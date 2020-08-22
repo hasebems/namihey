@@ -45,6 +45,7 @@ class Block:
         self.port.send(msg)
 
     def play(self):
+        # 演奏開始
         self.bpm = self.stockBpm
         if self.tickForOneMeasure != self.stockTickForOneMeasure:
             # beat が設定された場合
@@ -66,6 +67,7 @@ class Block:
             self.part[pt].play()
 
     def generateEv(self, evTime):
+        # 演奏データの生成
         if evTime > self.nextLoopStartTime:
             # loop して先頭に戻った時
             self.bpm = self.stockBpm
@@ -94,6 +96,7 @@ class Block:
         return self.currentLoopStartTime + nextTick/(self.bpm*8)
 
     def stop(self):
+        # 演奏終了
         for pt in range(MAX_PART_COUNT):
             self.part[pt].stop()
 
@@ -123,7 +126,6 @@ class Seq:
         return self.bk[block-1]
 
     def play(self, block=1, repeat='on'):
-        print("Start!")
         self.duringPlay = True
         self.startTime = time.time()
         self.nextTime = 0
@@ -133,4 +135,4 @@ class Seq:
     def stop(self):
         self.currentBk.stop()
         self.duringPlay = False
-        print("Stop!")
+

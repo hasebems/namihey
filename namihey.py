@@ -16,17 +16,18 @@ def quit():
 
 def cui():
     while True:
-        inputText = input("~~~> ")
+        global pas
+        inputText = input(pas.promptStr)
         if inputText == 'quit':
             quit()
             break
-        global seq
-        ps.parse(inputText,seq)
+        pas.startParsing(inputText)
     global loop
     loop = False
 
 loop = True
 seq = sq.Seq()
+pas = ps.Parsing(seq)
 cuijob = threading.Thread(target=cui)
 cuijob.start()
 while True:

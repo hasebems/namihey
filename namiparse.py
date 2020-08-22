@@ -5,6 +5,8 @@ class Parsing:
     #   一行単位で入力されるたびに生成される
     def __init__(self, seq):
         self.sq = seq
+        self.inputPart = 1
+        self.promptStr = '[1]~~> '
 
     def changeBeat(self, text):
         if '/' in text:
@@ -45,11 +47,13 @@ class Parsing:
         if inputText[0:4] == 'play':
             arg = inputText.split()
             if len(arg) == 1:
+                print("Phrase has started!")
                 self.sq.play()
 
     def letterS(self, inputText):
         if inputText[0:4] == 'stop':
             self.sq.stop()
+            print("Stopped!")
         elif inputText[0:3] == 'set':
             self.parseSetCommand(inputText[3:])
 
@@ -62,6 +66,8 @@ class Parsing:
                     print("Changed current part to " + str(part) + ".")
                     blk = self.sq.get_block()
                     blk.inputPart = part-1
+                    self.inputPart = part
+                    self.promptStr = '[' + str(part) + ']~~> '
 
     def letterBracket(self, inputText):
         # [] のペアを抜き出し、中身を noteInfo に入れる
@@ -109,7 +115,3 @@ class Parsing:
         elif firstLetter == 'k': self.letterP(inputText)
         elif firstLetter == '?': self.letterQm(inputText)
 
-
-def parse(inputText, seq):
-    ps = Parsing(seq)
-    ps.startParsing(inputText)

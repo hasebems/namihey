@@ -23,10 +23,12 @@ class Part:
 
     def addNote(self, tick, notes, duration, velocity=100):
         for note in notes:
-            self.playData.append([tick,note,velocity])
+            if note != REST:
+                self.playData.append([tick,note,velocity])
         for note in notes:
-            offTick = tick + duration*480*4/self.onpu - 1
-            self.playData.append([offTick,note,0])
+            if note != REST:
+                offTick = tick + duration*480*4/self.onpu - 1
+                self.playData.append([offTick,note,0])
 
     def clearPhrase(self):
         self.noteData= [None for _ in range(3)]
