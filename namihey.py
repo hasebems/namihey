@@ -7,6 +7,7 @@
 import  threading
 import  namiparse as ps
 import  namiseq as sq
+import  readline    # add history function
 
 def quit():
     global seq
