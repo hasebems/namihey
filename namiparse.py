@@ -21,6 +21,29 @@ class Parsing:
             if btnum >= 1 and onpu >= 1:
                 self.sq.get_block().stockTickForOneMeasure = (1920/onpu)*btnum
 
+    def changeKey(self, keyText):
+        key = 12
+        firstLetter = keyText[0:1]
+        if firstLetter == 'C':   key += 0
+        elif firstLetter == 'D': key += 2
+        elif firstLetter == 'E': key += 4
+        elif firstLetter == 'F': key += 5
+        elif firstLetter == 'G': key += 7
+        elif firstLetter == 'A': key += 9
+        elif firstLetter == 'B': key += 11
+        else: retrun
+        octaveLetter = keyText[1:2]
+        if octaveLetter == '#':
+            key += 1
+            octaveLetter = keyText[2:3]
+        elif octaveLetter == 'b':
+            key -= 1
+            octaveLetter = keyText[2:3]
+        if octaveLetter.isdecimal() == True:
+            key += int(octaveLetter)*12
+            pt = self.sq.currentBk.inputPart
+            self.sq.currentBk.part[pt].changeBaseNote(key)
+
     def parseSetCommand(self, inputText):
         prmText = inputText.strip()
         if 'part' in prmText:
@@ -31,9 +54,12 @@ class Parsing:
         if 'block' in prmText:
             pass
         if 'key' in prmText:
-            pass
+            pickedTxt = prmText[prmText.find('key')+3:]
+            if '=' in pickedTxt:
+                keyList = pickedTxt[pickedTxt.find('=')+1:].strip().split()
+                self.changeKey(keyList[0])
         if 'beat' in prmText:
-            pickedTxt = prmText[prmText.find('bpm')+3:]
+            pickedTxt = prmText[prmText.find('beat')+4:]
             if '=' in pickedTxt:
                 beatList = pickedTxt[pickedTxt.find('=')+1:].strip().split()
                 self.changeBeat(beatList[0])

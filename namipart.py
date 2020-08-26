@@ -2,6 +2,10 @@
 
 REST = 1000
 
+REPEAT_START = -1
+NO_REPEAT = 0
+REPEAT_END = 1 # 1,2,3 の数値はリピート回数
+
 class Part:
     #   Part 単位で、ノート情報を保持
     #   文字情報を MIDI で使う数値に変換
@@ -16,10 +20,17 @@ class Part:
         self.number = partNum
         self.onpu = 4               # base note type
         self.wholeTick = 0          # a length of whole tick that needs to play
-        self.statePlay = False
-        self.stateRsrv = False
+        self.statePlay = False      # during Playing
+        self.stateRsrv = False      # Change Phrase at next loop top 
 
         self.baseNote = 60
+
+    def changeBaseNote(self, nt):
+        self.baseNote = nt
+        if self.statePlay == True:
+            self.stateRsrv = True
+        else:
+            self.convertToMIDILikeFormat()
 
     def addNote(self, tick, notes, duration, velocity=100):
         for note in notes:
@@ -78,15 +89,32 @@ class Part:
     def cnvNote(self, noteText):
         nlists = noteText.replace(' ','').split('=')    # 和音検出
         bpchs = []
+        repeat = NO_REPEAT
         for nx in nlists:
             basePitch = self.baseNote
-            oct = nx[0:1]
-            if oct == '+':
+
+            first = nx[0]
+            if first == '|' and nx[1:2] == ':':
+                nx = nx[2:]
+                repeat = REPEAT_START
+            if first == '+':    # octave up
                 nx = nx[1:]
                 basePitch += 12
-            elif oct == '-':
+            elif first == '-':  # octave down
                 nx = nx[1:]
                 basePitch -= 12
+
+            if len(nx) > 2:     # repeat end check
+                if nx[-1] == '|' and nx[-2] == ':':
+                    nx = nx[0:-2]
+                    repeat = REPEAT_END
+                else:
+                    ptr = -2
+                    while (nx[ptr] != '|' or nx[ptr-1] != ':') and ptr > 0-len(nx):
+                        ptr -= 1
+                    repeat = int(nx[ptr+1:])
+                    nx = nx[0:ptr-1]
+
             if nx == 'x':                   basePitch = REST
             elif nx == 'd':                 basePitch += 0
             elif nx == 'di' or nx == 'ra':  basePitch += 1
@@ -101,19 +129,37 @@ class Part:
             elif nx == 'li' or nx == 'ta':  basePitch += 10
             elif nx == 't':                 basePitch += 11
             bpchs.append(basePitch)
-        return bpchs
+
+        return bpchs, repeat
 
     def convertToMIDILikeFormat(self):
         self.onpu = 4
         self.playData = []
+        if len(self.noteData[0]) == 0:
+            return 0
+
         noteFlow, durFlow, velFlow, ntNum = self.completeNoteData()
         tick = 0
-        for i in range(ntNum):
-            cnts = self.cnvNote(noteFlow[i])
-            dur = int(durFlow[i])
-            vel = int(velFlow[i])
+        readPtr = 0
+        repeatPoint = 0     # リピートして戻る場所
+        repeatCnt = 0       # リピート回数のカウント
+        while readPtr < ntNum:
+            cnts, repeatValue = self.cnvNote(noteFlow[readPtr])
+            dur = int(durFlow[readPtr])
+            vel = int(velFlow[readPtr])
             self.addNote(tick,cnts,dur,vel)
             tick += dur*480*4/self.onpu
+            if repeatValue >= REPEAT_END:
+                if repeatValue > repeatCnt:
+                    readPtr = repeatPoint
+                    repeatCnt += 1
+                else:
+                    readPtr += 1    # out from repeat
+            else:
+                if repeatValue == REPEAT_START:
+                    repeatPoint = readPtr
+                readPtr += 1
+
         self.wholeTick = tick
         return tick
 
