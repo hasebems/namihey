@@ -1,18 +1,20 @@
 
 # namihey Alpha-version
 
+## about namihey
+
+    namihey is a music description language developed mainly for use in Live Coding.
+    The main feature of namihey is the ability to specify tones by a gradation with a movable-do.
+    It is written in python and output to MIDI by the mido library.
+
+
+
 ## namihey とは
 
-namihey は、主に Live Coding で使うために開発された音楽記述言語です。
-音の指定を、移動ドによる階名で指定することを大きな特徴とします。
-python によって記述され、mido というライブラリにより、MIDI出力します。
+    namihey は、主に Live Coding で使うために開発された音楽記述言語です。
+    音の指定を、移動ドによる階名で指定することを大きな特徴とします。
+    python によって記述され、mido というライブラリにより、MIDI出力します。
 
-
-## 用語定義
-
-- フレーズ : 入力した音の高さ、長さ、強さの一連のデータのこと
-- 階名 : ある調の主音を「ド」とし、そこからドレミファ・・と呼んでいく、移動ドによる音の高さの呼称
-- duration（音価） : 楽譜上での音の長さ
 
 
 ## 記述の基本ルール
@@ -58,9 +60,10 @@ python によって記述され、mido というライブラリにより、MIDI�
 ## シーケンスコントロール
 
 - 'play' : シーケンス開始
-- 'mute 2,3' : part2 と part3 をミュートする
-- 'cancel' : ミュートしていたパートのミュート解除する
-- 'stop' : シーケンス終了
+- 'mute 2,3' : part2 と part3 をミュートする        【未実装】
+- 'cancel' : ミュートしていたパートのミュート解除する    【未実装】
+- 'fine' : ブロックの最後でシーケンス終了
+- 'stop' : 直ちにシーケンス終了
 
 ## 入力変更
 

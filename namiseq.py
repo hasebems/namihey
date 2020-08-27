@@ -17,6 +17,7 @@ class Block:
         self.tickForOneMeasure = 1920
         self.port = midiport
         self.inputPart = 0
+        self.waitForFine = False
 
         self.nextLoopStartTime = 0
         self.currentLoopStartTime = 0
@@ -70,6 +71,10 @@ class Block:
         # 演奏データの生成
         if evTime > self.nextLoopStartTime:
             # loop して先頭に戻った時
+            if self.waitForFine == True:
+                self.stop()
+                self.waitForFine == False
+                return 0
             self.bpm = self.stockBpm
             self.tickForOneMeasure = self.stockTickForOneMeasure
 
@@ -96,9 +101,13 @@ class Block:
         return self.currentLoopStartTime + nextTick/(self.bpm*8)
 
     def stop(self):
-        # 演奏終了
+        # 演奏強制終了
         for pt in range(MAX_PART_COUNT):
             self.part[pt].stop()
+
+    def fine(self):
+        # Blockの最後で演奏終了
+        self.waitForFine = True
 
 
 class Seq:
@@ -121,6 +130,8 @@ class Seq:
         currentTime = time.time() - self.startTime
         if currentTime > self.nextTime:
             self.nextTime = self.currentBk.generateEv(currentTime)
+            if self.nextTime == 0:
+                self.duringPlay = False
 
     def get_block(self, block=1):
         return self.bk[block-1]
@@ -136,3 +147,6 @@ class Seq:
         self.currentBk.stop()
         self.duringPlay = False
 
+    def fine(self):
+        print('Will be ended!')
+        self.currentBk.fine()

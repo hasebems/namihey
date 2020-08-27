@@ -127,7 +127,11 @@ class Parsing:
         blk.clearPhrase()
         blk.addPhrase(noteInfo)
 
-    def letterQm(inputText):
+    def letterF(self, inputText):
+        if inputText[0:4] == "fine":
+            self.sq.fine()
+
+    def letterQm(self, inputText):
         pass
 
     def startParsing(self, inputText):
@@ -139,5 +143,6 @@ class Parsing:
         elif firstLetter == 'i': self.letterI(inputText)
         elif firstLetter == 'o': self.letterP(inputText)
         elif firstLetter == 'k': self.letterP(inputText)
+        elif firstLetter == 'f': self.letterF(inputText)
         elif firstLetter == '?': self.letterQm(inputText)
 
