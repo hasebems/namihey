@@ -66,7 +66,10 @@ class Part:
             if lastDurTxt[0] == '':
                 lastDurTxt[0] = '1'
             durFlow[durNum-1] = lastDurTxt[0]
-            self.onpu = int(lastDurTxt[1])
+            if lastDurTxt[1].isdecimal() == True:
+                self.onpu = int(lastDurTxt[1])
+            else:
+                self.onpu = 4
 
         if durNum < ntNum:
             for _ in range(ntNum-durNum):
@@ -112,7 +115,7 @@ class Part:
                     ptr = -2
                     while (nx[ptr] != '|' or nx[ptr-1] != ':') and ptr > 0-len(nx):
                         ptr -= 1
-                    repeat = int(nx[ptr+1:])
+                    repeat = int(nx[ptr+1:]) if nx[ptr+1:].isdecimal() == True else REPEAT_END
                     nx = nx[0:ptr-1]
 
             if nx == 'x':                   basePitch = REST
