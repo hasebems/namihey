@@ -75,8 +75,8 @@ class Block:
     def __goesToLoopTop(self):
         # loop して先頭に戻った時
         if self.waitForFine == True:
+            self.waitForFine = False
             self.stop()
-            self.waitForFine == False
             return False
             
         self.bpm = self.stockBpm
