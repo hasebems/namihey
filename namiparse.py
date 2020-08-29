@@ -19,7 +19,7 @@ class Parsing:
             if onpuStr.isdecimal() == True:
                 onpu = int(onpuStr)
             if btnum >= 1 and onpu >= 1:
-                self.sq.get_block().stockTickForOneMeasure = (1920/onpu)*btnum
+                self.sq.getBlock().stockTickForOneMeasure = (1920/onpu)*btnum
 
     def changeKey(self, keyText):
         key = 12
@@ -67,7 +67,7 @@ class Parsing:
             pickedTxt = prmText[prmText.find('bpm')+3:]
             if '=' in pickedTxt:
                 bpmNumList = pickedTxt[pickedTxt.find('=')+1:].strip().split()
-                self.sq.get_block().stockBpm = int(bpmNumList[0])
+                self.sq.getBlock().stockBpm = int(bpmNumList[0])
 
     def letterP(self, inputText):
         if inputText[0:4] == 'play':
@@ -85,12 +85,12 @@ class Parsing:
 
     def letterI(self, inputText):
         if inputText[0:5] == 'input':
-            tx = inputText[5:].replace(' ', '').split('=')
-            if tx[0] == 'part':
-                part = int(tx[1])
+            tx = inputText[5:].replace(' ', '')
+            if tx.isdecimal() == True:
+                part = int(tx)
                 if part > 0 and part <= 16:
                     print("Changed current part to " + str(part) + ".")
-                    blk = self.sq.get_block()
+                    blk = self.sq.getBlock()
                     blk.inputPart = part-1
                     self.inputPart = part
                     self.promptStr = '[' + str(part) + ']~~> '
@@ -123,9 +123,18 @@ class Parsing:
             return
 
         print("set Phrase!")
-        blk = self.sq.get_block()
+        blk = self.sq.getBlock()
         blk.clearPhrase()
         blk.addPhrase(noteInfo)
+
+    def letterC(self, inputText):
+        if inputText[0:6] == 'copyto':
+            tx = inputText[7:].replace(' ', '')
+            if tx.isdecimal() == True:
+                part = int(tx)
+                if part > 0 and part <= 16:
+                    self.sq.currentBk.copyPhrase(part)
+                    print("Phrase copied to part" + tx + ".")
 
     def letterF(self, inputText):
         if inputText[0:4] == "fine":
@@ -136,13 +145,14 @@ class Parsing:
 
     def startParsing(self, inputText):
         firstLetter = inputText[0:1]
-        if firstLetter == 'p':   self.letterP(inputText)
-        elif firstLetter == '[': self.letterBracket(inputText)
-        elif firstLetter == 's': self.letterS(inputText)
+        if firstLetter == '[': self.letterBracket(inputText)
         elif firstLetter == 'b': self.letterP(inputText)
-        elif firstLetter == 'i': self.letterI(inputText)
-        elif firstLetter == 'o': self.letterP(inputText)
-        elif firstLetter == 'k': self.letterP(inputText)
+        elif firstLetter == 'c': self.letterC(inputText)
         elif firstLetter == 'f': self.letterF(inputText)
+        elif firstLetter == 'i': self.letterI(inputText)
+        elif firstLetter == 'k': self.letterP(inputText)
+        elif firstLetter == 'o': self.letterP(inputText)
+        elif firstLetter == 'p':   self.letterP(inputText)
+        elif firstLetter == 's': self.letterS(inputText)
         elif firstLetter == '?': self.letterQm(inputText)
 

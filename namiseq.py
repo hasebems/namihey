@@ -28,15 +28,20 @@ class Block:
     def getWholeTick(self):
         return self.tickForOneMeasure*self.maxMeasure
 
-    def clearPhrase(self):
-        self.part[self.inputPart].clearPhrase()
-
-    def addPhrase(self,data):
+    def __inputPhrase(self,data,pt):
         self.maxMeasure = 0
-        pt = self.inputPart
         tick = self.part[pt].addPhrase(data)
         while tick > self.getWholeTick():
             self.maxMeasure += 1
+
+    def clearPhrase(self):
+        self.part[self.inputPart].clearPhrase()
+
+    def copyPhrase(self,pt):
+        self.__inputPhrase(self.part[self.inputPart].noteData, pt)
+
+    def addPhrase(self,data):
+        self.__inputPhrase(data, self.inputPart)
 
     def sendMidiNote(self, ch, nt, vel):
         if vel != 0:
@@ -67,29 +72,35 @@ class Block:
         for pt in range(MAX_PART_COUNT):
             self.part[pt].play()
 
+    def __goesToLoopTop(self):
+        # loop して先頭に戻った時
+        if self.waitForFine == True:
+            self.stop()
+            self.waitForFine == False
+            return False
+            
+        self.bpm = self.stockBpm
+        self.tickForOneMeasure = self.stockTickForOneMeasure
+
+        # 最大小節数の再計算
+        self.maxMeasure = 0
+        tick = 0
+        for pt in range(MAX_PART_COUNT):
+            ptTick = self.part[pt].returnToTop()
+            if ptTick > tick:
+                tick = ptTick
+        while tick > self.getWholeTick():
+            self.maxMeasure += 1
+
+        self.currentLoopStartTime = self.nextLoopStartTime
+        self.nextLoopStartTime += self.getWholeTick()/(self.bpm*8)
+        return True
+
     def generateEv(self, evTime):
         # 演奏データの生成
         if evTime > self.nextLoopStartTime:
-            # loop して先頭に戻った時
-            if self.waitForFine == True:
-                self.stop()
-                self.waitForFine == False
+            if self.__goesToLoopTop() == False:
                 return 0
-            self.bpm = self.stockBpm
-            self.tickForOneMeasure = self.stockTickForOneMeasure
-
-            # 最大小節数の再計算
-            self.maxMeasure = 0
-            tick = 0
-            for pt in range(MAX_PART_COUNT):
-                ptTick = self.part[pt].returnToTop()
-                if ptTick > tick:
-                    tick = ptTick
-            while tick > self.getWholeTick():
-                self.maxMeasure += 1
-
-            self.currentLoopStartTime = self.nextLoopStartTime
-            self.nextLoopStartTime += self.getWholeTick()/(self.bpm*8)
 
         currentTick = (evTime - self.currentLoopStartTime)*self.bpm*8
         nextTick = self.getWholeTick()
@@ -114,6 +125,7 @@ class Seq:
     #   MIDI シーケンスを再生する全体のまとめ処理
     #   開始時に生成され、playSeq() がコマンド入力とは別スレッドで、定期的に呼ばれる
     #   その他の機能： mido の生成、CUIに情報を送る
+    #   Block: 現状 [0] の一つだけ生成
     def __init__(self):
         self.startTime = time.time()
         self.duringPlay = False
@@ -133,7 +145,7 @@ class Seq:
             if self.nextTime == 0:
                 self.duringPlay = False
 
-    def get_block(self, block=1):
+    def getBlock(self, block=1):
         return self.bk[block-1]
 
     def play(self, block=1, repeat='on'):
