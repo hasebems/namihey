@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import re
 
 REST = 1000
 
@@ -45,16 +46,18 @@ class Part:
         self.noteData= [None for _ in range(3)]
 
     def completeNoteData(self):
-        # スペース削除し、','区切りでリスト化
+        # スペース削除し、',' '|' 区切りでリスト化
         # 内容が足りなければ補填
         ### Note
-        noteFlow = self.noteData[0].replace(' ','').split(',')
+        noteFlow = re.split('[,|]', self.noteData[0].replace(' ',''))
+        while '' in noteFlow:
+            noteFlow.remove('')
         ntNum = len(noteFlow)
 
         ### Duration
         durFlow = []
         if ',' in self.noteData[1]:
-            durFlow = self.noteData[1].replace(' ','').split(',')
+            durFlow = re.split('[,|]', self.noteData[1].replace(' ',''))
         else:
             # ','が無い場合、全体を一つの文字列にし、リストとして追加
             durFlow.append(self.noteData[1])
@@ -78,7 +81,7 @@ class Part:
         ### Velocity
         velFlow = []
         if ',' in self.noteData[2]:
-            velFlow = self.noteData[2].replace(' ','').split(',')
+            velFlow = re.split('[,|]', self.noteData[2].replace(' ',''))
         else:
             # ','が無い場合、全体を一つの文字列にし、リストとして追加
             velFlow.append(self.noteData[2])
@@ -95,11 +98,8 @@ class Part:
         repeat = NO_REPEAT
         for nx in nlists:
             basePitch = self.baseNote
-
             first = nx[0]
-            if first == '|' and nx[1:2] == ':':
-                nx = nx[2:]
-                repeat = REPEAT_START
+
             if first == '+':    # octave up
                 nx = nx[1:]
                 basePitch += 12
@@ -107,16 +107,18 @@ class Part:
                 nx = nx[1:]
                 basePitch -= 12
 
-            if len(nx) > 2:     # repeat end check
-                if nx[-1] == '|' and nx[-2] == ':':
-                    nx = nx[0:-2]
-                    repeat = REPEAT_END
+            if ':' in nx:       # repeat
+                num = nx.find(':')
+                if num == 0:
+                    nx = nx[1:]
+                    repeat = REPEAT_START
                 else:
-                    ptr = -2
-                    while (nx[ptr] != '|' or nx[ptr-1] != ':') and ptr > 0-len(nx):
-                        ptr -= 1
-                    repeat = int(nx[ptr+1:]) if nx[ptr+1:].isdecimal() == True else REPEAT_END
-                    nx = nx[0:ptr-1]
+                    num = nx.rfind(':') - len(nx)
+                    if num == -1:
+                        repeat = REPEAT_END
+                    else:
+                        repeat = int(nx[num+1:]) if nx[num+1:].isdecimal() == True else REPEAT_END
+                    nx = nx[0:num]
 
             if nx == 'x':                   basePitch = REST
             elif nx == 'd':                 basePitch += 0
