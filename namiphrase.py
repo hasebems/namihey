@@ -139,7 +139,7 @@ class PhraseGenerator():
 
     def convertToMIDILikeFormat(self):
         if len(self.noteData[0]) == 0:
-            return 0
+            return 0, self.playData
 
         noteFlow, durFlow, velFlow, ntNum = self.fillOmittedData()
         tick = 0

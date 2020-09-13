@@ -153,7 +153,7 @@ class Parsing:
         elif firstLetter == 'i': self.letterI(inputText)
         elif firstLetter == 'k': self.letterP(inputText)
         elif firstLetter == 'o': self.letterP(inputText)
-        elif firstLetter == 'p':   self.letterP(inputText)
+        elif firstLetter == 'p': self.letterP(inputText)
         elif firstLetter == 's': self.letterS(inputText)
         elif firstLetter == '?': self.letterQm(inputText)
 
