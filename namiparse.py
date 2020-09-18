@@ -31,7 +31,7 @@ class Parsing:
         elif firstLetter == 'G': key += 7
         elif firstLetter == 'A': key += 9
         elif firstLetter == 'B': key += 11
-        else: retrun
+        else: return
         octaveLetter = keyText[1:2]
         if octaveLetter == '#':
             key += 1
