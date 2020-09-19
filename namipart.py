@@ -52,13 +52,12 @@ class Part:
 
     def returnToTop(self):
         # Phrase sequence return to top during playing 
-        tick = self.wholeTick
         if self.stateRsrv == True:
             pg = nph.PhraseGenerator(self.noteData, self.baseNote)
             self.wholeTick, self.playData = pg.convertToMIDILikeFormat()
 
         self.playDataCnt = 0
-        return tick
+        return self.wholeTick
 
     def generateEv(self, evTick):
         maxEv = len(self.playData)

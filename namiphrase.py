@@ -25,14 +25,85 @@ class PhraseGenerator():
                 offTick = tick + duration*480*4/self.onpu - 1
                 self.playData.append([offTick,note,0])
 
-    def fillOmittedData(self):
+    def fillOmittedNoteData(self):
         # スペース削除し、',' '|' 区切りでリスト化
-        # 内容が足りなければ補填
-        ### Note
         noteFlow = re.split('[,|]', self.noteData[0].replace(' ',''))
         while '' in noteFlow:
             noteFlow.remove('')
-        ntNum = len(noteFlow)
+
+        # If find Repeat mark, expand all event.
+        noRepeat = False
+        while noRepeat == False:
+            noRepeat = True
+            repeatStart = 0
+            for i, nt in enumerate(noteFlow):   # |: :n|
+                if ':' in nt:
+                    noRepeat = False
+                    locate = nt.find(':')
+                    if locate == 0:
+                        noteFlow[i] = nt[1:]
+                        repeatStart = i
+                    else:
+                        repeatCount = 0
+                        num = nt.rfind(':') - len(nt)
+                        noteFlow[i] = nt[0:num]
+                        if num == -1:
+                            repeatCount = 1
+                        else:
+                            if nt[num+1:].isdecimal() == True: repeatCount = int(nt[num+1:])
+                        for j in range(repeatCount):
+                            insPtr = i+1+j*(i+1-repeatStart)
+                            noteFlow[insPtr:insPtr] = noteFlow[repeatStart:i+1]
+                        break
+            ## end of for
+
+            repeatStart = 0
+            firstBracket = False
+            for i, nt in enumerate(noteFlow):   # <  >*n
+                if '<' in nt:
+                    noRepeat = False
+                    locate = nt.find('<')
+                    if locate == 0:
+                        noteFlow[i] = nt[1:]
+                        repeatStart = i
+                        firstBracket = True
+                elif '>' in nt:
+                    repeatCount = 0
+                    reCnt = nt.rfind('>')
+                    noteFlow[i] = nt[0:reCnt]
+                    if nt[reCnt+1:reCnt+2] == '*' and firstBracket == True:
+                        if nt[reCnt+2:].isdecimal() == True: repeatCount = int(nt[reCnt+2:])
+                        if repeatCount > 1:
+                            for j in range(repeatCount-1):
+                                insPtr = i+1+j*(i+1-repeatStart)
+                                noteFlow[insPtr:insPtr] = noteFlow[repeatStart:i+1]
+                    break
+            ## end of for
+        ## end of while
+
+        # Same note repeat
+        noRepeat = False
+        while noRepeat == False:
+            noRepeat = True
+            for i, nt in enumerate(noteFlow):
+                if '*' in nt:
+                    noRepeat = False
+                    locate = nt.find('*')
+                    noteFlow[i] = nt[0:locate]
+                    repeatCount = 0
+                    if nt[locate+1:].isdecimal() == True: repeatCount = int(nt[locate+1:])
+                    if repeatCount > 1:
+                        for j in range(repeatCount-1):
+                            noteFlow[i:i] = nt[0:locate]
+                    break
+            ## end of for
+        ## end of while
+
+        return noteFlow, len(noteFlow)
+
+    def fillOmittedData(self):
+        ### Note
+        noteFlow, ntNum = self.fillOmittedNoteData()
 
         ### Duration
         durFlow = []
@@ -73,20 +144,6 @@ class PhraseGenerator():
         return noteFlow, durFlow, velFlow, ntNum
 
     def cnvNoteToPitch(self, noteText):
-        repeat = NO_REPEAT
-        if ':' in noteText:       # repeat
-            num = noteText.find(':')
-            if num == 0:
-                noteText = noteText[1:]
-                repeat = REPEAT_START
-            else:
-                num = noteText.rfind(':') - len(noteText)
-                if num == -1:
-                    repeat = REPEAT_END
-                else:
-                    repeat = int(noteText[num+1:]) if noteText[num+1:].isdecimal() == True else REPEAT_END
-                noteText = noteText[0:num]
-
         nlists = noteText.replace(' ','').split('=')    # 和音検出
         bpchs = []
         for nx in nlists:
@@ -115,7 +172,7 @@ class PhraseGenerator():
             elif nx == 't':                 basePitch += 11
             bpchs.append(basePitch)
 
-        return bpchs, repeat
+        return bpchs
 
     def cnvDuration(self, durText):
         if durText.isdecimal() == True:
@@ -144,23 +201,12 @@ class PhraseGenerator():
         noteFlow, durFlow, velFlow, ntNum = self.fillOmittedData()
         tick = 0
         readPtr = 0
-        repeatPoint = 0     # リピートして戻る場所
-        repeatCnt = 0       # リピート回数のカウント
         while readPtr < ntNum:
-            cnts, repeatValue = self.cnvNoteToPitch(noteFlow[readPtr])
+            cnts = self.cnvNoteToPitch(noteFlow[readPtr])
             dur = self.cnvDuration(durFlow[readPtr])
             vel = self.cnvExpToVel(velFlow[readPtr])
             self.addNote(tick,cnts,dur,vel)
             tick += dur*480*4/self.onpu
-            if repeatValue >= REPEAT_END:
-                if repeatValue > repeatCnt:
-                    readPtr = repeatPoint
-                    repeatCnt += 1
-                else:
-                    readPtr += 1    # out from repeat
-            else:
-                if repeatValue == REPEAT_START:
-                    repeatPoint = readPtr
-                readPtr += 1
+            readPtr += 1    # out from repeat
 
         return tick, self.playData
