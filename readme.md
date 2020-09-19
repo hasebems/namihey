@@ -5,18 +5,18 @@ namihey Alpha-version
 about namihey
 --------------
 
-    namihey is a music description language developed mainly for use in Live Coding.
-    The main feature of namihey is the ability to specify tones by a gradation with a movable-do.
-    It is written in python and output to MIDI by the mido library.
+namihey is a music description language developed mainly for use in Live Coding.
+The main feature of namihey is the ability to specify tones by a gradation with a movable-do.
+It is written in python and output to MIDI by the mido library.
 
 
 
 namihey とは
 ------------
 
-    namihey は、主に Live Coding で使うために開発された音楽記述言語です。
-    音の指定を、移動ドによる階名で指定することを大きな特徴とします。
-    python によって記述され、mido というライブラリにより、MIDI出力します。
+namihey は、主に Live Coding で使うために開発された音楽記述言語です。
+音の指定を、移動ドによる階名で指定することを大きな特徴とします。
+python によって記述され、mido というライブラリにより、MIDI出力します。
 
 
 
@@ -55,7 +55,7 @@ namihey とは
     - d=m=s, : 同時演奏
     - |:d,r,m:3| : ドレミを３回繰り返し、合計４回演奏（数字がなければ1回繰り返し）
     - <d,r,m>*4 : ドレミを４回演奏
-    - d*4 : *n で n 回、その音を連続で発音
+    - d*4 : ドを４回連続して発音
 
 - 音価表現
     - [1,1,1,1:8] : 八分音符を４回 (:n で基本音価を示す)
