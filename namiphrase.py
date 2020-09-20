@@ -96,7 +96,7 @@ class PhraseGenerator():
                     if nt[locate+1:].isdecimal() == True: repeatCount = int(nt[locate+1:])
                     if repeatCount > 1:
                         for j in range(repeatCount-1):
-                            noteFlow[i:i] = nt[0:locate]
+                            noteFlow.insert(i+1, nt[0:locate])
                     break
             ## end of for
         ## end of while
