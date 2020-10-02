@@ -11,7 +11,7 @@ class Block:
     #   Block 内に最大 MAX_PART_COUNT part持つことができる
     #   CUI からの情報を取得後、 Part に渡し、generateEv() で MIDI OUT する
     def __init__(self, midiport):
-        self.part = [npt.Part(self,i) for i in range(MAX_PART_COUNT)]
+        self.parts = [npt.Part(self,i) for i in range(MAX_PART_COUNT)]
         self.bpm = 100
         self.maxMeasure = 1
         self.tickForOneMeasure = 1920
@@ -30,15 +30,15 @@ class Block:
 
     def __inputPhrase(self,data,pt):
         self.maxMeasure = 0
-        tick = self.part[pt].addPhrase(data)
+        tick = self.parts[pt].addPhrase(data)
         while tick > self.getWholeTick():
             self.maxMeasure += 1
 
     def clearPhrase(self):
-        self.part[self.inputPart].clearPhrase()
+        self.parts[self.inputPart].clearPhrase()
 
     def copyPhrase(self,pt):
-        self.__inputPhrase(self.part[self.inputPart].noteData, pt)
+        self.__inputPhrase(self.parts[self.inputPart].noteData, pt)
 
     def addPhrase(self,data):
         self.__inputPhrase(data, self.inputPart)
@@ -60,8 +60,8 @@ class Block:
             # 最大小節数の再計算
             self.maxMeasure = 0
             tick = 0
-            for pt in range(MAX_PART_COUNT):
-                ptTick = self.part[pt].wholeTick
+            for pt in self.parts:
+                ptTick = pt.wholeTick
                 if ptTick > tick:
                     tick = ptTick
             while tick > self.getWholeTick():
@@ -69,8 +69,8 @@ class Block:
 
         self.currentLoopStartTime = 0
         self.nextLoopStartTime = self.getWholeTick()/(self.bpm*8)
-        for pt in range(MAX_PART_COUNT):
-            self.part[pt].play()
+        for pt in self.parts:
+            pt.play()
 
     def __goesToLoopTop(self):
         # loop して先頭に戻った時
@@ -85,8 +85,8 @@ class Block:
         # 最大小節数の再計算
         self.maxMeasure = 0
         tick = 0
-        for pt in range(MAX_PART_COUNT):
-            ptTick = self.part[pt].returnToTop()
+        for pt in self.parts:
+            ptTick = pt.returnToTop()
             if ptTick > tick:
                 tick = ptTick
         while tick > self.getWholeTick():
@@ -104,8 +104,8 @@ class Block:
 
         currentTick = (evTime - self.currentLoopStartTime)*self.bpm*8
         nextTick = self.getWholeTick()
-        for pt in range(MAX_PART_COUNT):
-            ptNextTick = self.part[pt].generateEv(currentTick)
+        for pt in self.parts:
+            ptNextTick = pt.generateEv(currentTick)
             if nextTick > ptNextTick:
                 nextTick = ptNextTick
 
@@ -113,8 +113,8 @@ class Block:
 
     def stop(self):
         # 演奏強制終了
-        for pt in range(MAX_PART_COUNT):
-            self.part[pt].stop()
+        for pt in self.parts:
+            pt.stop()
 
     def fine(self):
         # Blockの最後で演奏終了
@@ -123,7 +123,7 @@ class Block:
 
 class Seq:
     #   MIDI シーケンスを再生する全体のまとめ処理
-    #   開始時に生成され、playSeq() がコマンド入力とは別スレッドで、定期的に呼ばれる
+    #   開始時に生成され、periodic() がコマンド入力とは別スレッドで、定期的に呼ばれる
     #   その他の機能： mido の生成、CUIに情報を送る
     #   Block: 現状 [0] の一つだけ生成
     def __init__(self):
@@ -136,7 +136,7 @@ class Seq:
         self.bk.append(Block(self.midiport))
         self.currentBk = self.bk[0]
 
-    def playSeq(self):
+    def periodic(self):
         if self.duringPlay == False:
             return
         currentTime = time.time() - self.startTime

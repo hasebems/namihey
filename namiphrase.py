@@ -277,7 +277,7 @@ class PhraseGenerator():
         return vel
 
     def convertToMIDILikeFormat(self):
-        if len(self.noteData[0]) == 0:
+        if self.noteData[0] == None or len(self.noteData[0]) == 0:
             return 0, self.playData
 
         noteFlow, durFlow, velFlow, ntNum = self.fillOmittedData()

@@ -32,7 +32,7 @@ pas = ps.Parsing(seq)
 cuijob = threading.Thread(target=cui)
 cuijob.start()
 while True:
-    seq.playSeq()
+    seq.periodic()
     if loop == False:
         break
 cuijob.join()

@@ -6,7 +6,7 @@ class Parsing:
     def __init__(self, seq):
         self.sq = seq
         self.inputPart = 1
-        self.promptStr = '[1]~~> '
+        self.promptStr = '[1][1]~~> '
 
     def changeBeat(self, text):
         if '/' in text:
@@ -21,7 +21,7 @@ class Parsing:
             if btnum >= 1 and onpu >= 1:
                 self.sq.getBlock().stockTickForOneMeasure = (1920/onpu)*btnum
 
-    def changeKey(self, keyText):
+    def changeKey(self, keyText, all):
         key = 12
         firstLetter = keyText[0:1]
         if firstLetter == 'C':   key += 0
@@ -41,8 +41,12 @@ class Parsing:
             octaveLetter = keyText[2:3]
         if octaveLetter.isdecimal() == True:
             key += int(octaveLetter)*12
-            pt = self.sq.currentBk.inputPart
-            self.sq.currentBk.part[pt].changeBaseNote(key)
+            if all == True:
+                for pt in self.sq.currentBk.parts:
+                    pt.changeBaseNote(key)
+            else:
+                pt = self.sq.currentBk.inputPart
+                self.sq.currentBk.parts[pt].changeBaseNote(key)
 
     def parseSetCommand(self, inputText):
         prmText = inputText.strip()
@@ -57,7 +61,10 @@ class Parsing:
             pickedTxt = prmText[prmText.find('key')+3:]
             if '=' in pickedTxt:
                 keyList = pickedTxt[pickedTxt.find('=')+1:].strip().split()
-                self.changeKey(keyList[0])
+                if len(keyList) > 1 and 'all' == keyList[1]:
+                    self.changeKey(keyList[0], True)
+                else:
+                    self.changeKey(keyList[0], False)
         if 'beat' in prmText:
             pickedTxt = prmText[prmText.find('beat')+4:]
             if '=' in pickedTxt:
@@ -94,7 +101,7 @@ class Parsing:
                     blk = self.sq.getBlock()
                     blk.inputPart = part-1
                     self.inputPart = part
-                    self.promptStr = '[' + str(part) + ']~~> '
+                    self.promptStr = '[1][' + str(part) + ']~~> '
 
     def letterBracket(self, inputText):
         # [] のペアを抜き出し、中身を noteInfo に入れる
