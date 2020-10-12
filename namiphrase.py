@@ -203,13 +203,8 @@ class PhraseGenerator():
                 velFlow.append(velFlow[velNum-1])   # 足りない要素を補填
         return velFlow
 
-    def fillOmittedData(self):
-        ### Note
-        noteFlow, ntNum = self.fillOmittedNoteData()
-
-        ### Duration
-        # セミコロンの後で設定されている基本音価の調査
-        durText = self.noteData[1]
+    def changeBasicNoteValue(self, durText):
+        # セミコロンの後で設定されている基本音価の調査し、変更があれば差し替え
         if ':' in durText:
             lastDurTxt = durText.split(':')
             if lastDurTxt[0] == '':
@@ -222,11 +217,21 @@ class PhraseGenerator():
                     per = percent[0].strip('%')
                     if per.isdecimal() == True and int(per) <= 100:
                         self.durPer = int(per)                  # % の数値
+                elif percent[0] == 'stacc.':
+                    self.durPer = 50
             durLen = re.sub("\(.+?\)", "", lastDurTxt[1])
             if durLen.isdecimal() == True:
                 self.onpu = int(durLen)
             else:
                 self.onpu = 4
+        return durText
+
+    def fillOmittedData(self):
+        ### Note
+        noteFlow, ntNum = self.fillOmittedNoteData()
+
+        ### Duration
+        durText = self.changeBasicNoteValue(self.noteData[1])
         durFlow = self.fillOmittedDurData(durText, ntNum)
 
         ### Velocity
