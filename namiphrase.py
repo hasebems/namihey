@@ -12,6 +12,7 @@ class PhraseGenerator():
 
     def __init__(self, phraseData, base):
         self.onpu = 4                   # base note type
+        self.durPer = 100               # 100%
         self.playData = []
         self.noteData = phraseData
         self.baseNote = base
@@ -22,7 +23,8 @@ class PhraseGenerator():
                 self.playData.append([tick,note,velocity])
         for note in notes:
             if note != REST:
-                offTick = tick + duration*480*4/self.onpu - 1
+                realDur = int(duration*self.durPer*480*4/(100*self.onpu))
+                offTick = tick + realDur - 1
                 self.playData.append([offTick,note,0])
 
     def fillOmittedNoteData(self):
@@ -214,8 +216,15 @@ class PhraseGenerator():
                 durText = '1'
             else:
                 durText = lastDurTxt[0]
-            if lastDurTxt[1].isdecimal() == True:
-                self.onpu = int(lastDurTxt[1])
+            if '(' and ')' in lastDurTxt[1]:
+                percent = re.findall("(?<=\().+?(?=\))", lastDurTxt[1])
+                if '%' in percent[0]:
+                    per = percent[0].strip('%')
+                    if per.isdecimal() == True and int(per) <= 100:
+                        self.durPer = int(per)                  # % の数値
+            durLen = re.sub("\(.+?\)", "", lastDurTxt[1])
+            if durLen.isdecimal() == True:
+                self.onpu = int(durLen)
             else:
                 self.onpu = 4
         durFlow = self.fillOmittedDurData(durText, ntNum)
