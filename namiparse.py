@@ -5,7 +5,7 @@ class Parsing:
     #   一行単位で入力されるたびに生成される
     def __init__(self, seq):
         self.sq = seq
-        self.inputPart = 1
+        self.inputPart = 1      # 1origin
         self.promptStr = '[1][1]~~> '
 
     def changeBeat(self, text):
@@ -90,6 +90,12 @@ class Parsing:
             print("Stopped!")
         elif inputText[0:3] == 'set':
             self.parseSetCommand(inputText[3:])
+        elif inputText[0:4] == 'show':
+            blk = self.sq.getBlock()
+            ele = blk.parts[blk.inputPart].noteData
+            print('~~> N[' + str(ele[0]) + ']')
+            print('~~> D[' + str(ele[1]) + ']')
+            print('~~> V[' + str(ele[2]) + ']')
 
     def letterI(self, inputText):
         if inputText[0:5] == 'input':

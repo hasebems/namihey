@@ -16,7 +16,7 @@ class Block:
         self.maxMeasure = 1
         self.tickForOneMeasure = 1920
         self.port = midiport
-        self.inputPart = 0
+        self.inputPart = 0      # 0origin
         self.waitForFine = False
 
         self.nextLoopStartTime = 0
