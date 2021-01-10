@@ -5,7 +5,7 @@ namihey Alpha-version(0.210110)
 about namihey
 --------------
 
-namihey is a music description language developed mainly for use in Live Coding.
+"namihey" is a music description language being developed mainly for use in Live Coding.
 The main feature of namihey is the ability to specify tones by a gradation with a movable-do.
 It is written in python and output to MIDI by the mido library.
 
@@ -14,7 +14,7 @@ It is written in python and output to MIDI by the mido library.
 namihey とは
 ------------
 
-namihey は、主に Live Coding で使うために開発された音楽記述言語です。
+namihey は、Live Coding などで使うために開発しているテキストベースの音楽記述言語です。
 音の指定を、移動ドによる階名で指定することを大きな特徴とします。
 python によって記述され、mido というライブラリにより、MIDI出力します。
 
