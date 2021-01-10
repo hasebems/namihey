@@ -43,10 +43,10 @@ class Parsing:
             key += int(octaveLetter)*12
             if all == True:
                 for pt in self.sq.currentBk.parts:
-                    pt.changeBaseNote(key)
+                    pt.changeKeynote(key)
             else:
                 pt = self.sq.currentBk.inputPart
-                self.sq.currentBk.parts[pt].changeBaseNote(key)
+                self.sq.currentBk.parts[pt].changeKeynote(key)
 
     def parseSetCommand(self, inputText):
         prmText = inputText.strip()
@@ -83,6 +83,7 @@ class Parsing:
             if len(arg) == 1:
                 print("Phrase has started!")
                 self.sq.play()
+        else: print("what?")
 
     def letterS(self, inputText):
         if inputText[0:4] == 'stop':
@@ -96,6 +97,7 @@ class Parsing:
             print('~~> N[' + str(ele[0]) + ']')
             print('~~> D[' + str(ele[1]) + ']')
             print('~~> V[' + str(ele[2]) + ']')
+        else: print("what?")
 
     def letterI(self, inputText):
         if inputText[0:5] == 'input':
@@ -108,9 +110,10 @@ class Parsing:
                     blk.inputPart = part-1
                     self.inputPart = part
                     self.promptStr = '[1][' + str(part) + ']~~> '
+        else: print("what?")
 
     def letterBracket(self, inputText):
-        # [] のペアを抜き出し、中身を noteInfo に入れる
+        # [] のセットを抜き出し、中身を noteInfo に入れる
         noteInfo = []
         tx = inputText
         while True:
@@ -149,13 +152,15 @@ class Parsing:
                 if part > 0 and part <= 16:
                     self.sq.currentBk.copyPhrase(part)
                     print("Phrase copied to part" + tx + ".")
+        else: print("what?")
 
     def letterF(self, inputText):
         if inputText[0:4] == "fine":
             self.sq.fine()
+        else: print("what?")
 
     def letterQm(self, inputText):
-        pass
+        print("what?")
 
     def startParsing(self, inputText):
         firstLetter = inputText[0:1]
@@ -169,4 +174,5 @@ class Parsing:
         elif firstLetter == 'p': self.letterP(inputText)
         elif firstLetter == 's': self.letterS(inputText)
         elif firstLetter == '?': self.letterQm(inputText)
+        else: print("what?")
 
