@@ -204,14 +204,15 @@ class PhraseGenerator():
         return velFlow
 
     def changeBasicNoteValue(self, durText):
-        # セミコロンで設定されている基本音価の調査し、変更があれば差し替え
+        # コロンで設定されている基本音価の調査し、変更があれば差し替え
         if ':' in durText:
             spTxt = durText.split(':')
             baseNoteTxt = '4'
-            if ',' in spTxt[0]:
+            # 基本音価はコロンの前か後か？
+            if (',' in spTxt[0]) or ('(' and ')' in spTxt[1]):
                 durText = spTxt[0]
                 baseNoteText = spTxt[1]
-            elif '(' and ')' in spTxt[0]:
+            elif (',' in spTxt[1]) or ('(' and ')' in spTxt[0]):
                 baseNoteText = spTxt[0]
                 durText = spTxt[1]
             elif spTxt[0] == '':
