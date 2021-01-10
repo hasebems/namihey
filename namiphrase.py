@@ -10,12 +10,12 @@ class PhraseGenerator():
     #   文字情報を MIDI で使う数値に変換
     #   変換の際、一回生成されるだけ
 
-    def __init__(self, phraseData, base):
-        self.onpu = 4                   # base note type
+    def __init__(self, phraseData, key):
+        self.baseNote = 4               # base note type
         self.durPer = 100               # 100%
         self.playData = []
         self.noteData = phraseData
-        self.baseNote = base
+        self.keynote = key
 
     def addNote(self, tick, notes, duration, velocity=100):
         for note in notes:
@@ -23,7 +23,7 @@ class PhraseGenerator():
                 self.playData.append([tick,note,velocity])
         for note in notes:
             if note != REST:
-                realDur = int(duration*self.durPer*480*4/(100*self.onpu))
+                realDur = int(duration*self.durPer*480*4/(100*self.baseNote))
                 offTick = tick + realDur - 1
                 self.playData.append([offTick,note,0])
 
@@ -204,26 +204,39 @@ class PhraseGenerator():
         return velFlow
 
     def changeBasicNoteValue(self, durText):
-        # セミコロンの後で設定されている基本音価の調査し、変更があれば差し替え
+        # セミコロンで設定されている基本音価の調査し、変更があれば差し替え
         if ':' in durText:
-            lastDurTxt = durText.split(':')
-            if lastDurTxt[0] == '':
+            spTxt = durText.split(':')
+            baseNoteTxt = '4'
+            if ',' in spTxt[0]:
+                durText = spTxt[0]
+                baseNoteText = spTxt[1]
+            elif '(' and ')' in spTxt[0]:
+                baseNoteText = spTxt[0]
+                durText = spTxt[1]
+            elif spTxt[0] == '':
                 durText = '1'
+                baseNoteText = spTxt[1]
+            elif spTxt[0].isdecimal() and spTxt[1].isdecimal() and int(spTxt[0]) < int(spTxt[1]):
+                durText = spTxt[0]
+                baseNoteText = spTxt[1]
             else:
-                durText = lastDurTxt[0]
-            if '(' and ')' in lastDurTxt[1]:
-                percent = re.findall("(?<=\().+?(?=\))", lastDurTxt[1])
+                baseNoteText = spTxt[0]
+                durText = spTxt[1]
+
+            if '(' and ')' in baseNoteText:
+                percent = re.findall("(?<=\().+?(?=\))", baseNoteText)
                 if '%' in percent[0]:
                     per = percent[0].strip('%')
                     if per.isdecimal() == True and int(per) <= 100:
                         self.durPer = int(per)                  # % の数値
                 elif percent[0] == 'stacc.':
                     self.durPer = 50
-            durLen = re.sub("\(.+?\)", "", lastDurTxt[1])
+            durLen = re.sub("\(.+?\)", "", baseNoteText)
             if durLen.isdecimal() == True:
-                self.onpu = int(durLen)
+                self.baseNote = int(durLen)
             else:
-                self.onpu = 4
+                self.baseNote = 4
         return durText
 
     def fillOmittedData(self):
@@ -243,7 +256,7 @@ class PhraseGenerator():
         nlists = noteText.replace(' ','').split('=')    # 和音検出
         bpchs = []
         for nx in nlists:
-            basePitch = self.baseNote
+            basePitch = self.keynote
             first = nx[0]
 
             if first == '+':    # octave up
@@ -302,7 +315,7 @@ class PhraseGenerator():
             dur = self.cnvDuration(durFlow[readPtr])
             vel = self.cnvExpToVel(velFlow[readPtr])
             self.addNote(tick,cnts,dur,vel)
-            tick += dur*480*4/self.onpu
+            tick += dur*480*4/self.baseNote
             readPtr += 1    # out from repeat
 
         return tick, self.playData

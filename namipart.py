@@ -16,10 +16,10 @@ class Part:
         self.statePlay = False      # during Playing
         self.stateRsrv = False      # Change Phrase at next loop top 
 
-        self.baseNote = 60
+        self.keynote = 60
 
-    def changeBaseNote(self, nt):
-        self.baseNote = nt
+    def changeKeynote(self, nt):
+        self.keynote = nt
         if self.statePlay == True:
             self.stateRsrv = True
         else:
@@ -34,7 +34,7 @@ class Part:
         if self.statePlay == True:
             self.stateRsrv = True
         else:
-            pg = nph.PhraseGenerator(data, self.baseNote)
+            pg = nph.PhraseGenerator(data, self.keynote)
             self.wholeTick, self.playData = pg.convertToMIDILikeFormat()
         return self.wholeTick
 
@@ -53,7 +53,7 @@ class Part:
     def returnToTop(self):
         # Phrase sequence return to top during playing 
         if self.stateRsrv == True:
-            pg = nph.PhraseGenerator(self.noteData, self.baseNote)
+            pg = nph.PhraseGenerator(self.noteData, self.keynote)
             self.wholeTick, self.playData = pg.convertToMIDILikeFormat()
 
         self.playDataCnt = 0
