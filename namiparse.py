@@ -86,7 +86,10 @@ class Parsing:
         else: print("what?")
 
     def letterS(self, inputText):
-        if inputText[0:4] == 'stop':
+        if inputText[0:5] == 'start':
+            print("Phrase has started!")
+            self.sq.play()            
+        elif inputText[0:4] == 'stop':
             self.sq.stop()
             print("Stopped!")
         elif inputText[0:3] == 'set':
