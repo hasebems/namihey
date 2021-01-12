@@ -19,7 +19,7 @@ def cui():
     while True:
         global pas
         inputText = input(pas.promptStr)
-        if inputText == 'quit':
+        if inputText == 'quit' or inputText == 'exit':
             quit()
             break
         pas.startParsing(inputText)
