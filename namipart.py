@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import namiphrase as nph
 
+
+
 class Part:
     #   Part 単位で、演奏情報を保持
     #   演奏時に、適切なタイミングで MIDI データを出力
@@ -18,6 +20,7 @@ class Part:
 
         self.keynote = 60
 
+
     def changeKeynote(self, nt):
         self.keynote = nt
         if self.statePlay == True:
@@ -26,17 +29,28 @@ class Part:
             pg = nph.PhraseGenerator(self.noteData, nt)
             self.wholeTick, self.playData = pg.convertToMIDILikeFormat()
 
-    def clearPhrase(self):
-        self.noteData= [None for _ in range(3)]
 
-    def addPhrase(self, data):
+    def clearDescription(self):
+        self.noteData= [None for _ in range(4)]
+
+
+    def __generateSequence(self):
+        seqType = self.noteData[0]
+        if seqType == 'phrase':
+            pg = nph.PhraseGenerator(self.noteData[1:], self.keynote)
+            self.wholeTick, self.playData = pg.convertToMIDILikeFormat()
+        elif seqType == 'pattern':
+            pass
+
+
+    def addSeqDescription(self, data):
         self.noteData = data
         if self.statePlay == True:
             self.stateRsrv = True
         else:
-            pg = nph.PhraseGenerator(data, self.keynote)
-            self.wholeTick, self.playData = pg.convertToMIDILikeFormat()
+            self.__generateSequence()
         return self.wholeTick
+
 
     def stockNoteOn_duringPlay(self, note, vel):
         # stop 時に直ちに Note Off を出すため、現在 Note On 中の音を保持しておく
@@ -45,19 +59,20 @@ class Part:
         else:
             self.stockNoteOn.remove(note)
 
+
     def play(self):
         # 再生開始
         self.statePlay = True
         return self.generateEv(0)
 
+
     def returnToTop(self):
         # Phrase sequence return to top during playing 
         if self.stateRsrv == True:
-            pg = nph.PhraseGenerator(self.noteData, self.keynote)
-            self.wholeTick, self.playData = pg.convertToMIDILikeFormat()
-
+            self.__generateSequence()
         self.playDataCnt = 0
         return self.wholeTick
+
 
     def generateEv(self, evTick):
         maxEv = len(self.playData)
@@ -88,6 +103,7 @@ class Part:
             
         self.playDataCnt = trace
         return nextTick
+
 
     def stop(self):
         # 再生停止

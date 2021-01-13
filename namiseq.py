@@ -4,7 +4,9 @@ import  mido
 import  namiconf
 import  namipart as npt
 
+
 MAX_PART_COUNT = 16
+
 
 class Block:
     #   シーケンスの断片を Block という単位で扱う
@@ -25,8 +27,10 @@ class Block:
         self.stockBpm = self.bpm
         self.stockTickForOneMeasure = self.tickForOneMeasure
 
+
     def getWholeTick(self):
         return self.tickForOneMeasure*self.maxMeasure
+
 
     def __inputPhrase(self,data,pt):
         self.maxMeasure = 0
@@ -34,14 +38,22 @@ class Block:
         while tick > self.getWholeTick():
             self.maxMeasure += 1
 
-    def clearPhrase(self):
-        self.parts[self.inputPart].clearPhrase()
+
+    def addSeqDescription(self,data):
+        self.parts[self.inputPart].addSeqDescription(data)
+
+
+    def clearDescription(self):
+        self.parts[self.inputPart].clearDescription()
+
 
     def copyPhrase(self,pt):
         self.__inputPhrase(self.parts[self.inputPart].noteData, pt)
 
+
     def addPhrase(self,data):
         self.__inputPhrase(data, self.inputPart)
+
 
     def sendMidiNote(self, ch, nt, vel):
         if vel != 0:
@@ -49,6 +61,7 @@ class Block:
         else:
             msg = mido.Message('note_off', channel=ch, note=nt)
         self.port.send(msg)
+
 
     def play(self):
         # 演奏開始
@@ -71,6 +84,7 @@ class Block:
         self.nextLoopStartTime = self.getWholeTick()/(self.bpm*8)
         for pt in self.parts:
             pt.play()
+
 
     def __goesToLoopTop(self):
         # loop して先頭に戻った時
@@ -96,6 +110,7 @@ class Block:
         self.nextLoopStartTime += self.getWholeTick()/(self.bpm*8)
         return True
 
+
     def generateEv(self, evTime):
         # 演奏データの生成
         if evTime > self.nextLoopStartTime:
@@ -111,14 +126,17 @@ class Block:
 
         return self.currentLoopStartTime + nextTick/(self.bpm*8)
 
+
     def stop(self):
         # 演奏強制終了
         for pt in self.parts:
             pt.stop()
 
+
     def fine(self):
         # Blockの最後で演奏終了
         self.waitForFine = True
+
 
 
 class Seq:
@@ -136,6 +154,7 @@ class Seq:
         self.bk.append(Block(self.midiport))
         self.currentBk = self.bk[0]
 
+
     def periodic(self):
         if self.duringPlay == False:
             return
@@ -145,8 +164,10 @@ class Seq:
             if self.nextTime == 0:
                 self.duringPlay = False
 
+
     def getBlock(self, block=1):
         return self.bk[block-1]
+
 
     def play(self, block=1, repeat='on'):
         self.duringPlay = True
@@ -155,9 +176,11 @@ class Seq:
         self.currentBk = self.bk[block-1]
         self.currentBk.play()
 
+
     def stop(self):
         self.currentBk.stop()
         self.duringPlay = False
+
 
     def fine(self):
         print('Will be ended!')
