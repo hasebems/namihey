@@ -7,7 +7,7 @@ class Part:
     #   Part 単位で、演奏情報を保持
     #   演奏時に、適切なタイミングで MIDI データを出力
     def __init__(self, blk, partNum):
-        self.noteData = [None for _ in range(3)]
+        self.noteData = [None for _ in range(4)]
         self.playData = []
         self.stockNoteOn = []
         self.playDataCnt = 0
@@ -20,21 +20,7 @@ class Part:
 
         self.keynote = 60
 
-
-    def changeKeynote(self, nt):
-        self.keynote = nt
-        if self.statePlay == True:
-            self.stateRsrv = True
-        else:
-            pg = nph.PhraseGenerator(self.noteData, nt)
-            self.wholeTick, self.playData = pg.convertToMIDILikeFormat()
-
-
-    def clearDescription(self):
-        self.noteData= [None for _ in range(4)]
-
-
-    def __generateSequence(self):
+    def __generate_sequence(self):
         seqType = self.noteData[0]
         if seqType == 'phrase':
             pg = nph.PhraseGenerator(self.noteData[1:], self.keynote)
@@ -42,15 +28,23 @@ class Part:
         elif seqType == 'pattern':
             pass
 
+    def changeKeynote(self, nt):
+        self.keynote = nt
+        if self.statePlay == True:
+            self.stateRsrv = True
+        else:
+            self.__generate_sequence()
 
-    def addSeqDescription(self, data):
+    def clear_description(self):
+        self.noteData= [None for _ in range(4)]
+
+    def add_seq_description(self, data):
         self.noteData = data
         if self.statePlay == True:
             self.stateRsrv = True
         else:
-            self.__generateSequence()
+            self.__generate_sequence()
         return self.wholeTick
-
 
     def stockNoteOn_duringPlay(self, note, vel):
         # stop 時に直ちに Note Off を出すため、現在 Note On 中の音を保持しておく
@@ -59,22 +53,19 @@ class Part:
         else:
             self.stockNoteOn.remove(note)
 
-
     def play(self):
         # 再生開始
         self.statePlay = True
-        return self.generateEv(0)
-
+        return self.generate_event(0)
 
     def returnToTop(self):
         # Phrase sequence return to top during playing 
         if self.stateRsrv == True:
-            self.__generateSequence()
+            self.__generate_sequence()
         self.playDataCnt = 0
         return self.wholeTick
 
-
-    def generateEv(self, evTick):
+    def generate_event(self, evTick):
         maxEv = len(self.playData)
         if maxEv == 0:
             # データを持っていない
@@ -103,7 +94,6 @@ class Part:
             
         self.playDataCnt = trace
         return nextTick
-
 
     def stop(self):
         # 再生停止

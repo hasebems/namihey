@@ -9,7 +9,6 @@ class Parsing:
         self.inputPart = 1      # 1origin
         self.promptStr = '[1][1]~~> '
 
-
     def changeBeat(self, text):
         if '/' in text:
             beatList = text.strip().split('/')
@@ -21,8 +20,7 @@ class Parsing:
             if onpuStr.isdecimal() == True:
                 onpu = int(onpuStr)
             if btnum >= 1 and onpu >= 1:
-                self.sq.getBlock().stockTickForOneMeasure = (1920/onpu)*btnum
-
+                self.sq.getBlock().stock_tick_for_one_measure = (1920/onpu)*btnum
 
     def changeKey(self, keyText, all):
         key = 12
@@ -50,7 +48,6 @@ class Parsing:
             else:
                 pt = self.sq.currentBk.inputPart
                 self.sq.currentBk.parts[pt].changeKeynote(key)
-
 
     def parseSetCommand(self, inputText):
         prmText = inputText.strip()
@@ -81,7 +78,6 @@ class Parsing:
                 if bpmNumList[0].isdecimal() == True:
                     self.sq.getBlock().stockBpm = int(bpmNumList[0])
 
-
     def letterP(self, inputText):
         if inputText[0:4] == 'play':
             arg = inputText.split()
@@ -89,7 +85,6 @@ class Parsing:
                 print("Phrase has started!")
                 self.sq.play()
         else: print("what?")
-
 
     def letterS(self, inputText):
         if inputText[0:5] == 'start':
@@ -103,11 +98,10 @@ class Parsing:
         elif inputText[0:4] == 'show':
             blk = self.sq.getBlock()
             ele = blk.parts[blk.inputPart].noteData
-            print('~~> N[' + str(ele[0]) + ']')
-            print('~~> D[' + str(ele[1]) + ']')
-            print('~~> V[' + str(ele[2]) + ']')
+            print('~~> N[' + str(ele[1]) + ']')
+            print('~~> D[' + str(ele[2]) + ']')
+            print('~~> V[' + str(ele[3]) + ']')
         else: print("what?")
-
 
     def letterI(self, inputText):
         if inputText[0:5] == 'input':
@@ -121,7 +115,6 @@ class Parsing:
                     self.inputPart = part
                     self.promptStr = '[1][' + str(part) + ']~~> '
         else: print("what?")
-
 
     def letterBracket(self, inputText):
         # [] のセットを抜き出し、中身を noteInfo に入れる
@@ -152,10 +145,9 @@ class Parsing:
 
         print("set Phrase!")
         blk = self.sq.getBlock()
-        blk.clearDescription()
+        blk.clear_description()
         noteInfo.insert(0,'phrase')
-        blk.addSeqDescription(noteInfo)
-
+        blk.add_seq_description(noteInfo)
 
     def letterBrace(self, inputText):
         # {} のセットを抜き出し、中身を noteInfo に入れる
@@ -186,10 +178,9 @@ class Parsing:
 
         print("set Pattern!")
         blk = self.sq.getBlock()
-        blk.clearDescription()
+        blk.clear_description()
         noteInfo.insert(0,'pattern')
-        blk.addSeqDescription(noteInfo)
-
+        blk.add_seq_description(noteInfo)
 
     def letterC(self, inputText):
         if inputText[0:6] == 'copyto':
@@ -201,16 +192,13 @@ class Parsing:
                     print("Phrase copied to part" + tx + ".")
         else: print("what?")
 
-
     def letterF(self, inputText):
         if inputText[0:4] == "fine":
             self.sq.fine()
         else: print("what?")
 
-
     def letterQm(self, inputText):
         print("what?")
-
 
     def startParsing(self, inputText):
         firstLetter = inputText[0:1]

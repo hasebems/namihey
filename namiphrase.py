@@ -17,7 +17,7 @@ class PhraseGenerator():
         self.noteData = phraseData
         self.keynote = key
 
-    def addNote(self, tick, notes, duration, velocity=100):
+    def __addNote(self, tick, notes, duration, velocity=100):
         for note in notes:
             if note != REST:
                 self.playData.append([tick,note,velocity])
@@ -27,7 +27,7 @@ class PhraseGenerator():
                 offTick = tick + realDur - 1
                 self.playData.append([offTick,note,0])
 
-    def fillOmittedNoteData(self):
+    def __fillOmittedNoteData(self):
         # スペース削除し、',' '|' 区切りでリスト化
         noteFlow = re.split('[,|]', self.noteData[0].replace(' ',''))
         while '' in noteFlow:
@@ -105,7 +105,7 @@ class PhraseGenerator():
 
         return noteFlow, len(noteFlow)
 
-    def fillOmittedDurData(self, durText, ntNum):
+    def __fillOmittedDurData(self, durText, ntNum):
         durFlow = []
         if ',' in durText:
             durFlow = re.split('[,|]', durText.replace(' ',''))
@@ -155,7 +155,7 @@ class PhraseGenerator():
             del durFlow[ntNum:] # 多い要素を削除
         return durFlow
 
-    def fillOmittedVelData(self, velText, ntNum):
+    def __fillOmittedVelData(self, velText, ntNum):
         velFlow = []
         if ',' in velText:
             velFlow = re.split('[,|]', velText.replace(' ',''))
@@ -203,7 +203,7 @@ class PhraseGenerator():
                 velFlow.append(velFlow[velNum-1])   # 足りない要素を補填
         return velFlow
 
-    def changeBasicNoteValue(self, durText):
+    def __changeBasicNoteValue(self, durText):
         # コロンで設定されている基本音価の調査し、変更があれば差し替え
         if ':' in durText:
             spTxt = durText.split(':')
@@ -240,20 +240,20 @@ class PhraseGenerator():
                 self.baseNote = 4
         return durText
 
-    def fillOmittedData(self):
+    def __fillOmittedData(self):
         ### Note
-        noteFlow, ntNum = self.fillOmittedNoteData()
+        noteFlow, ntNum = self.__fillOmittedNoteData()
 
         ### Duration
-        durText = self.changeBasicNoteValue(self.noteData[1])
-        durFlow = self.fillOmittedDurData(durText, ntNum)
+        durText = self.__changeBasicNoteValue(self.noteData[1])
+        durFlow = self.__fillOmittedDurData(durText, ntNum)
 
         ### Velocity
-        velFlow = self.fillOmittedVelData(self.noteData[2], ntNum)
+        velFlow = self.__fillOmittedVelData(self.noteData[2], ntNum)
 
         return noteFlow, durFlow, velFlow, ntNum
 
-    def cnvNoteToPitch(self, noteText):
+    def __cnvNoteToPitch(self, noteText):
         nlists = noteText.replace(' ','').split('=')    # 和音検出
         bpchs = []
         for nx in nlists:
@@ -284,13 +284,13 @@ class PhraseGenerator():
 
         return bpchs
 
-    def cnvDuration(self, durText):
+    def __cnvDuration(self, durText):
         if durText.isdecimal() == True:
             return int(durText)
         else:
             return 1
 
-    def cnvExpToVel(self, expText):
+    def __cnvExpToVel(self, expText):
         vel = 100
         if expText.isdecimal() == False:
             if   expText == 'ff':   vel = 127
@@ -308,14 +308,14 @@ class PhraseGenerator():
         if self.noteData[0] == None or len(self.noteData[0]) == 0:
             return 0, self.playData
 
-        noteFlow, durFlow, velFlow, ntNum = self.fillOmittedData()
+        noteFlow, durFlow, velFlow, ntNum = self.__fillOmittedData()
         tick = 0
         readPtr = 0
         while readPtr < ntNum:
-            cnts = self.cnvNoteToPitch(noteFlow[readPtr])
-            dur = self.cnvDuration(durFlow[readPtr])
-            vel = self.cnvExpToVel(velFlow[readPtr])
-            self.addNote(tick,cnts,dur,vel)
+            cnts = self.__cnvNoteToPitch(noteFlow[readPtr])
+            dur = self.__cnvDuration(durFlow[readPtr])
+            vel = self.__cnvExpToVel(velFlow[readPtr])
+            self.__addNote(tick,cnts,dur,vel)
             tick += dur*480*4/self.baseNote
             readPtr += 1    # out from repeat
 
