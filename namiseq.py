@@ -118,7 +118,7 @@ class Block:
         next_tick = self.get_whole_tick()
         for pt in self.parts:
             pt_next_tick = pt.generate_event(current_tick)
-            if next_tick > pt_next_tick:
+            if pt_next_tick != -1 and next_tick > pt_next_tick:
                 next_tick = pt_next_tick
 
         return self.currentLoopStartTime + next_tick/(self.bpm*TICK_PER_SEC)

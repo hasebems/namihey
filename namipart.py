@@ -59,24 +59,23 @@ class Part:
             self.__generate_sequence()
         return self.whole_tick
 
-    def __generate_event_sq(self, evTick):
+    def __generate_event_sq(self, tick):
         maxEv = len(self.sqdata)
         if maxEv == 0:
             # データを持っていない
-            return self.parent_block.get_whole_tick()
+            return -1
 
-        if evTick == 0:
+        if tick == 0:
             self.__play_counter = 0
 
         trace = self.__play_counter
         nextTick = 0
         while True:
             if maxEv <= trace:
-                # Return Max Value
-                nextTick = self.parent_block.get_whole_tick()
+                nextTick = -1   # means sequence finished
                 break
             nextTick = self.sqdata[trace][0]
-            if nextTick < evTick:
+            if nextTick < tick:
                 nt = self.sqdata[trace][1]
                 vel = self.sqdata[trace][2]
                 self.__send_midi_note(nt, vel)
