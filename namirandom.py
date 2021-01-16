@@ -5,7 +5,7 @@ import  random
 DEFAULT_WHOLE_TICK = 1920.0
 
 
-class PatternGenerator():
+class RandomGenerator():
 
     def __init__(self, pattern, key, func):
         self.sqdata = []
