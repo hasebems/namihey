@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import namiphrase as nph
-import namipattern as npt
+import namirandom as nrnd
 
 
 DEFAULT_NOTE_NUMBER = 60
@@ -38,7 +38,7 @@ class Part:
             self.whole_tick, self.sqdata = pg.convertToMIDILikeFormat()
             self.is_random = False
         elif seqType == 'pattern':
-            self.ptn = npt.PatternGenerator(self.description[1:], self.keynote, self._send_midi_note)
+            self.ptn = nrnd.RandomGenerator(self.description[1:], self.keynote, self._send_midi_note)
             self.is_random = True
 
     def changeKeynote(self, nt):
