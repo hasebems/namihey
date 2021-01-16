@@ -47,7 +47,7 @@ class Block:
     def get_whole_tick(self):
         return self.tick_for_one_measure*self.maxMeasure
 
-    def __inputPhrase(self,data,pt):
+    def _inputPhrase(self,data,pt):
         self.maxMeasure = 0
         tick = self.parts[pt].addPhrase(data)
         while tick > self.get_whole_tick():
@@ -60,10 +60,10 @@ class Block:
         self.parts[self.inputPart].clear_description()
 
     def copyPhrase(self,pt):
-        self.__inputPhrase(self.parts[self.inputPart].noteData, pt)
+        self._inputPhrase(self.parts[self.inputPart].noteData, pt)
 
     def addPhrase(self,data):
-        self.__inputPhrase(data, self.inputPart)
+        self._inputPhrase(data, self.inputPart)
 
     def sendMidiNote(self, ch, nt, vel):
         if vel != 0:
@@ -72,7 +72,7 @@ class Block:
             msg = mido.Message('note_off', channel=ch, note=nt)
         self.port.send(msg)
 
-    def __calc_max_measure(self):
+    def _calc_max_measure(self):
         # 最大小節数の再計算
         self.maxMeasure = 0
         tick = 0
@@ -83,7 +83,7 @@ class Block:
         while tick > self.get_whole_tick():
             self.maxMeasure += 1
 
-    def __goes_to_loop_top(self):
+    def _goes_to_loop_top(self):
         # loop して先頭に戻った時
         if self.waitForFine == True:
             self.waitForFine = False
@@ -92,7 +92,7 @@ class Block:
             
         self.bpm = self.__stock_bpm
         self.tick_for_one_measure = self.__stock_tick_for_one_measure
-        self.__calc_max_measure()
+        self._calc_max_measure()
         self.currentLoopStartTime = self.nextLoopStartTime
         self.nextLoopStartTime += self.get_whole_tick()/(self.bpm*TICK_PER_SEC)
         return True
@@ -103,7 +103,7 @@ class Block:
             # beat が設定された場合
             self.tick_for_one_measure = self.__stock_tick_for_one_measure
 
-        self.__calc_max_measure()
+        self._calc_max_measure()
         self.currentLoopStartTime = 0
         self.nextLoopStartTime = self.get_whole_tick()/(self.bpm*TICK_PER_SEC)
         for pt in self.parts:
@@ -111,7 +111,7 @@ class Block:
 
     def generate_event(self, evTime):       # 演奏データの生成
         if evTime > self.nextLoopStartTime:
-            if self.__goes_to_loop_top() == False:
+            if self._goes_to_loop_top() == False:
                 return 0
 
         current_tick = (evTime - self.currentLoopStartTime)*self.bpm*TICK_PER_SEC
