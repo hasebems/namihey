@@ -21,7 +21,7 @@ class Part:
         self.state_reserv = False      # Change Phrase at next loop top 
         self.keynote = DEFAULT_NOTE_NUMBER
         self.is_random = False
-        self.ptn = None
+        self.rnd = None
 
     def _send_midi_note(self, nt, vel):
         self.parent_block.sendMidiNote(self.midich, nt, vel)
@@ -38,7 +38,7 @@ class Part:
             self.whole_tick, self.sqdata = pg.convertToMIDILikeFormat()
             self.is_random = False
         elif seqType == 'pattern':
-            self.ptn = nrnd.RandomGenerator(self.description[1:], self.keynote, self._send_midi_note)
+            self.rnd = nrnd.RandomGenerator(self.description[1:], self.keynote, self._send_midi_note)
             self.is_random = True
 
     def changeKeynote(self, nt):
@@ -46,7 +46,7 @@ class Part:
         if self.state_play == True:
             self.state_reserv = True
         else:
-            self.generate_sequence()
+            self._generate_sequence()
 
     def clear_description(self):
         self.description= [None for _ in range(4)]
@@ -92,26 +92,26 @@ class Part:
             self.play_counter = 0
             self._generate_event_sq(0)
 
-        elif self.ptn != None:
-            self.ptn.play()
+        elif self.rnd != None:
+            self.rnd.play()
 
     def return_to_top(self):        # Phrase sequence return to top during playing 
         if not self.is_random:
             if self.state_reserv == True:
-                self.generate_sequence()
+                self._generate_sequence()
             self.play_counter = 0
             return self.whole_tick
 
-        elif self.ptn != None:
-            return self.ptn.return_to_top()
+        elif self.rnd != None:
+            return self.rnd.return_to_top()
         else: return 0
 
     def generate_event(self, tick):
         if not self.is_random:
             return self._generate_event_sq(tick)
 
-        elif self.ptn != None:
-            return self.ptn.generate_random(tick)
+        elif self.rnd != None:
+            return self.rnd.generate_random(tick)
         else: return 0
 
     def stop(self):     # 再生停止
@@ -119,7 +119,7 @@ class Part:
             self._send_midi_note(nt, 0)
         if not self.is_random:
             self.state_play = False
-        elif self.ptn != None:
-            self.ptn.stop()
+        elif self.rnd != None:
+            self.rnd.stop()
 
 

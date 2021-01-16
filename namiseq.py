@@ -140,38 +140,39 @@ class Seq:
     #   その他の機能： mido の生成、CUIに情報を送る
     #   Block: 現状 [0] の一つだけ生成
     def __init__(self):
-        self.startTime = time.time()
-        self.duringPlay = False
+        self.start_time = time.time()
+        self.during_play = False
         self.bk = []
-        allPort = mido.get_output_names()
-        print("MIDI OUT: " + allPort[-1])
-        self.midiport = mido.open_output(allPort[-1])
-        self.bk.append(Block(self.midiport))
-        self.currentBk = self.bk[0]
+        all_port = mido.get_output_names()
+        print("MIDI OUT: " + all_port[-1])
+        midiport = mido.open_output(all_port[-1])
+        self.bk.append(Block(midiport))
+        self.current_bk = self.bk[0]
+        self.next_time = 0
 
     def getBlock(self, block=1):
         return self.bk[block-1]
 
     def periodic(self):
-        if self.duringPlay == False:
+        if self.during_play == False:
             return
-        currentTime = time.time() - self.startTime  # calculate elapsed time
-        if currentTime > self.nextTime:             # if time of next event come,
-            self.nextTime = self.currentBk.generate_event(currentTime)
-            if self.nextTime == 0:
-                self.duringPlay = False             # Stop playing
+        currentTime = time.time() - self.start_time  # calculate elapsed time
+        if currentTime > self.next_time:             # if time of next event come,
+            self.next_time = self.current_bk.generate_event(currentTime)
+            if self.next_time == 0:
+                self.during_play = False             # Stop playing
 
     def play(self, block=1, repeat='on'):
-        self.duringPlay = True
-        self.startTime = time.time()                # Get current time
-        self.nextTime = 0
-        self.currentBk = self.bk[block-1]
-        self.currentBk.play()
+        self.during_play = True
+        self.start_time = time.time()                # Get current time
+        self.next_time = 0
+        self.current_bk = self.bk[block-1]
+        self.current_bk.play()
 
     def stop(self):
-        self.currentBk.stop()
-        self.duringPlay = False
+        self.current_bk.stop()
+        self.during_play = False
 
     def fine(self):
         print('Will be ended!')
-        self.currentBk.fine()
+        self.current_bk.fine()

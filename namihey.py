@@ -11,7 +11,7 @@ import  readline    # add history function
 
 def quit():
     global seq
-    if seq.duringPlay == True:
+    if seq.during_play == True:
         seq.stop()
     pass
 
