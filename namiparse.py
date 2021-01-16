@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
 
+WHOLE_TONE_LENGTH = 1920
+
+
 class Parsing:
     #   入力した文字列の解析
     #   一行単位で入力されるたびに生成される
@@ -20,7 +23,7 @@ class Parsing:
             if onpuStr.isdecimal() == True:
                 onpu = int(onpuStr)
             if btnum >= 1 and onpu >= 1:
-                self.sq.getBlock().stock_tick_for_one_measure = (1920/onpu)*btnum
+                self.sq.getBlock().stock_tick_for_one_measure = (WHOLE_TONE_LENGTH/onpu)*btnum
 
     def changeKey(self, keyText, all):
         key = 12
@@ -97,7 +100,7 @@ class Parsing:
             self.parseSetCommand(inputText[3:])
         elif inputText[0:4] == 'show':
             blk = self.sq.getBlock()
-            ele = blk.parts[blk.inputPart].noteData
+            ele = blk.parts[blk.inputPart].description
             print('~~> N[' + str(ele[1]) + ']')
             print('~~> D[' + str(ele[2]) + ']')
             print('~~> V[' + str(ele[3]) + ']')

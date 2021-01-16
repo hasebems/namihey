@@ -8,6 +8,7 @@ import  namipart as npt
 MAX_PART_COUNT = 16
 DEFAULT_TICK_FOR_ONE_MEASURE = 1920     # 480 * 4
 DEFAULT_BPM = 100
+TICK_PER_SEC = 8    # convert [bpm] to [tick per sec] := 480(tick)/60(sec)
 
 
 class Block:
@@ -18,14 +19,14 @@ class Block:
         self.parts = [npt.Part(self,i) for i in range(MAX_PART_COUNT)]
         self.bpm = DEFAULT_BPM
         self.maxMeasure = 1
-        self.tickForOneMeasure = DEFAULT_TICK_FOR_ONE_MEASURE
+        self.tick_for_one_measure = DEFAULT_TICK_FOR_ONE_MEASURE
         self.port = midiport
         self.inputPart = 0      # 0origin
         self.waitForFine = False
         self.nextLoopStartTime = 0
         self.currentLoopStartTime = 0
         self.__stock_bpm = self.bpm
-        self.__stock_tick_for_one_measure = self.tickForOneMeasure
+        self.__stock_tick_for_one_measure = self.tick_for_one_measure
 
     @property
     def stock_bpm(self):
@@ -43,13 +44,13 @@ class Block:
     def stock_tick_for_one_measure(self, value):
         self.__stock_tick_for_one_measure = value
 
-    def getWholeTick(self):
-        return self.tickForOneMeasure*self.maxMeasure
+    def get_whole_tick(self):
+        return self.tick_for_one_measure*self.maxMeasure
 
     def __inputPhrase(self,data,pt):
         self.maxMeasure = 0
         tick = self.parts[pt].addPhrase(data)
-        while tick > self.getWholeTick():
+        while tick > self.get_whole_tick():
             self.maxMeasure += 1
 
     def add_seq_description(self,data):
@@ -76,25 +77,13 @@ class Block:
         self.maxMeasure = 0
         tick = 0
         for pt in self.parts:
-            ptTick = pt.returnToTop()
+            ptTick = pt.return_to_top()
             if ptTick > tick:
                 tick = ptTick
-        while tick > self.getWholeTick():
+        while tick > self.get_whole_tick():
             self.maxMeasure += 1
 
-    def play(self):
-        # 演奏開始
-        self.bpm = self.__stock_bpm
-        if self.tickForOneMeasure != self.__stock_tick_for_one_measure:
-            # beat が設定された場合
-            self.tickForOneMeasure = self.__stock_tick_for_one_measure
-        self.__calc_max_measure()
-        self.currentLoopStartTime = 0
-        self.nextLoopStartTime = self.getWholeTick()/(self.bpm*8)
-        for pt in self.parts:
-            pt.play()
-
-    def __goesToLoopTop(self):
+    def __goes_to_loop_top(self):
         # loop して先頭に戻った時
         if self.waitForFine == True:
             self.waitForFine = False
@@ -102,26 +91,37 @@ class Block:
             return False
             
         self.bpm = self.__stock_bpm
-        self.tickForOneMeasure = self.__stock_tick_for_one_measure
+        self.tick_for_one_measure = self.__stock_tick_for_one_measure
         self.__calc_max_measure()
         self.currentLoopStartTime = self.nextLoopStartTime
-        self.nextLoopStartTime += self.getWholeTick()/(self.bpm*8)
+        self.nextLoopStartTime += self.get_whole_tick()/(self.bpm*TICK_PER_SEC)
         return True
 
-    def generate_event(self, evTime):
-        # 演奏データの生成
+    def play(self):     # 演奏開始
+        self.bpm = self.__stock_bpm
+        if self.tick_for_one_measure != self.__stock_tick_for_one_measure:
+            # beat が設定された場合
+            self.tick_for_one_measure = self.__stock_tick_for_one_measure
+
+        self.__calc_max_measure()
+        self.currentLoopStartTime = 0
+        self.nextLoopStartTime = self.get_whole_tick()/(self.bpm*TICK_PER_SEC)
+        for pt in self.parts:
+            pt.play()
+
+    def generate_event(self, evTime):       # 演奏データの生成
         if evTime > self.nextLoopStartTime:
-            if self.__goesToLoopTop() == False:
+            if self.__goes_to_loop_top() == False:
                 return 0
 
-        currentTick = (evTime - self.currentLoopStartTime)*self.bpm*8
-        nextTick = self.getWholeTick()
+        current_tick = (evTime - self.currentLoopStartTime)*self.bpm*TICK_PER_SEC
+        next_tick = self.get_whole_tick()
         for pt in self.parts:
-            ptNextTick = pt.generate_event(currentTick)
-            if nextTick > ptNextTick:
-                nextTick = ptNextTick
+            pt_next_tick = pt.generate_event(current_tick)
+            if next_tick > pt_next_tick:
+                next_tick = pt_next_tick
 
-        return self.currentLoopStartTime + nextTick/(self.bpm*8)
+        return self.currentLoopStartTime + next_tick/(self.bpm*TICK_PER_SEC)
 
     def stop(self):
         # 演奏強制終了
@@ -155,15 +155,15 @@ class Seq:
     def periodic(self):
         if self.duringPlay == False:
             return
-        currentTime = time.time() - self.startTime
-        if currentTime > self.nextTime:
+        currentTime = time.time() - self.startTime  # calculate elapsed time
+        if currentTime > self.nextTime:             # if time of next event come,
             self.nextTime = self.currentBk.generate_event(currentTime)
             if self.nextTime == 0:
-                self.duringPlay = False
+                self.duringPlay = False             # Stop playing
 
     def play(self, block=1, repeat='on'):
         self.duringPlay = True
-        self.startTime = time.time()
+        self.startTime = time.time()                # Get current time
         self.nextTime = 0
         self.currentBk = self.bk[block-1]
         self.currentBk.play()

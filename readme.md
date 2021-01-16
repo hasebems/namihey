@@ -106,17 +106,17 @@ python によって記述され、mido というライブラリにより、MIDI�
 
 - {*pattern*}{*length*}{*velocity*} : パターンの基本形式
     - *pattern*: パターン
-    - *length*: パターンの長さ
+    - *length*: パターンの小節数
     - *velocity*: 音量
     - {*length*} と {*velocity*} は省略可能
         - 長さを省略した場合全て１小節とみなし、音量を省略した場合100(mf)とみなす。
     - {} : 全データ削除
 
 - パターン表現
-    - func(chord、param1=xx, param2=yy) : パターンの基本記述方法
-        - func : 関数名
-        - chord : コード名
-        - param1=xx : パラメータ名と値（必ずデフォルト値を持ち、省略が可能）
+    - *func*(*chord*、*param1*=xx, *param2*=yy) : パターンの基本記述方法
+        - *func* : 関数名
+        - *chord* : コード名
+        - *param1*=xx : パラメータ名と値（必ずデフォルト値を持ち、省略が可能）
     - コード名
         - 1 : d=m=s（Iの和音)
         - 5 : s=t=r
@@ -129,6 +129,8 @@ python によって記述され、mido というライブラリにより、MIDI�
         - all : 全ての音
     - rnd() : 乱数
         - density : 音の単位時間あたりの多さ(0...10, default:5)
+        - ex1)  {rnd(all,density=3)}{2}{mp}  : 全音域ランダム、２小節分、mpで
+        - ex2)  {rnd(6m),rnd(4),rnd(5),rnd(1)}{1,1,1,1}{mf} : 1小節ごとに指定した和音をランダムに、mfで
 
 
 
