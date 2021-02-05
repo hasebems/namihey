@@ -179,11 +179,14 @@ class Parsing:
             print("Error!")
             return
 
-        print("set Pattern!")
-        blk = self.sq.getBlock()
-        blk.clear_description()
-        noteInfo.insert(0,'pattern')
-        blk.add_seq_description(noteInfo)
+        if noteInfo[0][0:3] == 'rnd':
+            print("set Random Pattern!")
+            blk = self.sq.getBlock()
+            blk.clear_description()
+            noteInfo.insert(0,'random')
+            blk.add_seq_description(noteInfo)
+        else:
+            print("what?")
 
     def letterC(self, inputText):
         if inputText[0:6] == 'copyto':
