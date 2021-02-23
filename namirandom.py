@@ -1,14 +1,53 @@
 # -*- coding: utf-8 -*-
 import  random
+import  re
 
 
 DEFAULT_WHOLE_TICK = 1920.0
+CHORD_SCALE = {
+    'all':[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23],
+    '_':[0,4,7,12,16,19],
+    '_m':[0,3,7,12,15,19],
+    '_7':[0,4,7,10,12,16,19,22],
+    '_6':[0,4,7,9,12,16,19,21],
+    '_m7':[0,3,7,10,12,15,19,22],
+    '_M7':[0,4,7,11,12,16,19,23],
+    '_9':[0,2,4,7,10,12,14,19,22],
+    '_m9':[0,2,3,7,10,12,14,15,19,22],
+    '_M9':[0,2,4,7,11,12,14,19,23],
+    '_+5':[0,4,8,12,16,20],
+    '_aug':[0,4,8,12,16,20],
+    '_7+5':[0,4,8,10,12,16,20,22],
+    '_aug7':[0,4,8,10,12,16,20,22],
+    '_7-9':[0,1,4,7,10,12,13,16,19,22],
+    '_7+9':[0,3,4,7,10,12,15,16,19,22],
+    '_dim':[0,3,6,9,12,15,18,21],
+    '_m7-5':[0,3,6,10,12,15,18,20],
+    'diatonic':[0,2,4,5,7,9,11,12,14,16,17,19,21],
+    'dorian':[0,2,3,5,7,9,10,12,14,15,17,19,21,22],
+    'lydian':[0,2,4,6,7,9,11,12,14,16,18,19,21,23],
+    'mixolydian':[0,2,4,5,7,9,10,12,14,16,17,19,21,22],
+    'aeolian':[0,2,3,5,7,8,10,12,14,15,17,19,20,22]
+}
+
+DURATION = {
+    1:[1920,100],
+    2:[960,100],
+    3:[640,100],
+    4:[480,100],
+    6:[320,100],
+    8:[240,100],
+    9:[213,100],
+    12:[160,100],
+    16:[120,100],
+    24:[80,100],
+    32:[60,100],
+}
 
 
 class RandomGenerator():
 
     def __init__(self, pattern, key, func):
-        self.sqdata = []
         self.description = pattern
         self.keynote = key
         self.whole_tick = DEFAULT_WHOLE_TICK
@@ -16,20 +55,39 @@ class RandomGenerator():
         self.state_play = False
         self.next_tick = 0
         self.event_counter = 0
-        self.last_note = 60
+        self.last_note = []
+        self.chord_flow = []
+        self.rnd_type = 0
+        self.rnd_dur = 8
+        self._makeRandomParameter()
 
-    def convertToMIDILikeFormat(self):
-        if self.description[0] == None or len(self.description[0]) == 0:
-            return 0, self.sqdata
-        return self.whole_tick, self.sqdata
+    def _makeRandomParameter(self):
+        chord_flow = self.description[0].split(':')
+        if '(' and ')' in chord_flow[0]:
+            # check inside ()
+            inside = re.findall("(?<=\().+?(?=\))", chord_flow[0])
+            prms = inside[0].split(',')
+            for prm in prms:
+                elm = prm.strip().split('=')
+                if elm[0] == 'type':
+                    self.rnd_type = elm[1]
+                elif elm[0] == 'dur':
+                    self.rnd_dur = elm[1]
+        if len(chord_flow) >= 2:
+            self.chord_flow = chord_flow[1].strip().split(',')
+        else:
+            # if no ':', set 'all" pattern
+            self.chord_flow.append('all')
 
     def _generate_rnd_pattern(self):
         crnt_tick = self.next_tick
         if crnt_tick%240 == 0:
-            note = random.randint(48,72)
-            self.midi_handler(note,127)
-            self.last_note = note
-            crnt_tick += 100
+            doremi = CHORD_SCALE[self.chord_flow[0]]
+            idx = random.randint(0,len(doremi)-1)
+            note = doremi[idx]+48
+            self.midi_handler(note,100)     #
+            self.last_note = note           #
+            crnt_tick += 100                #
             if self.event_counter >= 16: print("something wrong!")
         else:
             self.midi_handler(self.last_note,0)
@@ -41,7 +99,7 @@ class RandomGenerator():
         else:
             return crnt_tick, crnt_tick
 
-    def play(self):
+    def start(self):
         self.state_play = True
         self.event_counter = 0
         return self.generate_random(0)

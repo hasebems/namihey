@@ -37,7 +37,7 @@ class Part:
             pg = nph.PhraseGenerator(self.description[1:], self.keynote)
             self.whole_tick, self.sqdata = pg.convertToMIDILikeFormat()
             self.is_random = False
-        elif seqType == 'pattern':
+        elif seqType == 'random':
             self.rnd = nrnd.RandomGenerator(self.description[1:], self.keynote, self._send_midi_note)
             self.is_random = True
 
@@ -49,6 +49,10 @@ class Part:
             self._generate_sequence()
 
     def clear_description(self):
+        for nt in self.retained_note:
+            self._send_midi_note(nt, 0)
+        if self.is_random:
+            self.rnd.stop()
         self.description= [None for _ in range(4)]
 
     def add_seq_description(self, data):
@@ -86,15 +90,17 @@ class Part:
         self.play_counter = trace
         return nextTick
 
-    def play(self):     # 再生開始
+    # Main IF
+    def start(self):
         if not self.is_random:
             self.state_play = True
             self.play_counter = 0
             self._generate_event_sq(0)
 
         elif self.rnd != None:
-            self.rnd.play()
+            self.rnd.start()
 
+    # Main IF
     def return_to_top(self):        # Phrase sequence return to top during playing 
         if not self.is_random:
             if self.state_reserv == True:
@@ -106,6 +112,7 @@ class Part:
             return self.rnd.return_to_top()
         else: return 0
 
+    # Main IF
     def generate_event(self, tick):
         if not self.is_random:
             return self._generate_event_sq(tick)
@@ -114,6 +121,7 @@ class Part:
             return self.rnd.generate_random(tick)
         else: return 0
 
+    # Main IF
     def stop(self):     # 再生停止
         for nt in self.retained_note:
             self._send_midi_note(nt, 0)

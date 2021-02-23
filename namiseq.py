@@ -97,7 +97,8 @@ class Block:
         self.nextLoopStartTime += self.get_whole_tick()/(self.bpm*TICK_PER_SEC)
         return True
 
-    def play(self):     # 演奏開始
+    # Main IF : Start Sequencer
+    def start(self):
         self.bpm = self.__stock_bpm
         if self.tick_for_one_measure != self.__stock_tick_for_one_measure:
             # beat が設定された場合
@@ -107,9 +108,10 @@ class Block:
         self.currentLoopStartTime = 0
         self.nextLoopStartTime = self.get_whole_tick()/(self.bpm*TICK_PER_SEC)
         for pt in self.parts:
-            pt.play()
+            pt.start()
 
-    def generate_event(self, evTime):       # 演奏データの生成
+    # Main IF : Generate Music Event
+    def generate_event(self, evTime):
         if evTime > self.nextLoopStartTime:
             if self._goes_to_loop_top() == False:
                 return 0
@@ -123,6 +125,7 @@ class Block:
 
         return self.currentLoopStartTime + next_tick/(self.bpm*TICK_PER_SEC)
 
+    # Main IF : Stop Sequencer
     def stop(self):
         # 演奏強制終了
         for pt in self.parts:
@@ -167,7 +170,7 @@ class Seq:
         self.start_time = time.time()                # Get current time
         self.next_time = 0
         self.current_bk = self.bk[block-1]
-        self.current_bk.play()
+        self.current_bk.start()
 
     def stop(self):
         self.current_bk.stop()
