@@ -49,8 +49,8 @@ DURATION = {
 
 class RandomGenerator():
 
-    def __init__(self, pattern, key, func):
-        self.description = pattern
+    def __init__(self, key, func):
+        self.description = []
         self.keynote = key
         self.whole_tick = DEFAULT_WHOLE_TICK
         self.midi_handler = func
@@ -59,8 +59,13 @@ class RandomGenerator():
         self.event_counter = 0
         self.last_note = []
         self.chord_flow = []
+        self.chord_flow_next = []
         self.rnd_type = 0
         self.rnd_dur = 8
+
+    def set_random(self, pattern, key):
+        self.description = pattern
+        self.keynote = key
         self._makeRandomParameter()
 
     def _makeRandomParameter(self):
@@ -76,14 +81,14 @@ class RandomGenerator():
                 elif elm[0] == 'dur':
                     self.rnd_dur = elm[1]
         if len(chord_flow) >= 2:
-            self.chord_flow = chord_flow[1].strip().split(',')
+            self.chord_flow_next = chord_flow[1].strip().split(',')
         else:
             # if no ':', set 'all" pattern
-            self.chord_flow.append('all')
+            self.chord_flow_next.append('all')
 
     def _generate_rnd_pattern(self):
         crnt_tick = self.next_tick
-        if crnt_tick%240 == 0:
+        if crnt_tick%240 == 0:              # ToDo
             # detect random chord array
             chord = self.chord_flow[0]
             root = 0
@@ -100,7 +105,7 @@ class RandomGenerator():
             if self.event_counter >= 16: print("something wrong!")
         else:
             self.midi_handler(self.last_note,0)
-            crnt_tick += 140
+            crnt_tick += 140                # ToDo
         self.event_counter += 1
 
         if crnt_tick >= self.whole_tick:
@@ -111,11 +116,13 @@ class RandomGenerator():
     def start(self):
         self.state_play = True
         self.event_counter = 0
+        self.chord_flow = self.chord_flow_next
         return self.generate_random(0)
 
     def return_to_top(self):
         self.event_counter = 0
         self.next_tick = 0
+        self.chord_flow = self.chord_flow_next
         return self.whole_tick
 
     def generate_random(self, tick):

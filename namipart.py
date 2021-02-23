@@ -21,7 +21,7 @@ class Part:
         self.state_reserv = False      # Change Phrase at next loop top 
         self.keynote = DEFAULT_NOTE_NUMBER
         self.is_random = False
-        self.rnd = None
+        self.rnd = nrnd.RandomGenerator(DEFAULT_NOTE_NUMBER, self._send_midi_note)
 
     def _send_midi_note(self, nt, vel):
         self.parent_block.sendMidiNote(self.midich, nt, vel)
@@ -38,7 +38,7 @@ class Part:
             self.whole_tick, self.sqdata = pg.convertToMIDILikeFormat()
             self.is_random = False
         elif seqType == 'random':
-            self.rnd = nrnd.RandomGenerator(self.description[1:], self.keynote, self._send_midi_note)
+            self.rnd.set_random(self.description[1:], self.keynote)
             self.is_random = True
 
     def changeKeynote(self, nt):
