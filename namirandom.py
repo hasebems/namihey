@@ -12,9 +12,11 @@ CHORD_SCALE = {
     '_6':[0,4,7,9,12,16,19,21],
     '_m7':[0,3,7,10,12,15,19,22],
     '_M7':[0,4,7,11,12,16,19,23],
+    '_maj7':[0,4,7,11,12,16,19,23],
     '_9':[0,2,4,7,10,12,14,19,22],
     '_m9':[0,2,3,7,10,12,14,15,19,22],
     '_M9':[0,2,4,7,11,12,14,19,23],
+    '_maj9':[0,2,4,7,11,12,14,19,23],
     '_+5':[0,4,8,12,16,20],
     '_aug':[0,4,8,12,16,20],
     '_7+5':[0,4,8,10,12,16,20,22],
@@ -82,9 +84,16 @@ class RandomGenerator():
     def _generate_rnd_pattern(self):
         crnt_tick = self.next_tick
         if crnt_tick%240 == 0:
-            doremi = CHORD_SCALE[self.chord_flow[0]]
-            idx = random.randint(0,len(doremi)-1)
-            note = doremi[idx]+48
+            # detect random chord array
+            chord = self.chord_flow[0]
+            root = 0
+            if str.isdecimal(chord[0:1]):
+                root = int(chord[0:1])
+                chord = '_' + chord[1:]
+            doremi_set = CHORD_SCALE.get(chord, CHORD_SCALE['all'])
+
+            idx = random.randint(0,len(doremi_set)-1)
+            note = doremi_set[idx]+48+root-1
             self.midi_handler(note,100)     #
             self.last_note = note           #
             crnt_tick += 100                #
