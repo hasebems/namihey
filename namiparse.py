@@ -79,7 +79,8 @@ class Parsing:
             if '=' in pickedTxt:
                 bpmNumList = pickedTxt[pickedTxt.find('=')+1:].strip().split()
                 if bpmNumList[0].isdecimal() == True:
-                    self.sq.getBlock().stockBpm = int(bpmNumList[0])
+                    self.sq.getBlock().stock_bpm = int(bpmNumList[0])
+                    print("BPM has changed!")
 
     def letterP(self, inputText):
         if inputText[0:4] == 'play':
