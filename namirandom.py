@@ -57,6 +57,7 @@ class RandomGenerator():
         self.state_play = False
         self.next_tick = 0
         self.event_counter = 0
+        self.measure_counter = -1
         self.last_note = []
         self.chord_flow = []
         self.chord_flow_next = []
@@ -88,6 +89,9 @@ class RandomGenerator():
 
     def _generate_rnd_pattern(self):
         crnt_tick = self.next_tick
+        if self.measure_counter == -1:
+            return -1, self.whole_tick
+
         if crnt_tick%240 == 0:              # ToDo
             # detect random chord array
             chord = self.chord_flow[0]
@@ -102,7 +106,7 @@ class RandomGenerator():
             self.midi_handler(note,100)     #
             self.last_note = note           #
             crnt_tick += 100                #
-            if self.event_counter >= 16: print("something wrong!")
+            if self.event_counter >= 16: print("something wrong!")  # ToDo
         else:
             self.midi_handler(self.last_note,0)
             crnt_tick += 140                # ToDo
@@ -117,12 +121,18 @@ class RandomGenerator():
         self.state_play = True
         self.event_counter = 0
         self.chord_flow = self.chord_flow_next
+        if self.chord_flow != []:
+            self.measure_counter = 0
         return self.generate_random(0)
 
     def return_to_top(self):
         self.event_counter = 0
         self.next_tick = 0
         self.chord_flow = self.chord_flow_next
+        if self.chord_flow == []:
+            self.measure_counter = -1
+        else:
+            self.measure_counter += 1
         return self.whole_tick
 
     def generate_random(self, tick):
