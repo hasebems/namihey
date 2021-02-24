@@ -58,11 +58,12 @@ class RandomGenerator():
         self.next_tick = 0
         self.event_counter = 0
         self.measure_counter = -1
-        self.last_note = []
+        self.last_note = 0
         self.chord_flow = []
         self.chord_flow_next = []
         self.rnd_type = 0
         self.rnd_dur = 8
+        self.note_reso = 240
 
     def set_random(self, pattern, key):
         self.description = pattern
@@ -87,29 +88,35 @@ class RandomGenerator():
             # if no ':', set 'all" pattern
             self.chord_flow_next.append('all')
 
+    def _detect_note_number(self):
+        # detect random chord array
+        chord = self.chord_flow[self.measure_counter]
+        root = 0
+        if str.isdecimal(chord[0:1]):
+            root = int(chord[0:1])
+            chord = '_' + chord[1:]
+        doremi_set = CHORD_SCALE.get(chord, CHORD_SCALE['all'])
+
+        while True:
+            idx = random.randint(0,len(doremi_set)-1)
+            note = doremi_set[idx]+48+root-1
+            if note != self.last_note:  # don't decide same note as last note
+                break
+        self.midi_handler(note,100)
+        self.last_note = note
+        if self.event_counter >= 16: print("something wrong!")
+
     def _generate_rnd_pattern(self):
         crnt_tick = self.next_tick
         if self.measure_counter == -1:
             return -1, self.whole_tick
 
-        if crnt_tick%240 == 0:              # ToDo
-            # detect random chord array
-            chord = self.chord_flow[0]
-            root = 0
-            if str.isdecimal(chord[0:1]):
-                root = int(chord[0:1])
-                chord = '_' + chord[1:]
-            doremi_set = CHORD_SCALE.get(chord, CHORD_SCALE['all'])
-
-            idx = random.randint(0,len(doremi_set)-1)
-            note = doremi_set[idx]+48+root-1
-            self.midi_handler(note,100)     #
-            self.last_note = note           #
-            crnt_tick += 100                #
-            if self.event_counter >= 16: print("something wrong!")  # ToDo
+        if crnt_tick%self.note_reso == 0:
+            self._detect_note_number()
+            crnt_tick += abs(self.note_reso*2/5)
         else:
             self.midi_handler(self.last_note,0)
-            crnt_tick += 140                # ToDo
+            crnt_tick += self.note_reso - abs(self.note_reso*2/5)
         self.event_counter += 1
 
         if crnt_tick >= self.whole_tick:
@@ -133,6 +140,8 @@ class RandomGenerator():
             self.measure_counter = -1
         else:
             self.measure_counter += 1
+            if len(self.chord_flow) <= self.measure_counter:
+                self.measure_counter = 0
         return self.whole_tick
 
     def generate_random(self, tick):
