@@ -83,7 +83,7 @@ class RandomGenerator():
                 elif elm[0] == 'dur':
                     self.rnd_dur = elm[1]
         if len(chord_flow) >= 2:
-            self.chord_flow_next = chord_flow[1].strip().split(',')
+            self.chord_flow_next = chord_flow[1].strip().split(',') # chord
         else:
             # if no ':', set 'all" pattern
             self.chord_flow_next.append('all')
@@ -92,14 +92,20 @@ class RandomGenerator():
         # detect random chord array
         chord = self.chord_flow[self.measure_counter]
         root = 0
-        if str.isdecimal(chord[0:1]):
-            root = int(chord[0:1])
+        if str.isdecimal(chord[0:1]) or chord[0:1] == '+' or chord[0:1] == '-':
+            diatonic = [0,0,2,4,5,7,9,11,12,2]
+            if chord[0:1] == '+':
+                root = diatonic[int(chord[1:2])] + 1
+            elif chord[0:1] == '-':
+                root = diatonic[int(chord[1:2])] - 1
+            else:
+                root = diatonic[int(chord[0:1])]
             chord = '_' + chord[1:]
         doremi_set = CHORD_SCALE.get(chord, CHORD_SCALE['all'])
 
         while True:
             idx = random.randint(0,len(doremi_set)-1)
-            note = doremi_set[idx]+48+root-1
+            note = doremi_set[idx]+48+root
             if note != self.last_note:  # don't decide same note as last note
                 break
         self.midi_handler(note,100)
