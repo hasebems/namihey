@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import  random
 import  re
+import  namilib as lib
 
 
 DEFAULT_WHOLE_TICK = 1920.0
@@ -81,7 +82,7 @@ class RandomGenerator():
                 if elm[0] == 'type':
                     self.rnd_type = elm[1]
                 elif elm[0] == 'dur':
-                    if str.isdecimal(elm[1]):
+                    if elm[1].isdecimal() == True:
                         self.rnd_dur = int(elm[1])
         if len(chord_flow) >= 2:
             self.chord_flow_next = chord_flow[1].strip().split(',') # chord
@@ -89,15 +90,13 @@ class RandomGenerator():
             # if no ':', set 'all" pattern
             self.chord_flow_next.append('all')
         if self.description[2] != None:
-            if str.isdecimal(self.description[2]):
-                self.velocity = int(self.description[2])
-                if self.velocity > 127: self.velocity = 127
+            self.velocity = lib.convert_exp2vel(self.description[2])
 
     def _detect_note_number(self):
         # detect random chord array
         chord = self.chord_flow[self.measure_counter]
         root = 0
-        if str.isdecimal(chord[0:1]) or chord[0:1] == '+' or chord[0:1] == '-':
+        if chord[0:1].isdecimal() == True or chord[0:1] == '+' or chord[0:1] == '-':
             diatonic = [0,0,2,4,5,7,9,11,12,2]
             if chord[0:1] == '+':
                 root = diatonic[int(chord[1:2])] + 1
