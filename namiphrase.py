@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import re
+import namilib as lib
 
 REPEAT_START = -1
 NO_REPEAT = 0
 REPEAT_END = 1 # 1,2,3 の数値はリピート回数
-REST = 1000
 
 class PhraseGenerator():
     #   文字情報を MIDI で使う数値に変換
@@ -19,10 +19,10 @@ class PhraseGenerator():
 
     def __addNote(self, tick, notes, duration, velocity=100):
         for note in notes:
-            if note != REST:
+            if note != lib.REST:
                 self.playData.append([tick,note,velocity])
         for note in notes:
-            if note != REST:
+            if note != lib.REST:
                 realDur = int(duration*self.durPer*480*4/(100*self.baseNote))
                 offTick = tick + realDur - 1
                 self.playData.append([offTick,note,0])
@@ -257,31 +257,8 @@ class PhraseGenerator():
         nlists = noteText.replace(' ','').split('=')    # 和音検出
         bpchs = []
         for nx in nlists:
-            basePitch = self.keynote
-            first = nx[0]
-
-            if first == '+':    # octave up
-                nx = nx[1:]
-                basePitch += 12
-            elif first == '-':  # octave down
-                nx = nx[1:]
-                basePitch -= 12
-
-            if nx == 'x':                   basePitch = REST
-            elif nx == 'd':                 basePitch += 0
-            elif nx == 'di' or nx == 'ra':  basePitch += 1
-            elif nx == 'r':                 basePitch += 2
-            elif nx == 'ri' or nx == 'ma':  basePitch += 3
-            elif nx == 'm':                 basePitch += 4
-            elif nx == 'f':                 basePitch += 5
-            elif nx == 'fi' or nx == 'sa':  basePitch += 6
-            elif nx == 's':                 basePitch += 7
-            elif nx == 'si' or nx == 'lo':  basePitch += 8
-            elif nx == 'l':                 basePitch += 9
-            elif nx == 'li' or nx == 'ta':  basePitch += 10
-            elif nx == 't':                 basePitch += 11
+            basePitch = self.keynote + lib.convert_doremi(nx)
             bpchs.append(basePitch)
-
         return bpchs
 
     def __cnvDuration(self, durText):
@@ -289,20 +266,6 @@ class PhraseGenerator():
             return int(durText)
         else:
             return 1
-
-    def __cnvExpToVel(self, expText):
-        vel = 100
-        if expText.isdecimal() == False:
-            if   expText == 'ff':   vel = 127
-            elif expText == 'f':    vel = 114
-            elif expText == 'mf':   vel = 100
-            elif expText == 'mp':   vel = 84
-            elif expText == 'p':    vel = 64
-            elif expText == 'pp':   vel = 48
-            elif expText == 'ppp':  vel = 24
-        else:
-            vel = int(expText)
-        return vel
 
     def convertToMIDILikeFormat(self):
         if self.noteData[0] == None or len(self.noteData[0]) == 0:
@@ -314,7 +277,7 @@ class PhraseGenerator():
         while readPtr < ntNum:
             cnts = self.__cnvNoteToPitch(noteFlow[readPtr])
             dur = self.__cnvDuration(durFlow[readPtr])
-            vel = self.__cnvExpToVel(velFlow[readPtr])
+            vel = lib.convert_exp2vel(velFlow[readPtr])
             self.__addNote(tick,cnts,dur,vel)
             tick += dur*480*4/self.baseNote
             readPtr += 1    # out from repeat
