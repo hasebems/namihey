@@ -57,13 +57,12 @@ class RandomGenerator():
         self.state_play = False
         self.next_tick = 0
         self.event_counter = 0
-        self.measure_counter = -1
+        self.measure_counter = -1       # No Data
         self.last_note = 0
         self.chord_flow = []
         self.chord_flow_next = []
         self.rnd_type = 0
         self.rnd_dur = 8
-        self.note_reso = 240
 
     def set_random(self, pattern, key):
         self.description = pattern
@@ -81,7 +80,8 @@ class RandomGenerator():
                 if elm[0] == 'type':
                     self.rnd_type = elm[1]
                 elif elm[0] == 'dur':
-                    self.rnd_dur = elm[1]
+                    if str.isdecimal(elm[1]):
+                        self.rnd_dur = int(elm[1])
         if len(chord_flow) >= 2:
             self.chord_flow_next = chord_flow[1].strip().split(',') # chord
         else:
@@ -110,19 +110,20 @@ class RandomGenerator():
                 break
         self.midi_handler(note,100)
         self.last_note = note
-        if self.event_counter >= 16: print("something wrong!")
+        # if self.event_counter >= 16: print("something wrong!")
 
     def _generate_rnd_pattern(self):
         crnt_tick = self.next_tick
         if self.measure_counter == -1:
             return -1, self.whole_tick
 
-        if crnt_tick%self.note_reso == 0:
+        tick_reso = round(1920/self.rnd_dur,0)
+        if crnt_tick%tick_reso == 0:    # Note On
             self._detect_note_number()
-            crnt_tick += abs(self.note_reso*2/5)
-        else:
+            crnt_tick += round(tick_reso/2,0)-20
+        else:                           # Note Off
             self.midi_handler(self.last_note,0)
-            crnt_tick += self.note_reso - abs(self.note_reso*2/5)
+            crnt_tick += tick_reso-round(tick_reso/2,0)+20
         self.event_counter += 1
 
         if crnt_tick >= self.whole_tick:
