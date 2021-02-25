@@ -46,11 +46,11 @@ class Parsing:
         if octaveLetter.isdecimal() == True:
             key += int(octaveLetter)*12
             if all == True:
-                for pt in self.sq.currentBk.parts:
+                for pt in self.sq.current_bk.parts:
                     pt.changeKeynote(key)
             else:
-                pt = self.sq.currentBk.inputPart
-                self.sq.currentBk.parts[pt].changeKeynote(key)
+                pt = self.sq.current_bk.inputPart
+                self.sq.current_bk.parts[pt].changeKeynote(key)
 
     def parseSetCommand(self, inputText):
         prmText = inputText.strip()
@@ -195,7 +195,7 @@ class Parsing:
             if tx.isdecimal() == True:
                 part = int(tx)
                 if part > 0 and part <= 16:
-                    self.sq.currentBk.copyPhrase(part)
+                    self.sq.current_bk.copyPhrase(part)
                     print("Phrase copied to part" + tx + ".")
         else: print("what?")
 
