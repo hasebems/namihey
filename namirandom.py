@@ -63,6 +63,7 @@ class RandomGenerator():
         self.chord_flow_next = []
         self.rnd_type = 0
         self.rnd_dur = 8
+        self.velocity = 100
 
     def set_random(self, pattern, key):
         self.description = pattern
@@ -87,6 +88,10 @@ class RandomGenerator():
         else:
             # if no ':', set 'all" pattern
             self.chord_flow_next.append('all')
+        if self.description[2] != None:
+            if str.isdecimal(self.description[2]):
+                self.velocity = int(self.description[2])
+                if self.velocity > 127: self.velocity = 127
 
     def _detect_note_number(self):
         # detect random chord array
@@ -105,10 +110,10 @@ class RandomGenerator():
 
         while True:
             idx = random.randint(0,len(doremi_set)-1)
-            note = doremi_set[idx]+48+root
+            note = doremi_set[idx]+self.keynote+root
             if note != self.last_note:  # don't decide same note as last note
                 break
-        self.midi_handler(note,100)
+        self.midi_handler(note,self.velocity)
         self.last_note = note
         # if self.event_counter >= 16: print("something wrong!")
 
