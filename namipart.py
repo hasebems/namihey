@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-import namiphrase as nph
 import namirandom as nrnd
+import namiptgen as nptgen
 
 
 DEFAULT_NOTE_NUMBER = 60
@@ -11,17 +11,16 @@ class Part:
     #   演奏時に、適切なタイミングで MIDI データを出力
     def __init__(self, blk, partNum):
         self.description = [None for _ in range(4)]
-        self.sqdata = []
         self.retained_note = []
-        self.play_counter = 0
         self.parent_block = blk
         self.midich = partNum
-        self.whole_tick = 0          # a length of whole tick that needs to play
-        self.state_play = False      # during Playing
-        self.state_reserv = False      # Change Phrase at next loop top 
+        self.whole_tick = 0             # a length of whole tick that needs to play
+        self.state_play = False         # during Playing
+        self.state_reserv = False       # Change Phrase at next loop top 
         self.keynote = DEFAULT_NOTE_NUMBER
-        self.is_random = False
+        self.is_onebyone = False
         self.rnd = nrnd.RandomGenerator(DEFAULT_NOTE_NUMBER, self._send_midi_note)
+        self.ptgen = nptgen.PartGenPlay(self._send_midi_note)
 
     def _send_midi_note(self, nt, vel):
         self.parent_block.sendMidiNote(self.midich, nt, vel)
@@ -34,13 +33,13 @@ class Part:
     def _generate_sequence(self):
         seqType = self.description[0]
         if seqType == 'phrase':
-            pg = nph.PhraseGenerator(self.description[1:], self.keynote)
-            self.whole_tick, self.sqdata = pg.convertToMIDILikeFormat()
-            self.is_random = False
+            self.whole_tick = self.ptgen.set_phrase(self.description[1:], self.keynote)
+            self.is_onebyone = False
         elif seqType == 'random':
-            self.rnd.set_random(self.description[1:], self.keynote)
-            self.is_random = True
+            self.whole_tick = self.rnd.set_random(self.description[1:], self.keynote)
+            self.is_onebyone = True
 
+    # Settings IF
     def changeKeynote(self, nt):
         self.keynote = nt
         if self.state_play == True:
@@ -48,13 +47,15 @@ class Part:
         else:
             self._generate_sequence()
 
+    # Data Input IF
     def clear_description(self):
         for nt in self.retained_note:
             self._send_midi_note(nt, 0)
-        if self.is_random:
+        if self.is_onebyone:
             self.rnd.stop()
         self.description= [None for _ in range(4)]
 
+    # Data Input IF
     def add_seq_description(self, data):
         self.description = data
         if self.state_play == True:
@@ -63,71 +64,36 @@ class Part:
             self._generate_sequence()
         return self.whole_tick
 
-    def _generate_event_sq(self, tick):
-        maxEv = len(self.sqdata)
-        if maxEv == 0:
-            # データを持っていない
-            return -1
-
-        if tick == 0:
-            self.play_counter = 0
-
-        trace = self.play_counter
-        nextTick = 0
-        while True:
-            if maxEv <= trace:
-                nextTick = -1   # means sequence finished
-                break
-            nextTick = self.sqdata[trace][0]
-            if nextTick < tick:
-                nt = self.sqdata[trace][1]
-                vel = self.sqdata[trace][2]
-                self._send_midi_note(nt, vel)
-            else:
-                break
-            trace += 1
-
-        self.play_counter = trace
-        return nextTick
-
-    # Main IF
+    # Sequence Control IF
     def start(self):
-        if not self.is_random:
-            self.state_play = True
-            self.play_counter = 0
-            self._generate_event_sq(0)
-
-        elif self.rnd != None:
+        self.state_play = True
+        if not self.is_onebyone:
+            self.ptgen.start()
+        else:
             self.rnd.start()
 
-    # Main IF
+    # Sequence Control IF
     def return_to_top(self, tick_for_one_measure):        # Phrase sequence return to top during playing 
-        if not self.is_random:
-            if self.state_reserv == True:
-                self._generate_sequence()
-            self.play_counter = 0
-            return self.whole_tick
-
-        elif self.rnd != None:
+        if self.state_reserv == True:
+            self._generate_sequence()
+        if not self.is_onebyone:
+            return self.ptgen.return_to_top()
+        else:
             return self.rnd.return_to_top(tick_for_one_measure)
-        else: return 0
 
-    # Main IF
+    # Sequence Control IF
     def generate_event(self, tick):
-        if not self.is_random:
-            return self._generate_event_sq(tick)
-
-        elif self.rnd != None:
+        if not self.is_onebyone:
+            return self.ptgen.generate_event(tick)
+        else:
             return self.rnd.generate_random(tick)
-        else: return 0
 
-    # Main IF
-    def stop(self):     # 再生停止
+    # Sequence Control IF
+    def stop(self):
         for nt in self.retained_note:
             self._send_midi_note(nt, 0)
-        if not self.is_random:
-            self.state_play = False
-        elif self.rnd != None:
+        self.state_play = False
+        if not self.is_onebyone:
+            self.ptgen.stop()
+        else:
             self.rnd.stop()
-
-

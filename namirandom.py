@@ -25,6 +25,7 @@ class RandomGenerator():
         self.description = pattern
         self.keynote = key
         self._analyse_random_parameter()
+        return self.max_measure_num * self.tick_for_one_measure
 
     def _analyse_random_parameter(self):
         chord_flow = self.description[0].split(':')
