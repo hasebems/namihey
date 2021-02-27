@@ -77,7 +77,7 @@ class Block:
         self.maxMeasure = 0
         tick = 0
         for pt in self.parts:
-            ptTick = pt.return_to_top()
+            ptTick = pt.return_to_top(self.tick_for_one_measure)
             if ptTick > tick:
                 tick = ptTick
         while tick > self.get_whole_tick():

@@ -101,7 +101,7 @@ class Part:
             self.rnd.start()
 
     # Main IF
-    def return_to_top(self):        # Phrase sequence return to top during playing 
+    def return_to_top(self, tick_for_one_measure):        # Phrase sequence return to top during playing 
         if not self.is_random:
             if self.state_reserv == True:
                 self._generate_sequence()
@@ -109,7 +109,7 @@ class Part:
             return self.whole_tick
 
         elif self.rnd != None:
-            return self.rnd.return_to_top()
+            return self.rnd.return_to_top(tick_for_one_measure)
         else: return 0
 
     # Main IF

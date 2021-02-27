@@ -8,12 +8,11 @@ class RandomGenerator():
     def __init__(self, key, func):
         self.description = []
         self.keynote = key
-        self.whole_tick = nlib.DEFAULT_TICK_FOR_ONE_MEASURE
+        self.tick_for_one_measure = 0
         self.midi_handler = func
         self.state_play = False
         self.next_tick = 0
         self.event_counter = 0
-        self.measure_counter = -1       # No Data
         self.max_measure_num = 0        # No Data
         self.last_note = 0
         self.chord_flow = []
@@ -50,9 +49,9 @@ class RandomGenerator():
         if self.description[2] != None:
             self.velocity = nlib.convert_exp2vel(self.description[2])
 
-    def _detect_note_number(self):
+    def _detect_note_number(self, tick):
         # detect random chord array
-        chord = self.chord_flow[self.measure_counter]
+        chord = self.chord_flow[int(tick/self.tick_for_one_measure)]
         root = 0
         if chord[0:1].isdecimal() == True or chord[0:1] == '+' or chord[0:1] == '-':
             diatonic = [0,0,2,4,5,7,9,11,12,2]
@@ -75,21 +74,22 @@ class RandomGenerator():
         # if self.event_counter >= 16: print("something wrong!")
 
     def _generate_rnd_pattern(self):
+        whole_tick = self.max_measure_num * self.tick_for_one_measure
         crnt_tick = self.next_tick
-        if self.measure_counter == -1:
-            return -1, self.whole_tick
+        if self.chord_flow == []:
+            return -1, whole_tick
 
-        tick_reso = round(DEFAULT_WHOLE_TICK/self.rnd_dur,0)
+        tick_reso = round(nlib.DEFAULT_TICK_FOR_ONE_MEASURE/self.rnd_dur,0)
         if crnt_tick%tick_reso == 0:    # Note On
-            self._detect_note_number()
+            self._detect_note_number(crnt_tick)
             crnt_tick += round(tick_reso/2,0)-20
         else:                           # Note Off
             self.midi_handler(self.last_note,0)
             crnt_tick += tick_reso-round(tick_reso/2,0)+20
         self.event_counter += 1
 
-        if crnt_tick >= self.whole_tick:
-            return -1, self.whole_tick
+        if crnt_tick >= whole_tick:
+            return -1, whole_tick
         else:
             return crnt_tick, crnt_tick
 
@@ -97,27 +97,20 @@ class RandomGenerator():
         self.state_play = True
         self.event_counter = 0
         self.chord_flow = self.chord_flow_next
-        if self.chord_flow != []:
-            self.measure_counter = 0
         return self.generate_random(0)
 
-    def return_to_top(self):
+    def return_to_top(self, tick_for_one_measure):
         self.event_counter = 0
         self.next_tick = 0
-        if self.chord_flow_next == []:
-            self.measure_counter = -1
-        else:
-            self.measure_counter += 1
-            if self.max_measure_num <= self.measure_counter:
-                # when random pattern return to top of pattern
-                self.measure_counter = 0
-                self.chord_flow = self.chord_flow_next
-        return self.whole_tick*self.max_measure_num
+        self.tick_for_one_measure = tick_for_one_measure
+        if self.chord_flow_next != []:
+            self.chord_flow = self.chord_flow_next
+        return self.max_measure_num * self.tick_for_one_measure
 
     def generate_random(self, tick):
         rtn_value = self.next_tick
         if tick >= self.next_tick:
-            if tick >= self.whole_tick:
+            if tick >= self.max_measure_num * self.tick_for_one_measure:
                 return -1
             rtn_value, self.next_tick = self._generate_rnd_pattern()
         return rtn_value
