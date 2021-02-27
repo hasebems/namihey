@@ -1,5 +1,5 @@
 
-namihey Alpha-version(0.210224)
+namihey Alpha-version(0.210227)
 =================================
 
 about namihey
@@ -132,7 +132,7 @@ python によって記述され、mido というライブラリにより、MIDI�
         - lydian : d=r=m=fi=s=l=t (Lydian Scale)
         - all : 全ての音
     - 使用例
-        - ex1)  {rnd(dur=8):all}{2}{mp}  : 全音域ランダム、２小節分、mpで
+        - ex1)  {rnd(dur=16):all}{2}{mp}  : 16分音符で全音域ランダム、２小節分、mpで
         - ex2)  {rnd:6m,4,5,1}{1,1,1,1}{mf} : 1小節ごとに指定した和音をランダムに、mfで
 
 
@@ -146,8 +146,8 @@ python によって記述され、mido というライブラリにより、MIDI�
 - 'show' : 現在のフレーズ情報を、階名(N)、音価(D)、音量(V)を nami prompt と一緒に、それぞれ一行ずつにして表示
 
 
-設定コマンド
------------
+調、テンポ、拍子
+---------------
 
 - 'set bpm=100' : BPM（テンポ）=100 にセット
 - 'set beat=4/4' : 拍子を 4/4 にセット
