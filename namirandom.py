@@ -19,7 +19,8 @@ class RandomGenerator():
         self.chord_flow_next = []
         self.rnd_type = 0
         self.rnd_dur = 8
-        self.velocity = 100
+        self.measure_flow = []
+        self.velocity_flow = []
 
     def set_random(self, pattern, key):
         self.description = pattern
@@ -27,8 +28,8 @@ class RandomGenerator():
         self._analyse_random_parameter()
         return self.max_measure_num * self.tick_for_one_measure
 
-    def _analyse_random_parameter(self):
-        chord_flow = self.description[0].split(':')
+    def _analyse_chord_param(self, chord_description):
+        chord_flow = chord_description.split(':')
         if '(' and ')' in chord_flow[0]:
             # check inside ()
             inside = re.findall("(?<=\().+?(?=\))", chord_flow[0])
@@ -42,17 +43,59 @@ class RandomGenerator():
                         self.rnd_dur = int(elm[1])
         if len(chord_flow) >= 2:
             self.chord_flow_next = chord_flow[1].strip().split(',') # chord
-            self.max_measure_num = len(self.chord_flow_next)
         else:
             # if no ':', set 'all" pattern
-            self.chord_flow_next.append('all')
-            self.max_measure_num = 1
-        if self.description[2] != None:
-            self.velocity = nlib.convert_exp2vel(self.description[2])
+            self.chord_flow_next = ['all']
+
+    def _analyse_measure_param(self, measure_description):
+        if measure_description != None:
+            self.measure_flow = measure_description.strip().split(',')
+            for i, mes in enumerate(self.measure_flow):
+                if mes.isdecimal():
+                    self.measure_flow[i] = int(mes)
+                else:
+                    self.measure_flow[i] = 1
+            if len(self.measure_flow) > len(self.chord_flow_next):
+                del self.measure_flow[len(self.chord_flow_next):]
+            elif len(self.measure_flow) < len(self.chord_flow_next):
+                ext = [self.measure_flow[-1] for i in range(len(self.chord_flow_next)-len(self.measure_flow))]
+                self.measure_flow += ext
+        else:
+            self.measure_flow = [1 for i in range(len(self.chord_flow_next))]
+        self.max_measure_num = sum(self.measure_flow)
+
+    def _analyse_velocity_param(self, velocity_description):
+        if velocity_description != None:
+            self.velocity_flow = velocity_description.strip().split(',')
+            for i, mes in enumerate(self.velocity_flow):
+                self.velocity_flow[i] = nlib.convert_exp2vel(self.velocity_flow[i])
+            if len(self.velocity_flow) > len(self.chord_flow_next):
+                del self.velocity_flow[len(self.chord_flow_next):]
+            elif len(self.velocity_flow) < len(self.chord_flow_next):
+                ext = [self.velocity_flow[-1] for i in range(len(self.chord_flow_next)-len(self.velocity_flow))]
+                self.velocity_flow += ext
+        else:
+            self.velocity_flow = [100 for i in range(len(self.chord_flow_next))]
+
+    def _analyse_random_parameter(self):
+        self._analyse_chord_param(self.description[0])
+        self._analyse_measure_param(self.description[1])
+        self._analyse_velocity_param(self.description[2])
+
+    def _detect_locate(self, tick):
+        current_num = int(tick/self.tick_for_one_measure)
+        compare_num = 0
+        index_locate = 0
+        while True:
+            compare_num += self.measure_flow[index_locate]
+            if current_num < compare_num: break
+            index_locate += 1
+        return index_locate
 
     def _detect_note_number(self, tick):
         # detect random chord array
-        chord = self.chord_flow[int(tick/self.tick_for_one_measure)]
+        index_number = self._detect_locate(tick)
+        chord = self.chord_flow[index_number]
         root = 0
         if chord[0:1].isdecimal() == True or chord[0:1] == '+' or chord[0:1] == '-':
             diatonic = [0,0,2,4,5,7,9,11,12,2]
@@ -70,7 +113,7 @@ class RandomGenerator():
             note = doremi_set[idx] + self.keynote + root
             if note != self.last_note:  # don't decide same note as last note
                 break
-        self.midi_handler(note,self.velocity)
+        self.midi_handler(note,self.velocity_flow[index_number])
         self.last_note = note
         # if self.event_counter >= 16: print("something wrong!")
 
