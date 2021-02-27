@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
-import namilib as lib
+import namilib as nlib
 
 REPEAT_START = -1
 NO_REPEAT = 0
@@ -19,10 +19,10 @@ class PhraseGenerator():
 
     def __addNote(self, tick, notes, duration, velocity=100):
         for note in notes:
-            if note != lib.REST:
+            if note != nlib.REST:
                 self.playData.append([tick,note,velocity])
         for note in notes:
-            if note != lib.REST:
+            if note != nlib.REST:
                 realDur = int(duration*self.durPer*480*4/(100*self.baseNote))
                 offTick = tick + realDur - 1
                 self.playData.append([offTick,note,0])
@@ -257,7 +257,7 @@ class PhraseGenerator():
         nlists = noteText.replace(' ','').split('=')    # 和音検出
         bpchs = []
         for nx in nlists:
-            basePitch = self.keynote + lib.convert_doremi(nx)
+            basePitch = self.keynote + nlib.convert_doremi(nx)
             bpchs.append(basePitch)
         return bpchs
 
@@ -277,7 +277,7 @@ class PhraseGenerator():
         while readPtr < ntNum:
             cnts = self.__cnvNoteToPitch(noteFlow[readPtr])
             dur = self.__cnvDuration(durFlow[readPtr])
-            vel = lib.convert_exp2vel(velFlow[readPtr])
+            vel = nlib.convert_exp2vel(velFlow[readPtr])
             self.__addNote(tick,cnts,dur,vel)
             tick += dur*480*4/self.baseNote
             readPtr += 1    # out from repeat

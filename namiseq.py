@@ -3,10 +3,10 @@ import  time
 import  mido
 import  namiconf
 import  namipart as npt
+import  namilib as nlib
 
 
 MAX_PART_COUNT = 16
-DEFAULT_TICK_FOR_ONE_MEASURE = 1920     # 480 * 4
 DEFAULT_BPM = 100
 TICK_PER_SEC = 8    # convert [bpm] to [tick per sec] := 480(tick)/60(sec)
 
@@ -19,7 +19,7 @@ class Block:
         self.parts = [npt.Part(self,i) for i in range(MAX_PART_COUNT)]
         self.bpm = DEFAULT_BPM
         self.maxMeasure = 1
-        self.tick_for_one_measure = DEFAULT_TICK_FOR_ONE_MEASURE
+        self.tick_for_one_measure = nlib.DEFAULT_TICK_FOR_ONE_MEASURE
         self.port = midiport
         self.inputPart = 0      # 0origin
         self.waitForFine = False
