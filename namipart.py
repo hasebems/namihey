@@ -76,6 +76,7 @@ class Part:
     def return_to_top(self, tick_for_one_measure):        # Phrase sequence return to top during playing 
         if self.state_reserv == True:
             self._generate_sequence()
+            self.state_reserv = False
         if not self.is_onebyone:
             return self.ptgen.return_to_top()
         else:
