@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-
-
-WHOLE_TONE_LENGTH = 1920
-
+import  namilib as nlib
 
 class Parsing:
     #   入力した文字列の解析
@@ -23,7 +20,7 @@ class Parsing:
             if onpuStr.isdecimal() == True:
                 onpu = int(onpuStr)
             if btnum >= 1 and onpu >= 1:
-                self.sq.getBlock().stock_tick_for_one_measure = (WHOLE_TONE_LENGTH/onpu)*btnum
+                self.sq.getBlock().stock_tick_for_one_measure = (nlib.DEFAULT_TICK_FOR_ONE_MEASURE/onpu)*btnum
 
     def changeKey(self, keyText, all):
         key = 12
