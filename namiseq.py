@@ -49,7 +49,7 @@ class Block:
 
     def _inputPhrase(self,data,pt):
         self.maxMeasure = 0
-        tick = self.parts[pt].addPhrase(data)
+        tick = self.parts[pt].add_seq_description(data)
         while tick > self.get_whole_tick():
             self.maxMeasure += 1
 
@@ -60,7 +60,7 @@ class Block:
         self.parts[self.inputPart].clear_description()
 
     def copyPhrase(self,pt):
-        self._inputPhrase(self.parts[self.inputPart].noteData, pt)
+        self._inputPhrase(self.parts[self.inputPart].description, pt)
 
     def addPhrase(self,data):
         self._inputPhrase(data, self.inputPart)

@@ -192,7 +192,7 @@ class Parsing:
             if tx.isdecimal() == True:
                 part = int(tx)
                 if part > 0 and part <= 16:
-                    self.sq.current_bk.copyPhrase(part)
+                    self.sq.current_bk.copyPhrase(part-1)
                     print("Phrase copied to part" + tx + ".")
         else: print("what?")
 
