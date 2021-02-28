@@ -66,6 +66,7 @@ class Block:
         self._inputPhrase(data, self.inputPart)
 
     def sendMidiNote(self, ch, nt, vel):
+        if nt > 127 or vel > 127: return
         if vel != 0:
             msg = mido.Message('note_on', channel=ch, note=nt, velocity=vel)
         else:

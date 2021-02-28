@@ -23,6 +23,7 @@ class Part:
         self.ptgen = nptgen.PartGenPlay(self._send_midi_note)
 
     def _send_midi_note(self, nt, vel):
+        if nt > 127 or vel > 127: return
         self.parent_block.sendMidiNote(self.midich, nt, vel)
         # stop 時に直ちに Note Off を出すため、現在 Note On 中の音を保持しておく
         if vel != 0:
