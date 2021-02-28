@@ -29,6 +29,7 @@ def cui():
 loop = True
 seq = sq.Seq()
 pas = ps.Parsing(seq)
+pas.print_dialogue("MIDI OUT: " + seq.get_midi_port())
 cuijob = threading.Thread(target=cui)
 cuijob.start()
 while True:
@@ -36,4 +37,4 @@ while True:
     if loop == False:
         break
 cuijob.join()
-print("That's it! Bye!")
+pas.print_dialogue("That's it! Bye!")

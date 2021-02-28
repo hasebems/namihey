@@ -1,13 +1,21 @@
 # -*- coding: utf-8 -*-
 import  namilib as nlib
 
+T_WATER = '\033[96m'
+T_PINK = '\033[95m'
+T_WHITE = '\033[97m'
+T_END = '\033[0m'
+
 class Parsing:
     #   入力した文字列の解析
     #   一行単位で入力されるたびに生成される
     def __init__(self, seq):
         self.sq = seq
         self.inputPart = 1      # 1origin
-        self.promptStr = '[1][1]~~> '
+        self.promptStr = T_WATER + '[1][1]~~> ' + T_END
+
+    def print_dialogue(self, rpy):
+        print(T_PINK+rpy+T_END)
 
     def changeBeat(self, text):
         if '/' in text:
@@ -77,32 +85,32 @@ class Parsing:
                 bpmNumList = pickedTxt[pickedTxt.find('=')+1:].strip().split()
                 if bpmNumList[0].isdecimal() == True:
                     self.sq.getBlock().stock_bpm = int(bpmNumList[0])
-                    print("BPM has changed!")
+                    self.print_dialogue("BPM has changed!")
 
     def letterP(self, inputText):
         if inputText[0:4] == 'play':
             arg = inputText.split()
             if len(arg) == 1:
-                print("Phrase has started!")
+                self.print_dialogue("Phrase has started!")
                 self.sq.play()
-        else: print("what?")
+        else: self.print_dialogue("what?")
 
     def letterS(self, inputText):
         if inputText[0:5] == 'start':
-            print("Phrase has started!")
+            self.print_dialogue("Phrase has started!")
             self.sq.play()            
         elif inputText[0:4] == 'stop':
             self.sq.stop()
-            print("Stopped!")
+            self.print_dialogue("Stopped!")
         elif inputText[0:3] == 'set':
             self.parseSetCommand(inputText[3:])
         elif inputText[0:4] == 'show':
             blk = self.sq.getBlock()
             ele = blk.parts[blk.inputPart].description
-            print('~~> N[' + str(ele[1]) + ']')
-            print('~~> D[' + str(ele[2]) + ']')
-            print('~~> V[' + str(ele[3]) + ']')
-        else: print("what?")
+            self.print_dialogue('~~> N[' + str(ele[1]) + ']')
+            self.print_dialogue('~~> D[' + str(ele[2]) + ']')
+            self.print_dialogue('~~> V[' + str(ele[3]) + ']')
+        else: self.print_dialogue("what?")
 
     def letterI(self, inputText):
         if inputText[0:5] == 'input':
@@ -110,12 +118,12 @@ class Parsing:
             if tx.isdecimal() == True:
                 part = int(tx)
                 if part > 0 and part <= 16:
-                    print("Changed current part to " + str(part) + ".")
+                    self.print_dialogue("Changed current part to " + str(part) + ".")
                     blk = self.sq.getBlock()
                     blk.inputPart = part-1
                     self.inputPart = part
                     self.promptStr = '[1][' + str(part) + ']~~> '
-        else: print("what?")
+        else: self.print_dialogue("what?")
 
     def letterBracket(self, inputText):
         # [] のセットを抜き出し、中身を noteInfo に入れる
@@ -141,10 +149,10 @@ class Parsing:
             noteInfo.append('100')  # set default velocity value
         elif brktNum == 0 or brktNum > 3:
             # [] の数が 1〜3 以外ならエラー
-            print("Error!")
+            self.print_dialogue("Error!")
             return
 
-        print("set Phrase!")
+        self.print_dialogue("set Phrase!")
         blk = self.sq.getBlock()
         blk.clear_description()
         noteInfo.insert(0,'phrase')
@@ -174,17 +182,17 @@ class Parsing:
             noteInfo.append('100')  # set default velocity value
         elif brktNum == 0 or brktNum > 3:
             # [] の数が 1〜3 以外ならエラー
-            print("Error!")
+            self.print_dialogue("Error!")
             return
 
         if noteInfo[0][0:3] == 'rnd':
-            print("set Random Pattern!")
+            self.print_dialogue("set Random Pattern!")
             blk = self.sq.getBlock()
             blk.clear_description()
             noteInfo.insert(0,'random')
             blk.add_seq_description(noteInfo)
         else:
-            print("what?")
+            self.print_dialogue("what?")
 
     def letterC(self, inputText):
         if inputText[0:6] == 'copyto':
@@ -193,16 +201,17 @@ class Parsing:
                 part = int(tx)
                 if part > 0 and part <= 16:
                     self.sq.current_bk.copyPhrase(part-1)
-                    print("Phrase copied to part" + tx + ".")
-        else: print("what?")
+                    self.print_dialogue("Phrase copied to part" + tx + ".")
+        else: self.print_dialogue("what?")
 
     def letterF(self, inputText):
         if inputText[0:4] == "fine":
             self.sq.fine()
-        else: print("what?")
+            self.print_dialogue('Will be ended!')
+        else: self.print_dialogue("what?")
 
     def letterQm(self, inputText):
-        print("what?")
+        self.print_dialogue("what?")
 
     def startParsing(self, inputText):
         firstLetter = inputText[0:1]
@@ -217,5 +226,5 @@ class Parsing:
         elif firstLetter == 'p': self.letterP(inputText)
         elif firstLetter == 's': self.letterS(inputText)
         elif firstLetter == '?': self.letterQm(inputText)
-        else: print("what?")
+        else: self.print_dialogue("what?")
 

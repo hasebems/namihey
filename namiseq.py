@@ -148,11 +148,14 @@ class Seq:
         self.during_play = False
         self.bk = []
         all_port = mido.get_output_names()
-        print("MIDI OUT: " + all_port[-1])
-        midiport = mido.open_output(all_port[-1])
+        self.port_name = all_port[-1]
+        midiport = mido.open_output(self.port_name)
         self.bk.append(Block(midiport))
         self.current_bk = self.bk[0]
         self.next_time = 0
+
+    def get_midi_port(self):
+        return self.port_name
 
     def getBlock(self, block=1):
         return self.bk[block-1]
@@ -178,5 +181,4 @@ class Seq:
         self.during_play = False
 
     def fine(self):
-        print('Will be ended!')
         self.current_bk.fine()
