@@ -122,7 +122,7 @@ class Parsing:
                     blk = self.sq.getBlock()
                     blk.inputPart = part-1
                     self.inputPart = part
-                    self.promptStr = '[1][' + str(part) + ']~~> '
+                    self.promptStr = T_WATER + '[1][' + str(part) + ']~~> ' + T_END
         else: self.print_dialogue("what?")
 
     def letterBracket(self, inputText):
