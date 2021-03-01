@@ -18,7 +18,7 @@ class Block:
     def __init__(self, midiport):
         self.parts = [npt.Part(self,i) for i in range(MAX_PART_COUNT)]
         self.bpm = DEFAULT_BPM
-        self.maxMeasure = 1
+        self.maxMeasure = 0
         self.tick_for_one_measure = nlib.DEFAULT_TICK_FOR_ONE_MEASURE
         self.port = midiport
         self.inputPart = 0      # 0origin
@@ -108,8 +108,13 @@ class Block:
         self._calc_max_measure()
         self.currentLoopStartTime = 0
         self.nextLoopStartTime = self.get_whole_tick()/(self.bpm*TICK_PER_SEC)
+
+        if self.get_whole_tick() == 0:
+            return False
+
         for pt in self.parts:
             pt.start()
+        return True
 
     # Main IF : Generate Music Event
     def generate_event(self, evTime):
@@ -174,7 +179,7 @@ class Seq:
         self.start_time = time.time()                # Get current time
         self.next_time = 0
         self.current_bk = self.bk[block-1]
-        self.current_bk.start()
+        return self.current_bk.start()
 
     def stop(self):
         self.current_bk.stop()

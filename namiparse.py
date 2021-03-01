@@ -91,14 +91,16 @@ class Parsing:
         if inputText[0:4] == 'play':
             arg = inputText.split()
             if len(arg) == 1:
-                self.print_dialogue("Phrase has started!")
-                self.sq.play()
+                welldone = self.sq.play()
+                if welldone:    self.print_dialogue("Phrase has started!")
+                else:           self.print_dialogue("Phrase has no data!")
         else: self.print_dialogue("what?")
 
     def letterS(self, inputText):
         if inputText[0:5] == 'start':
-            self.print_dialogue("Phrase has started!")
-            self.sq.play()            
+            welldone = self.sq.play()
+            if welldone:    self.print_dialogue("Phrase has started!")
+            else:           self.print_dialogue("Phrase has no data!")
         elif inputText[0:4] == 'stop':
             self.sq.stop()
             self.print_dialogue("Stopped!")
