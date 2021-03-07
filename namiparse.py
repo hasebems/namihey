@@ -12,7 +12,11 @@ class Parsing:
     def __init__(self, seq):
         self.sq = seq
         self.inputPart = 1      # 1origin
-        self.promptStr = T_WATER + '[1][1]~~> ' + T_END
+        self.promptStr = self.get_prompt_string(1,1)
+
+    def get_prompt_string(self, blk, part):
+       # return T_WATER + '[' + str(blk) + '][' + str(part) + ']~~> ' + T_END
+        return '[' +str(blk) + '][' + str(part) + ']~~> '
 
     def print_dialogue(self, rpy):
         print(T_PINK+rpy+T_END)
@@ -93,7 +97,6 @@ class Parsing:
             if len(arg) == 1:
                 welldone = self.sq.play()
                 if welldone:    self.print_dialogue("Phrase has started!")
-                else:           self.print_dialogue("Phrase has no data!")
         else: self.print_dialogue("what?")
 
     def letterS(self, inputText):
@@ -124,7 +127,7 @@ class Parsing:
                     blk = self.sq.getBlock()
                     blk.inputPart = part-1
                     self.inputPart = part
-                    self.promptStr = T_WATER + '[1][' + str(part) + ']~~> ' + T_END
+                    self.promptStr = self.get_prompt_string(1, part)
         else: self.print_dialogue("what?")
 
     def letterBracket(self, inputText):
