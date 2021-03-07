@@ -175,6 +175,7 @@ class Seq:
                 self.during_play = False             # Stop playing
 
     def play(self, block=1, repeat='on'):
+        if self.during_play: return False
         self.during_play = True
         self.start_time = time.time()                # Get current time
         self.next_time = 0

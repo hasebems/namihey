@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
+import math
 import namilib as nlib
 
 REPEAT_START = -1
@@ -23,7 +24,7 @@ class PhraseGenerator():
                 self.playData.append([tick,note,velocity])
         for note in notes:
             if note != nlib.REST:
-                realDur = int(duration*self.durPer*480*4/(100*self.baseNote))
+                realDur = math.floor(duration*self.durPer*480*4/(100*self.baseNote)) # 切り捨て
                 offTick = tick + realDur - 1
                 self.playData.append([offTick,note,0])
 

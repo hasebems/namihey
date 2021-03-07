@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import copy
 import namirandom as nrnd
 import namiptgen as nptgen
 
@@ -50,10 +51,6 @@ class Part:
 
     # Data Input IF
     def clear_description(self):
-        for nt in self.retained_note:
-            self._send_midi_note(nt, 0)
-        if self.is_onebyone:
-            self.rnd.stop()
         self.description= [None for _ in range(4)]
 
     # Data Input IF
@@ -92,7 +89,8 @@ class Part:
 
     # Sequence Control IF
     def stop(self):
-        for nt in self.retained_note:
+        all_ntof = copy.deepcopy(self.retained_note)
+        for nt in all_ntof:
             self._send_midi_note(nt, 0)
         self.state_play = False
         if not self.is_onebyone:
