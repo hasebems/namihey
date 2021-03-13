@@ -26,10 +26,22 @@ def cui():
     global loop
     loop = False
 
+def midi_setting():
+    global pas
+    global seq
+    midiport = seq.get_midi_all_port()
+    pas.print_dialogue("==MIDI OUT LIST==")
+    for i, pt in enumerate(midiport):
+        pas.print_dialogue("PORT " + str(i) + ": " + str(pt))
+    pas.print_dialogue("==SELECTED MIDI OUT==")
+    pas.print_dialogue(seq.get_midi_port())
+
+# Start from here!
 loop = True
 seq = sq.Seq()
 pas = ps.Parsing(seq)
-pas.print_dialogue("MIDI OUT: " + seq.get_midi_port())
+midi_setting()
+
 cuijob = threading.Thread(target=cui)
 cuijob.start()
 while True:

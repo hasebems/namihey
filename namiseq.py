@@ -144,7 +144,7 @@ class Block:
 
 
 class Seq:
-    #   MIDI シーケンスを再生する全体のまとめ処理
+    #   MIDI シーケンスの制御
     #   開始時に生成され、periodic() がコマンド入力とは別スレッドで、定期的に呼ばれる
     #   その他の機能： mido の生成、CUIに情報を送る
     #   Block: 現状 [0] の一つだけ生成
@@ -152,15 +152,24 @@ class Seq:
         self.start_time = time.time()
         self.during_play = False
         self.bk = []
-        all_port = mido.get_output_names()
-        self.port_name = all_port[-1]
+        self.all_port = mido.get_output_names()
+        self.port_name = self.all_port[-1]
         midiport = mido.open_output(self.port_name)
         self.bk.append(Block(midiport))
         self.current_bk = self.bk[0]
         self.next_time = 0
 
+    def get_midi_all_port(self):
+        return self.all_port
+
     def get_midi_port(self):
         return self.port_name
+
+    def set_midi_port(self, idx):
+        if idx < len(self.all_port):
+            self.port_name = self.all_port[idx]
+            return True
+        else: return False
 
     def getBlock(self, block=1):
         return self.bk[block-1]
