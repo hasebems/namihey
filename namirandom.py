@@ -3,6 +3,8 @@ import random
 import re
 import namilib as nlib
 
+NOTE_OFF_MARGIN = 20
+
 class RandomGenerator():
 
     def __init__(self, key, func):
@@ -94,8 +96,8 @@ class RandomGenerator():
 
     def _detect_note_number(self, tick):
         # detect random chord array
-        index_number = self._detect_locate(tick)
-        chord = self.chord_flow[index_number]
+        measure_num = self._detect_locate(tick)
+        chord = self.chord_flow[measure_num]
         root = 0
         if chord[0:1].isdecimal() == True or chord[0:1] == '+' or chord[0:1] == '-':
             diatonic = [0,0,2,4,5,7,9,11,12,2]
@@ -113,33 +115,46 @@ class RandomGenerator():
             note = doremi_set[idx] + self.keynote + root
             if note != self.last_note:  # don't decide same note as last note
                 break
-        self.midi_handler(note,self.velocity_flow[index_number])
-        self.last_note = note
+        return note, self.velocity_flow[measure_num]
         # if self.event_counter >= 16: print("something wrong!")
 
     def _generate_rnd_pattern(self):
+        # print(self.next_tick)
         whole_tick = self.max_measure_num * self.tick_for_one_measure
-        crnt_tick = self.next_tick
         if self.chord_flow == []:
-            return -1, whole_tick
+            # Data がない場合
+            self.next_tick = whole_tick
+            return nlib.INVALID_TICK
 
-        tick_reso = round(nlib.DEFAULT_TICK_FOR_ONE_MEASURE/self.rnd_dur,0)
-        if crnt_tick%tick_reso == 0:    # Note On
-            self._detect_note_number(crnt_tick)
-            crnt_tick += tick_reso - 20
+        crnt_tick = self.next_tick                                          # 全体 Loop Size 中の tick
+        crnt_tick_for_one_measure = crnt_tick % self.tick_for_one_measure   # １小節内の tick
+        tick_reso = round(nlib.DEFAULT_TICK_FOR_ONE_MEASURE/self.rnd_dur,0) # 音価
+        if crnt_tick_for_one_measure % tick_reso == 0:    # Note On
+            note, vel = self._detect_note_number(crnt_tick)
+            self.midi_handler(note, vel)
+            self.last_note = note
+            if self.tick_for_one_measure - crnt_tick_for_one_measure < tick_reso:
+                # 小節最後の音符で、小節の残りが音価以下だったら
+                crnt_tick += self.tick_for_one_measure - crnt_tick_for_one_measure - NOTE_OFF_MARGIN
+            else:
+                crnt_tick += tick_reso - NOTE_OFF_MARGIN
         else:                           # Note Off
             self.midi_handler(self.last_note,0)
-            crnt_tick += tick_reso - tick_reso + 20
+            crnt_tick += NOTE_OFF_MARGIN
         self.event_counter += 1
 
         if crnt_tick >= whole_tick:
-            return -1, whole_tick
+            # Block の Loop Size を越えたとき 
+            self.next_tick = whole_tick
+            return nlib.INVALID_TICK
         else:
-            return crnt_tick, crnt_tick
+            self.next_tick = crnt_tick
+            return crnt_tick
 
     def start(self):
         self.state_play = True
         self.event_counter = 0
+        self.next_tick = 0
         self.chord_flow = self.chord_flow_next
         return self.generate_random(0)
 
@@ -152,11 +167,13 @@ class RandomGenerator():
         return self.max_measure_num * self.tick_for_one_measure
 
     def generate_random(self, tick):
-        rtn_value = self.next_tick
         if tick >= self.next_tick:
             if tick >= self.max_measure_num * self.tick_for_one_measure:
-                return -1
-            rtn_value, self.next_tick = self._generate_rnd_pattern()
+                rtn_value = nlib.INVALID_TICK
+            else:
+                rtn_value = self._generate_rnd_pattern()
+        else:
+            rtn_value = self.next_tick
         return rtn_value
 
     def stop(self):
