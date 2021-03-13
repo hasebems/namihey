@@ -118,6 +118,7 @@ class Block:
 
     # Main IF : Generate Music Event
     def generate_event(self, evTime):
+        # tick は Block の長さ全体で管理（１小節単位ではなく）
         if evTime > self.nextLoopStartTime:
             if self._goes_to_loop_top() == False:
                 return 0
@@ -126,10 +127,10 @@ class Block:
         next_tick = self.get_whole_tick()
         for pt in self.parts:
             pt_next_tick = pt.generate_event(current_tick)
-            if pt_next_tick != -1 and next_tick > pt_next_tick:
+            if pt_next_tick != nlib.INVALID_TICK and next_tick > pt_next_tick:
                 next_tick = pt_next_tick
 
-        return self.currentLoopStartTime + next_tick/(self.bpm*TICK_PER_SEC)
+        return self.currentLoopStartTime + next_tick/(self.bpm*TICK_PER_SEC) # time(sec)
 
     # Main IF : Stop Sequencer
     def stop(self):
