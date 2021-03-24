@@ -19,7 +19,8 @@ class RandomGenerator():
         self.last_note = 0
         self.chord_flow = []
         self.chord_flow_next = []
-        self.rnd_type = 0
+        self.rnd_rgn = 7
+        self.rnd_ofs = 0
         self.rnd_dur = 8
         self.measure_flow = []
         self.velocity_flow = []
@@ -27,10 +28,10 @@ class RandomGenerator():
     def set_random(self, pattern, key):
         self.description = pattern
         self.keynote = key
-        self._analyse_random_parameter()
+        self._analyse_random_braces()
         return self.max_measure_num * self.tick_for_one_measure
 
-    def _analyse_chord_param(self, chord_description):
+    def _analyse_chord_brace(self, chord_description):
         chord_flow = chord_description.split(':')
         if '(' and ')' in chord_flow[0]:
             # check inside ()
@@ -38,18 +39,25 @@ class RandomGenerator():
             prms = inside[0].split(',')
             for prm in prms:
                 elm = prm.strip().split('=')
-                if elm[0] == 'type':
-                    self.rnd_type = elm[1]
-                elif elm[0] == 'dur':
-                    if elm[1].isdecimal() == True:
-                        self.rnd_dur = int(elm[1])
+                if elm[1].isdecimal() == True:
+                    value = int(elm[1])
+                    if elm[0] == 'rgn':
+                        if value < 3: value = 3
+                        elif value > 8: value = 8
+                        self.rnd_rgn = value - 1
+                    elif elm[0] == 'ofs':
+                        if value < 1: value = 1
+                        elif value > 7: value = 7
+                        self.rnd_ofs = value - 1
+                    elif elm[0] == 'dur':
+                        self.rnd_dur = value
         if len(chord_flow) >= 2:
             self.chord_flow_next = chord_flow[1].strip().split(',') # chord
         else:
             # if no ':', set 'all" pattern
             self.chord_flow_next = ['all']
 
-    def _analyse_measure_param(self, measure_description):
+    def _analyse_measure_brace(self, measure_description):
         if measure_description != None:
             self.measure_flow = measure_description.strip().split(',')
             for i, mes in enumerate(self.measure_flow):
@@ -66,7 +74,7 @@ class RandomGenerator():
             self.measure_flow = [1 for i in range(len(self.chord_flow_next))]
         self.max_measure_num = sum(self.measure_flow)
 
-    def _analyse_velocity_param(self, velocity_description):
+    def _analyse_velocity_brace(self, velocity_description):
         if velocity_description != None:
             self.velocity_flow = velocity_description.strip().split(',')
             for i, mes in enumerate(self.velocity_flow):
@@ -79,10 +87,10 @@ class RandomGenerator():
         else:
             self.velocity_flow = [100 for i in range(len(self.chord_flow_next))]
 
-    def _analyse_random_parameter(self):
-        self._analyse_chord_param(self.description[0])
-        self._analyse_measure_param(self.description[1])
-        self._analyse_velocity_param(self.description[2])
+    def _analyse_random_braces(self):
+        self._analyse_chord_brace(self.description[0])
+        self._analyse_measure_brace(self.description[1])
+        self._analyse_velocity_brace(self.description[2])
 
     def _detect_locate(self, tick):
         current_num = int(tick/self.tick_for_one_measure)
@@ -99,19 +107,33 @@ class RandomGenerator():
         measure_num = self._detect_locate(tick)
         chord = self.chord_flow[measure_num]
         root = 0
-        if chord[0:1].isdecimal() == True or chord[0:1] == '+' or chord[0:1] == '-':
-            diatonic = [0,0,2,4,5,7,9,11,12,2]
-            if chord[0:1] == '+':
-                root = diatonic[int(chord[1:2])] + 1
-            elif chord[0:1] == '-':
-                root = diatonic[int(chord[1:2])] - 1
-            else:
-                root = diatonic[int(chord[0:1])]
-            chord = '_' + chord[1:]
-        doremi_set = nlib.CHORD_SCALE.get(chord, nlib.CHORD_SCALE['all'])
+        l1 = chord[0:1]     # 最初の一文字
+        l2 = chord[1:2]     # 最初から二文字目
+        dtbl = nlib.CHORD_SCALE['diatonic']
+        if l1.isdecimal():
+            root = dtbl[len(dtbl)//2+int(l1)-1]
+        elif l1 == '+' and l2.isdecimal():
+            root = dtbl[len(dtbl)//2+int(l2)-1] + 1
+        elif l1 == '-' and l2.isdecimal():
+            root = dtbl[len(dtbl)//2+int(l2)-1] - 1
+        else:
+            root = nlib.convert_doremi(chord)
+        chord = '_' + chord[1:]
+        doremi_set = nlib.CHORD_SCALE.get(chord, dtbl)
 
+        # Random の Index値を作るための最小値、最大値を算出
+        ofs = dtbl[len(dtbl)//2+self.rnd_ofs]
+        rgn = dtbl[len(dtbl)//2+self.rnd_rgn]
+        min_doremi = ofs - rgn
+        start_idx = len(doremi_set)//2
+        while doremi_set[start_idx] >  min_doremi : start_idx-=1
+        max_doremi = ofs + rgn
+        end_idx = len(doremi_set)//2
+        while doremi_set[end_idx] < max_doremi: end_idx+=1
+
+        # Random な Index値を発生させて、Tableからノート番号を読み出す 
         while True:
-            idx = random.randint(0,len(doremi_set)-1)
+            idx = random.randint(start_idx,end_idx)
             note = doremi_set[idx] + self.keynote + root
             if note != self.last_note:  # don't decide same note as last note
                 break
