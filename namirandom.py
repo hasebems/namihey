@@ -42,7 +42,7 @@ class RandomGenerator():
                 if elm[1].isdecimal() == True:
                     value = int(elm[1])
                     if elm[0] == 'rgn':
-                        if value < 3: value = 3
+                        if value < 2: value = 2
                         elif value > 8: value = 8
                         self.rnd_rgn = value - 1
                     elif elm[0] == 'ofs':
@@ -107,28 +107,30 @@ class RandomGenerator():
         measure_num = self._detect_locate(tick)
         chord = self.chord_flow[measure_num]
         root = 0
-        l1 = chord[0:1]     # 最初の一文字
-        l2 = chord[1:2]     # 最初から二文字目
         dtbl = nlib.CHORD_SCALE['diatonic']
-        if l1.isdecimal():
-            root = dtbl[len(dtbl)//2+int(l1)-1]
-        elif l1 == '+' and l2.isdecimal():
-            root = dtbl[len(dtbl)//2+int(l2)-1] + 1
-        elif l1 == '-' and l2.isdecimal():
-            root = dtbl[len(dtbl)//2+int(l2)-1] - 1
-        else:
-            root = nlib.convert_doremi(chord)
-        chord = '_' + chord[1:]
-        doremi_set = nlib.CHORD_SCALE.get(chord, dtbl)
+        doremi_set = nlib.CHORD_SCALE.get(chord)
+        if doremi_set == None:
+            l1 = chord[0:1]     # 最初の一文字
+            l2 = chord[1:2]     # 最初から二文字目
+            if l1.isdecimal():
+                root = dtbl[len(dtbl)//2+int(l1)-1]
+            elif l1 == '+' and l2.isdecimal():
+                root = dtbl[len(dtbl)//2+int(l2)-1] + 1
+            elif l1 == '-' and l2.isdecimal():
+                root = dtbl[len(dtbl)//2+int(l2)-1] - 1
+            else:
+                root = nlib.convert_doremi(chord)
+            chord = '_' + chord[1:]
+            doremi_set = nlib.CHORD_SCALE.get(chord,dtbl)
 
         # Random の Index値を作るための最小値、最大値を算出
         ofs = dtbl[len(dtbl)//2+self.rnd_ofs]
         rgn = dtbl[len(dtbl)//2+self.rnd_rgn]
         min_doremi = ofs - rgn
-        start_idx = len(doremi_set)//2
+        start_idx = len(doremi_set)-1
         while doremi_set[start_idx] >  min_doremi : start_idx-=1
         max_doremi = ofs + rgn
-        end_idx = len(doremi_set)//2
+        end_idx = 0
         while doremi_set[end_idx] < max_doremi: end_idx+=1
 
         # Random な Index値を発生させて、Tableからノート番号を読み出す 
