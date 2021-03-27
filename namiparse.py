@@ -34,9 +34,17 @@ class Parsing:
             if btnum >= 1 and onpu >= 1:
                 self.sq.getBlock().stock_tick_for_one_measure = (nlib.DEFAULT_TICK_FOR_ONE_MEASURE/onpu)*btnum
 
-    def changeKey(self, keyText, all):
-        key = 12
-        firstLetter = keyText[0:1]
+    def change_key(self, keyText, all):
+        def change_note(pt, key, oct):
+            if oct == nlib.NONE:
+                oct = pt.keynote//12
+            key += oct*12
+            key = nlib.note_limit(key, 0, 127)
+            pt.change_keynote(key)
+
+        key = 0
+        oct = nlib.NONE
+        firstLetter = keyText[0]
         if firstLetter == 'C':   key += 0
         elif firstLetter == 'D': key += 2
         elif firstLetter == 'E': key += 4
@@ -45,21 +53,53 @@ class Parsing:
         elif firstLetter == 'A': key += 9
         elif firstLetter == 'B': key += 11
         else: return
-        octaveLetter = keyText[1:2]
-        if octaveLetter == '#':
-            key += 1
-            octaveLetter = keyText[2:3]
-        elif octaveLetter == 'b':
-            key -= 1
-            octaveLetter = keyText[2:3]
-        if octaveLetter.isdecimal() == True:
-            key += int(octaveLetter)*12
-            if all == True:
-                for pt in self.sq.current_bk.parts:
-                    pt.changeKeynote(key)
-            else:
-                pt = self.sq.current_bk.inputPart
-                self.sq.current_bk.parts[pt].changeKeynote(key)
+        if len(keyText) > 1:
+            octave_letter = keyText[1:]
+            if keyText[1] == '#':
+                key += 1
+                if len(keyText) > 2:
+                    octave_letter = keyText[2:]
+            elif keyText[1] == 'b':
+                key -= 1
+                if len(keyText) > 2:
+                    octave_letter = keyText[2:]
+            if octave_letter.isdecimal() == True:
+                oct = int(octave_letter) + 1
+        curbk = self.sq.current_bk
+        if all == True:
+            for pt in curbk.parts:
+                change_note(pt, key, oct)
+        else:
+            pt = curbk.parts[curbk.inputPart]
+            change_note(pt, key, oct)
+
+    def change_oct(self, text, all):
+        def change_oct(pt, oct):
+            newoct = pt.keynote//12 + oct
+            key = newoct*12 + pt.keynote%12
+            key = nlib.note_limit(key, 0, 127)
+            pt.change_keynote(key)
+
+        octave_letter = text
+        pm = 1
+        oct = 0
+        if len(text) > 1:
+            if text[0] == '+':
+                octave_letter = text[1:]
+            elif text[0] == '-':
+                pm = -1
+                octave_letter = text[1:]
+        if octave_letter.isdecimal() == True:
+            oct = int(octave_letter)*pm
+        else:
+            return
+        curbk = self.sq.current_bk
+        if all == True:
+            for pt in curbk.parts:
+                change_oct(pt, oct)
+        else:
+            pt = curbk.parts[curbk.inputPart]
+            change_oct(pt, oct)
 
     def parseSetCommand(self, inputText):
         prmText = inputText.strip()
@@ -74,10 +114,12 @@ class Parsing:
             pickedTxt = prmText[prmText.find('key')+3:]
             if '=' in pickedTxt:
                 keyList = pickedTxt[pickedTxt.find('=')+1:].strip().split()
-                if len(keyList) > 1 and 'all' == keyList[1]:
-                    self.changeKey(keyList[0], True)
-                else:
-                    self.changeKey(keyList[0], False)
+                self.change_key(keyList[0], 'all' in prmText)
+        if 'oct' in prmText:
+            pickedTxt = prmText[prmText.find('oct')+3:]
+            if '=' in pickedTxt:
+                keyList = pickedTxt[pickedTxt.find('=')+1:].strip().split()
+                self.change_oct(keyList[0], 'all' in prmText)
         if 'beat' in prmText:
             pickedTxt = prmText[prmText.find('beat')+4:]
             if '=' in pickedTxt:

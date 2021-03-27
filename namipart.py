@@ -42,7 +42,7 @@ class Part:
             self.is_onebyone = True
 
     # Settings IF
-    def changeKeynote(self, nt):
+    def change_keynote(self, nt):
         self.keynote = nt
         if self.state_play == True:
             self.state_reserv = True

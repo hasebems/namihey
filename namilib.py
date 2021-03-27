@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 REST = 1000
+NONE = 1000
 DEFAULT_TICK_FOR_ONE_MEASURE = 1920     # 480 * 4
 INVALID_TICK = -1
 
@@ -93,3 +94,14 @@ def convert_doremi(doremi_str):
         elif l12 == 'li' or l12 == 'ta':  basePitch += 10
 
     return basePitch
+
+def limit(num, min, max):
+    if num > max: num = max
+    elif num < min: num = min
+    return num
+
+def note_limit(num, min, max):
+    while num > max: num -= 12
+    while num < min: num += 12
+    return num
+
