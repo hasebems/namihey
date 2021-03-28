@@ -19,7 +19,7 @@ class RandomGenerator():
         self.last_note = 0
         self.chord_flow = []
         self.chord_flow_next = []
-        self.rnd_rgn = 7
+        self.rnd_rgn = 12
         self.rnd_ofs = 0
         self.rnd_dur = 8
         self.measure_flow = []
@@ -43,12 +43,12 @@ class RandomGenerator():
                     value = int(elm[1])
                     if elm[0] == 'rgn':
                         if value < 2: value = 2
-                        elif value > 8: value = 8
-                        self.rnd_rgn = value - 1
+                        elif value > 12: value = 12
+                        self.rnd_rgn = value
                     elif elm[0] == 'ofs':
-                        if value < 1: value = 1
-                        elif value > 7: value = 7
-                        self.rnd_ofs = value - 1
+                        if value < 0: value = 0
+                        elif value > 11: value = 11
+                        self.rnd_ofs = value
                     elif elm[0] == 'dur':
                         self.rnd_dur = value
         if len(chord_flow) >= 2:
@@ -102,10 +102,7 @@ class RandomGenerator():
             index_locate += 1
         return index_locate
 
-    def _detect_note_number(self, tick):
-        # detect random chord array
-        measure_num = self._detect_locate(tick)
-        chord = self.chord_flow[measure_num]
+    def _detect_chord_scale(self, chord):
         root = 0
         dtbl = nlib.CHORD_SCALE['diatonic']
         doremi_set = nlib.CHORD_SCALE.get(chord)
@@ -122,16 +119,25 @@ class RandomGenerator():
                 root = nlib.convert_doremi(chord)
             chord = '_' + chord[1:]
             doremi_set = nlib.CHORD_SCALE.get(chord,dtbl)
+        return root, doremi_set
 
-        # Random の Index値を作るための最小値、最大値を算出
-        ofs = dtbl[len(dtbl)//2+self.rnd_ofs]
-        rgn = dtbl[len(dtbl)//2+self.rnd_rgn]
-        min_doremi = ofs - rgn
+    def _detect_index(self, root, doremi_set):
+        min_doremi = self.rnd_ofs - self.rnd_rgn - root
         start_idx = len(doremi_set)-1
         while doremi_set[start_idx] >  min_doremi : start_idx-=1
-        max_doremi = ofs + rgn
+        max_doremi = self.rnd_ofs + self.rnd_rgn - root
         end_idx = 0
         while doremi_set[end_idx] < max_doremi: end_idx+=1
+        return start_idx, end_idx
+
+    def _detect_note_number(self, tick):
+        # detect random chord array
+        measure_num = self._detect_locate(tick)
+        chord = self.chord_flow[measure_num]
+        root, doremi_set = self._detect_chord_scale(chord)
+
+        # Random の Index値を作るための最小値、最大値を算出
+        start_idx, end_idx = self._detect_index(root, doremi_set)
 
         # Random な Index値を発生させて、Tableからノート番号を読み出す 
         while True:
