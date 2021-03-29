@@ -42,7 +42,7 @@ class RandomGenerator():
                 if elm[1].isdecimal() == True:
                     value = int(elm[1])
                     if elm[0] == 'rgn':
-                        if value < 2: value = 2
+                        if value < 1: value = 1
                         elif value > 12: value = 12
                         self.rnd_rgn = value
                     elif elm[0] == 'ofs':
