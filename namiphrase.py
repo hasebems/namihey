@@ -5,282 +5,293 @@ import namilib as nlib
 
 REPEAT_START = -1
 NO_REPEAT = 0
-REPEAT_END = 1 # 1,2,3 の数値はリピート回数
+REPEAT_END = 1  # 1,2,3 の数値はリピート回数
 
-class PhraseGenerator():
+
+class PhraseGenerator:
     #   文字情報を MIDI で使う数値に変換
     #   変換の際、一回生成されるだけ
 
-    def __init__(self, phraseData, key):
-        self.baseNote = 4               # base note type
-        self.durPer = 100               # 100%
+    def __init__(self, phrase_data, key):
+        self.baseNote = 4  # base note type
+        self.durPer = 100  # 100%
         self.playData = []
-        self.noteData = phraseData
+        self.noteData = phrase_data
         self.keynote = key
 
-    def __addNote(self, tick, notes, duration, velocity=100):
+    def __add_note(self, tick, notes, duration, velocity=100):
         for note in notes:
             if note != nlib.REST:
-                self.playData.append([tick,note,velocity])
+                self.playData.append([tick, note, velocity])
         for note in notes:
             if note != nlib.REST:
-                realDur = math.floor(duration*self.durPer*480*4/(100*self.baseNote)) # 切り捨て
-                offTick = tick + realDur - 1
-                self.playData.append([offTick,note,0])
+                real_dur = math.floor(duration * self.durPer * 480 * 4 / (100 * self.baseNote))  # 切り捨て
+                off_tick = tick + real_dur - 1
+                self.playData.append([off_tick, note, 0])
 
-    def __fillOmittedNoteData(self):
+    def __fill_omitted_note_data(self):
         # スペース削除し、',' '|' 区切りでリスト化
-        noteFlow = re.split('[,|]', self.noteData[0].replace(' ',''))
-        while '' in noteFlow:
-            noteFlow.remove('')
+        note_flow = re.split('[,|]', self.noteData[0].replace(' ', ''))
+        while '' in note_flow:
+            note_flow.remove('')
 
         # If find Repeat mark, expand all event.
-        noRepeat = False
-        while noRepeat == False:
-            noRepeat = True
-            repeatStart = 0
-            for i, nt in enumerate(noteFlow):   # |: :n|
+        no_repeat = False
+        while not no_repeat:
+            no_repeat = True
+            repeat_start = 0
+            for i, nt in enumerate(note_flow):  # |: :n|
                 if ':' in nt:
-                    noRepeat = False
+                    no_repeat = False
                     locate = nt.find(':')
                     if locate == 0:
-                        noteFlow[i] = nt[1:]
-                        repeatStart = i
+                        note_flow[i] = nt[1:]
+                        repeat_start = i
                     else:
-                        repeatCount = 0
+                        repeat_count = 0
                         num = nt.rfind(':') - len(nt)
-                        noteFlow[i] = nt[0:num]
+                        note_flow[i] = nt[0:num]
                         if num == -1:
-                            repeatCount = 1
+                            repeat_count = 1
                         else:
-                            if nt[num+1:].isdecimal() == True: repeatCount = int(nt[num+1:])
-                        rptEndPtr = i+1
-                        for j in range(repeatCount):
-                            insPtr = rptEndPtr + j*(rptEndPtr-repeatStart)
-                            noteFlow[insPtr:insPtr] = noteFlow[repeatStart:rptEndPtr]
+                            if nt[num + 1:].isdecimal():
+                                repeat_count = int(nt[num + 1:])
+                        repeat_end_ptr = i + 1
+                        for j in range(repeat_count):
+                            ins_ptr = repeat_end_ptr + j * (repeat_end_ptr - repeat_start)
+                            note_flow[ins_ptr:ins_ptr] = note_flow[repeat_start:repeat_end_ptr]
                         break
-            ## end of for
+            # end of for
 
-            repeatStart = 0
-            firstBracket = False
-            for i, nt in enumerate(noteFlow):   # <  >*n
+            repeat_start = 0
+            first_bracket = False
+            for i, nt in enumerate(note_flow):  # <  >*n
                 if '<' in nt:
-                    noRepeat = False
+                    no_repeat = False
                     locate = nt.find('<')
                     if locate == 0:
-                        noteFlow[i] = nt[1:]
-                        repeatStart = i
-                        firstBracket = True
+                        note_flow[i] = nt[1:]
+                        repeat_start = i
+                        first_bracket = True
                 elif '>' in nt:
-                    repeatCount = 0
-                    reCnt = nt.rfind('>')
-                    noteFlow[i] = nt[0:reCnt]
-                    if nt[reCnt+1:reCnt+2] == '*' and firstBracket == True:
-                        if nt[reCnt+2:].isdecimal() == True: repeatCount = int(nt[reCnt+2:])
-                        if repeatCount > 1:
-                            rptEndPtr = i+1
-                            for j in range(repeatCount-1):
-                                insPtr = rptEndPtr + j*(rptEndPtr-repeatStart)
-                                noteFlow[insPtr:insPtr] = noteFlow[repeatStart:rptEndPtr]
+                    repeat_count = 0
+                    re_cnt = nt.rfind('>')
+                    note_flow[i] = nt[0:re_cnt]
+                    if nt[re_cnt + 1:re_cnt + 2] == '*' and first_bracket is True:
+                        if nt[re_cnt + 2:].isdecimal():
+                            repeat_count = int(nt[re_cnt + 2:])
+                        if repeat_count > 1:
+                            repeat_end_ptr = i + 1
+                            for j in range(repeat_count - 1):
+                                ins_ptr = repeat_end_ptr + j * (repeat_end_ptr - repeat_start)
+                                note_flow[ins_ptr:ins_ptr] = note_flow[repeat_start:repeat_end_ptr]
                     break
-            ## end of for
-        ## end of while
+            # end of for
+        # end of while
 
         # Same note repeat
-        noRepeat = False
-        while noRepeat == False:
-            noRepeat = True
-            for i, nt in enumerate(noteFlow):
+        no_repeat = False
+        while not no_repeat:
+            no_repeat = True
+            for i, nt in enumerate(note_flow):
                 if '*' in nt:
-                    noRepeat = False
+                    no_repeat = False
                     locate = nt.find('*')
-                    noteFlow[i] = nt[0:locate]
-                    repeatCount = 0
-                    if nt[locate+1:].isdecimal() == True: repeatCount = int(nt[locate+1:])
-                    if repeatCount > 1:
-                        for j in range(repeatCount-1):
-                            noteFlow.insert(i+1, nt[0:locate])
+                    note_flow[i] = nt[0:locate]
+                    repeat_count = 0
+                    if nt[locate + 1:].isdecimal():
+                        repeat_count = int(nt[locate + 1:])
+                    if repeat_count > 1:
+                        for j in range(repeat_count - 1):
+                            note_flow.insert(i + 1, nt[0:locate])
                     break
-            ## end of for
-        ## end of while
+            # end of for
+        # end of while
 
-        return noteFlow, len(noteFlow)
+        return note_flow, len(note_flow)
 
-    def __fillOmittedDurData(self, durText, ntNum):
-        durFlow = []
-        if ',' in durText:
-            durFlow = re.split('[,|]', durText.replace(' ',''))
+    @staticmethod
+    def __fill_omitted_dur_data(dur_text, note_num):
+        dur_flow = []
+        if ',' in dur_text:
+            dur_flow = re.split('[,|]', dur_text.replace(' ', ''))
         else:
             # ','が無い場合、全体を一つの文字列にし、リストとして追加
-            durFlow.append(durText)
+            dur_flow.append(dur_text)
 
-        noRepeat = False
-        while noRepeat == False:
-            noRepeat = True
-            repeatStart = 0
-            firstBracket = False
-            for i, dur in enumerate(durFlow):   # <  >*n
+        no_repeat = False
+        while not no_repeat:
+            no_repeat = True
+            repeat_start = 0
+            first_bracket = False
+            for i, dur in enumerate(dur_flow):  # <  >*n
                 if '<' in dur:
-                    noRepeat = False
+                    no_repeat = False
                     locate = dur.find('<')
                     if locate == 0:
-                        durFlow[i] = dur[1:]
-                        repeatStart = i
-                        firstBracket = True
+                        dur_flow[i] = dur[1:]
+                        repeat_start = i
+                        first_bracket = True
                 elif '>' in dur:
-                    reCnt = dur.rfind('>')
-                    durFlow[i] = dur[0:reCnt]
-                    if dur[reCnt+1:reCnt+2] == '*' and firstBracket == True:
-                        repeatCount = 0
-                        if dur[reCnt+2:].isdecimal() == True: repeatCount = int(dur[reCnt+2:])
-                        if repeatCount > 1:
-                            rptEndPtr = i+1
-                            for j in range(repeatCount-1):
-                                insPtr = rptEndPtr + j*(rptEndPtr-repeatStart)
-                                durFlow[insPtr:insPtr] = durFlow[repeatStart:rptEndPtr]
-                    elif i+1 == len(durFlow) and firstBracket == True:
+                    re_cnt = dur.rfind('>')
+                    dur_flow[i] = dur[0:re_cnt]
+                    if dur[re_cnt + 1:re_cnt + 2] == '*' and first_bracket is True:
+                        repeat_count = 0
+                        if dur[re_cnt + 2:].isdecimal():
+                            repeat_count = int(dur[re_cnt + 2:])
+                        if repeat_count > 1:
+                            repeat_end_ptr = i + 1
+                            for j in range(repeat_count - 1):
+                                ins_ptr = repeat_end_ptr + j * (repeat_end_ptr - repeat_start)
+                                dur_flow[ins_ptr:ins_ptr] = dur_flow[repeat_start:repeat_end_ptr]
+                    elif i + 1 == len(dur_flow) and first_bracket is True:
                         cntr = 0
                         while True:
-                            durFlow.append(durFlow[repeatStart+cntr])
-                            cntr+=1
-                            if ntNum <= len(durFlow): break
+                            dur_flow.append(dur_flow[repeat_start + cntr])
+                            cntr += 1
+                            if note_num <= len(dur_flow):
+                                break
                     break
-            ## end of for
-        ## end of while
+            # end of for
+        # end of while
 
-        durNum = len(durFlow)
-        if durNum < ntNum:
-            for _ in range(ntNum-durNum):
-                durFlow.append(durFlow[durNum-1])   # 足りない要素を補填
-        elif durNum > ntNum:
-            del durFlow[ntNum:] # 多い要素を削除
-        return durFlow
+        dur_num = len(dur_flow)
+        if dur_num < note_num:
+            for _ in range(note_num - dur_num):
+                dur_flow.append(dur_flow[dur_num - 1])  # 足りない要素を補填
+        elif dur_num > note_num:
+            del dur_flow[note_num:]  # 多い要素を削除
+        return dur_flow
 
-    def __fillOmittedVelData(self, velText, ntNum):
-        velFlow = []
-        if ',' in velText:
-            velFlow = re.split('[,|]', velText.replace(' ',''))
+    @staticmethod
+    def __fill_omitted_vel_data(vel_text, note_num):
+        vel_flow = []
+        if ',' in vel_text:
+            vel_flow = re.split('[,|]', vel_text.replace(' ', ''))
         else:
             # ','が無い場合、全体を一つの文字列にし、リストとして追加
-            velFlow.append(velText)
+            vel_flow.append(vel_text)
 
-        noRepeat = False
-        while noRepeat == False:
-            noRepeat = True
-            repeatStart = 0
-            firstBracket = False
-            for i, vel in enumerate(velFlow):   # <  >*n
+        no_repeat = False
+        while not no_repeat:
+            no_repeat = True
+            repeat_start = 0
+            first_bracket = False
+            for i, vel in enumerate(vel_flow):  # <  >*n
                 if '<' in vel:
-                    noRepeat = False
+                    no_repeat = False
                     locate = vel.find('<')
                     if locate == 0:
-                        velFlow[i] = vel[1:]
-                        repeatStart = i
-                        firstBracket = True
+                        vel_flow[i] = vel[1:]
+                        repeat_start = i
+                        first_bracket = True
                 elif '>' in vel:
-                    reCnt = vel.rfind('>')
-                    velFlow[i] = vel[0:reCnt]
-                    if vel[reCnt+1:reCnt+2] == '*' and firstBracket == True:
-                        repeatCount = 0
-                        if vel[reCnt+2:].isdecimal() == True: repeatCount = int(vel[reCnt+2:])
-                        if repeatCount > 1:
-                            rptEndPtr = i+1
-                            for j in range(repeatCount-1):
-                                insPtr = rptEndPtr + j*(rptEndPtr-repeatStart)
-                                velFlow[insPtr:insPtr] = velFlow[repeatStart:rptEndPtr]
-                    elif i+1 == len(velFlow) and firstBracket == True:
+                    re_cnt = vel.rfind('>')
+                    vel_flow[i] = vel[0:re_cnt]
+                    if vel[re_cnt + 1:re_cnt + 2] == '*' and first_bracket is True:
+                        repeat_count = 0
+                        if vel[re_cnt + 2:].isdecimal():
+                            repeat_count = int(vel[re_cnt + 2:])
+                        if repeat_count > 1:
+                            repeat_end_ptr = i + 1
+                            for j in range(repeat_count - 1):
+                                ins_ptr = repeat_end_ptr + j * (repeat_end_ptr - repeat_start)
+                                vel_flow[ins_ptr:ins_ptr] = vel_flow[repeat_start:repeat_end_ptr]
+                    elif i + 1 == len(vel_flow) and first_bracket is True:
                         cntr = 0
                         while True:
-                            velFlow.append(velFlow[repeatStart+cntr])
-                            cntr+=1
-                            if ntNum <= len(velFlow): break
+                            vel_flow.append(vel_flow[repeat_start + cntr])
+                            cntr += 1
+                            if note_num <= len(vel_flow):
+                                break
                     break
-            ## end of for
-        ## end of while
+            # end of for
+        # end of while
 
-        velNum = len(velFlow)
-        if velNum < ntNum:
-            for _ in range(ntNum-velNum):
-                velFlow.append(velFlow[velNum-1])   # 足りない要素を補填
-        return velFlow
+        vel_num = len(vel_flow)
+        if vel_num < note_num:
+            for _ in range(note_num - vel_num):
+                vel_flow.append(vel_flow[vel_num - 1])  # 足りない要素を補填
+        return vel_flow
 
-    def __changeBasicNoteValue(self, durText):
+    def __change_basic_note_value(self, dur_text):
         # コロンで設定されている基本音価の調査し、変更があれば差し替え
-        if ':' in durText:
-            spTxt = durText.split(':')
-            baseNoteTxt = '4'
+        if ':' in dur_text:
+            sp_txt = dur_text.split(':')
+            base_note_text = '4'
             # 基本音価はコロンの前か後か？
-            if (',' in spTxt[0]) or ('(' and ')' in spTxt[1]):
-                durText = spTxt[0]
-                baseNoteText = spTxt[1]
-            elif (',' in spTxt[1]) or ('(' and ')' in spTxt[0]):
-                baseNoteText = spTxt[0]
-                durText = spTxt[1]
-            elif spTxt[0] == '':
-                durText = '1'
-                baseNoteText = spTxt[1]
-            elif spTxt[0].isdecimal() and spTxt[1].isdecimal() and int(spTxt[0]) < int(spTxt[1]):
-                durText = spTxt[0]
-                baseNoteText = spTxt[1]
+            if (',' in sp_txt[0]) or ('(' and ')' in sp_txt[1]):
+                dur_text = sp_txt[0]
+                base_note_text = sp_txt[1]
+            elif (',' in sp_txt[1]) or ('(' and ')' in sp_txt[0]):
+                base_note_text = sp_txt[0]
+                dur_text = sp_txt[1]
+            elif sp_txt[0] == '':
+                dur_text = '1'
+                base_note_text = sp_txt[1]
+            elif sp_txt[0].isdecimal() and sp_txt[1].isdecimal() and int(sp_txt[0]) < int(sp_txt[1]):
+                dur_text = sp_txt[0]
+                base_note_text = sp_txt[1]
             else:
-                baseNoteText = spTxt[0]
-                durText = spTxt[1]
+                base_note_text = sp_txt[0]
+                dur_text = sp_txt[1]
 
-            if '(' and ')' in baseNoteText:
-                percent = re.findall("(?<=\().+?(?=\))", baseNoteText)
+            if '(' and ')' in base_note_text:
+                percent = re.findall("(?<=\().+?(?=\))", base_note_text)
                 if '%' in percent[0]:
                     per = percent[0].strip('%')
-                    if per.isdecimal() == True and int(per) <= 100:
-                        self.durPer = int(per)                  # % の数値
+                    if per.isdecimal() is True and int(per) <= 100:
+                        self.durPer = int(per)  # % の数値
                 elif percent[0] == 'stacc.':
                     self.durPer = 50
-            durLen = re.sub("\(.+?\)", "", baseNoteText)
-            if durLen.isdecimal() == True:
-                self.baseNote = int(durLen)
+            dur_len = re.sub("\(.+?\)", "", base_note_text)
+            if dur_len.isdecimal() is True:
+                self.baseNote = int(dur_len)
             else:
                 self.baseNote = 4
-        return durText
+        return dur_text
 
-    def __fillOmittedData(self):
-        ### Note
-        noteFlow, ntNum = self.__fillOmittedNoteData()
+    def __fill_omitted_data(self):
+        # Note
+        note_flow, note_num = self.__fill_omitted_note_data()
 
-        ### Duration
-        durText = self.__changeBasicNoteValue(self.noteData[1])
-        durFlow = self.__fillOmittedDurData(durText, ntNum)
+        # Duration
+        dur_text = self.__change_basic_note_value(self.noteData[1])
+        dur_flow = self.__fill_omitted_dur_data(dur_text, note_num)
 
-        ### Velocity
-        velFlow = self.__fillOmittedVelData(self.noteData[2], ntNum)
+        # Velocity
+        vel_flow = self.__fill_omitted_vel_data(self.noteData[2], note_num)
 
-        return noteFlow, durFlow, velFlow, ntNum
+        return note_flow, dur_flow, vel_flow, note_num
 
-    def __cnvNoteToPitch(self, noteText):
-        nlists = noteText.replace(' ','').split('=')    # 和音検出
+    def __cnv_note_to_pitch(self, note_text):
+        nlists = note_text.replace(' ', '').split('=')  # 和音検出
         bpchs = []
         for nx in nlists:
-            basePitch = self.keynote + nlib.convert_doremi(nx)
-            bpchs.append(basePitch)
+            base_pitch = self.keynote + nlib.convert_doremi(nx)
+            bpchs.append(base_pitch)
         return bpchs
 
-    def __cnvDuration(self, durText):
-        if durText.isdecimal() == True:
-            return int(durText)
+    @staticmethod
+    def __cnv_duration(dur_text):
+        if dur_text.isdecimal() is True:
+            return int(dur_text)
         else:
             return 1
 
-    def convertToMIDILikeFormat(self):
-        if self.noteData[0] == None or len(self.noteData[0]) == 0:
+    def convert_to_MIDI_like_format(self):
+        if self.noteData[0] is None or len(self.noteData[0]) == 0:
             return 0, self.playData
 
-        noteFlow, durFlow, velFlow, ntNum = self.__fillOmittedData()
+        note_flow, dur_flow, vel_flow, note_num = self.__fill_omitted_data()
         tick = 0
-        readPtr = 0
-        while readPtr < ntNum:
-            cnts = self.__cnvNoteToPitch(noteFlow[readPtr])
-            dur = self.__cnvDuration(durFlow[readPtr])
-            vel = nlib.convert_exp2vel(velFlow[readPtr])
-            self.__addNote(tick,cnts,dur,vel)
-            tick += dur*480*4/self.baseNote
-            readPtr += 1    # out from repeat
+        read_ptr = 0
+        while read_ptr < note_num:
+            cnts = self.__cnv_note_to_pitch(note_flow[read_ptr])
+            dur = self.__cnv_duration(dur_flow[read_ptr])
+            vel = nlib.convert_exp2vel(vel_flow[read_ptr])
+            self.__add_note(tick, cnts, dur, vel)
+            tick += dur * 480 * 4 / self.baseNote
+            read_ptr += 1  # out from repeat
 
         return tick, self.playData

@@ -9,29 +9,29 @@ import  namiparse as ps
 import  namiseq as sq
 import  readline    # add history function
 
-def quit():
+def quit_job():
     global seq
-    if seq.during_play == True:
+    if seq.during_play:
         seq.stop()
     pass
 
 def cui():
     while True:
         global pas
-        inputText = input(pas.promptStr)
-        if inputText == 'quit' or inputText == 'exit':
-            quit()
+        input_text = input(pas.promptStr)
+        if input_text == 'quit' or input_text == 'exit':
+            quit_job()
             break
-        pas.startParsing(inputText)
+        pas.startParsing(input_text)
     global loop
     loop = False
 
 def midi_setting():
     global pas
     global seq
-    midiport = seq.get_midi_all_port()
+    midi_port = seq.get_midi_all_port()
     pas.print_dialogue("==MIDI OUT LIST==")
-    for i, pt in enumerate(midiport):
+    for i, pt in enumerate(midi_port):
         pas.print_dialogue("PORT " + str(i) + ": " + str(pt))
     pas.print_dialogue("==SELECTED MIDI OUT==")
     pas.print_dialogue(seq.get_midi_port())
@@ -42,11 +42,11 @@ seq = sq.Seq()
 pas = ps.Parsing(seq)
 midi_setting()
 
-cuijob = threading.Thread(target=cui)
-cuijob.start()
+cui_job = threading.Thread(target=cui)
+cui_job.start()
 while True:
     seq.periodic()
-    if loop == False:
+    if not loop:
         break
-cuijob.join()
+cui_job.join()
 pas.print_dialogue("That's it! Bye!")

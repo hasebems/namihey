@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import namiphrase as nph
 
+
 class PartGenPlay:
 
     def __init__(self, func):
@@ -12,12 +13,12 @@ class PartGenPlay:
 
     def set_phrase(self, description, keynote):
         pg = nph.PhraseGenerator(description, keynote)
-        self.whole_tick, self.sqdata = pg.convertToMIDILikeFormat()
+        self.whole_tick, self.sqdata = pg.convert_to_MIDI_like_format()
         return self.whole_tick
 
     def generate_event(self, tick):
-        maxEv = len(self.sqdata)
-        if maxEv == 0:
+        max_ev = len(self.sqdata)
+        if max_ev == 0:
             # データを持っていない
             return -1
 
@@ -25,13 +26,13 @@ class PartGenPlay:
             self.play_counter = 0
 
         trace = self.play_counter
-        nextTick = 0
+        next_tick = 0
         while True:
-            if maxEv <= trace:
-                nextTick = -1   # means sequence finished
+            if max_ev <= trace:
+                next_tick = -1   # means sequence finished
                 break
-            nextTick = self.sqdata[trace][0]
-            if nextTick < tick:
+            next_tick = self.sqdata[trace][0]
+            if next_tick < tick:
                 nt = self.sqdata[trace][1]
                 vel = self.sqdata[trace][2]
                 self.midi_handler(nt, vel)
@@ -40,7 +41,7 @@ class PartGenPlay:
             trace += 1
 
         self.play_counter = trace
-        return nextTick
+        return next_tick
 
     def start(self):
         self.play_counter = 0

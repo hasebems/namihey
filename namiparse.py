@@ -1,72 +1,83 @@
 # -*- coding: utf-8 -*-
-import  namilib as nlib
+import namilib as nlib
 
 T_WATER = '\033[96m'
 T_PINK = '\033[95m'
 T_WHITE = '\033[97m'
 T_END = '\033[0m'
 
+
 class Parsing:
     #   入力した文字列の解析
     #   一行単位で入力されるたびに生成される
     def __init__(self, seq):
         self.sq = seq
-        self.inputPart = 1      # 1origin
-        self.promptStr = self.get_prompt_string(1,1)
+        self.inputPart = 1  # 1origin
+        self.promptStr = self.get_prompt_string(1, 1)
 
-    def get_prompt_string(self, blk, part):
-       # return T_WATER + '[' + str(blk) + '][' + str(part) + ']~~> ' + T_END
-        return '[' +str(blk) + '][' + str(part) + ']~~> '
+    @staticmethod
+    def get_prompt_string(blk, part):
+        # return T_WATER + '[' + str(blk) + '][' + str(part) + ']~~> ' + T_END
+        return '[' + str(blk) + '][' + str(part) + ']~~> '
 
-    def print_dialogue(self, rpy):
-        print(T_PINK+rpy+T_END)
+    @staticmethod
+    def print_dialogue(rpy):
+        print(T_PINK + rpy + T_END)
 
-    def changeBeat(self, text):
+    def change_beat(self, text):
         if '/' in text:
-            beatList = text.strip().split('/')
+            beat_list = text.strip().split('/')
             btnum = onpu = 0
-            btnumStr = beatList[0].strip()
-            if btnumStr.isdecimal() == True:
-                btnum = int(btnumStr)
-            onpuStr = beatList[1].strip()
-            if onpuStr.isdecimal() == True:
-                onpu = int(onpuStr)
+            btnum_str = beat_list[0].strip()
+            if btnum_str.isdecimal():
+                btnum = int(btnum_str)
+            onpu_str = beat_list[1].strip()
+            if onpu_str.isdecimal():
+                onpu = int(onpu_str)
             if btnum >= 1 and onpu >= 1:
-                self.sq.getBlock().stock_tick_for_one_measure = (nlib.DEFAULT_TICK_FOR_ONE_MEASURE/onpu)*btnum
+                self.sq.block().stock_tick_for_one_measure = (nlib.DEFAULT_TICK_FOR_ONE_MEASURE / onpu) * btnum
 
-    def change_key(self, keyText, all):
-        def change_note(pt, key, oct):
-            if oct == nlib.NONE:
-                oct = pt.keynote//12
-            key += oct*12
-            key = nlib.note_limit(key, 0, 127)
-            pt.change_keynote(key)
+    def change_key(self, key_text, all):
+        def change_note(ptx, keyx, octx):
+            if octx == nlib.NONE:
+                octx = ptx.keynote // 12
+            keyx += octx * 12
+            keyx = nlib.note_limit(keyx, 0, 127)
+            ptx.change_keynote(keyx)
 
         key = 0
         oct = nlib.NONE
-        firstLetter = keyText[0]
-        if firstLetter == 'C':   key += 0
-        elif firstLetter == 'D': key += 2
-        elif firstLetter == 'E': key += 4
-        elif firstLetter == 'F': key += 5
-        elif firstLetter == 'G': key += 7
-        elif firstLetter == 'A': key += 9
-        elif firstLetter == 'B': key += 11
-        else: return
-        if len(keyText) > 1:
-            octave_letter = keyText[1:]
-            if keyText[1] == '#':
+        first_letter = key_text[0]
+        if first_letter == 'C':
+            key += 0
+        elif first_letter == 'D':
+            key += 2
+        elif first_letter == 'E':
+            key += 4
+        elif first_letter == 'F':
+            key += 5
+        elif first_letter == 'G':
+            key += 7
+        elif first_letter == 'A':
+            key += 9
+        elif first_letter == 'B':
+            key += 11
+        else:
+            return
+        if len(key_text) > 1:
+            octave_letter = key_text[1:]
+            if key_text[1] == '#':
                 key += 1
-                if len(keyText) > 2:
-                    octave_letter = keyText[2:]
-            elif keyText[1] == 'b':
+                if len(key_text) > 2:
+                    octave_letter = key_text[2:]
+            elif key_text[1] == 'b':
                 key -= 1
-                if len(keyText) > 2:
-                    octave_letter = keyText[2:]
-            if octave_letter.isdecimal() == True:
+                if len(key_text) > 2:
+                    octave_letter = key_text[2:]
+            if octave_letter.isdecimal():
                 oct = int(octave_letter) + 1
         curbk = self.sq.current_bk
-        if all == True:
+        if all:
             for pt in curbk.parts:
                 change_note(pt, key, oct)
         else:
@@ -74,204 +85,222 @@ class Parsing:
             change_note(pt, key, oct)
 
     def change_oct(self, text, all):
-        def change_oct(pt, oct):
-            newoct = pt.keynote//12 + oct
-            key = newoct*12 + pt.keynote%12
+        def change_oct_to_part(ptx, octx):
+            newoct = ptx.keynote // 12 + octx
+            key = newoct * 12 + ptx.keynote % 12
             key = nlib.note_limit(key, 0, 127)
-            pt.change_keynote(key)
+            ptx.change_keynote(key)
 
         octave_letter = text
         pm = 1
-        oct = 0
         if len(text) > 1:
             if text[0] == '+':
                 octave_letter = text[1:]
             elif text[0] == '-':
                 pm = -1
                 octave_letter = text[1:]
-        if octave_letter.isdecimal() == True:
-            oct = int(octave_letter)*pm
+        if octave_letter.isdecimal():
+            oct = int(octave_letter) * pm
         else:
             return
         curbk = self.sq.current_bk
-        if all == True:
+        if all:
             for pt in curbk.parts:
-                change_oct(pt, oct)
+                change_oct_to_part(pt, oct)
         else:
             pt = curbk.parts[curbk.inputPart]
-            change_oct(pt, oct)
+            change_oct_to_part(pt, oct)
 
-    def parseSetCommand(self, inputText):
-        prmText = inputText.strip()
-        if 'part' in prmText:
-            pickedTxt = prmText[prmText.find('part')+4:]
-            if '=' in pickedTxt:
-                ptNumList = pickedTxt[pickedTxt.find('=')+1:].strip().split()
-                #print(ptNumList[0])
-        if 'block' in prmText:
+    def parse_set_command(self, input_text):
+        prm_text = input_text.strip()
+        if 'part' in prm_text:
+            picked_txt = prm_text[prm_text.find('part') + 4:]
+            if '=' in picked_txt:
+                ptNumList = picked_txt[picked_txt.find('=') + 1:].strip().split()
+                # print(ptNumList[0])
+        if 'block' in prm_text:
             pass
-        if 'key' in prmText:
-            pickedTxt = prmText[prmText.find('key')+3:]
-            if '=' in pickedTxt:
-                keyList = pickedTxt[pickedTxt.find('=')+1:].strip().split()
-                self.change_key(keyList[0], 'all' in prmText)
-        if 'oct' in prmText:
-            pickedTxt = prmText[prmText.find('oct')+3:]
-            if '=' in pickedTxt:
-                keyList = pickedTxt[pickedTxt.find('=')+1:].strip().split()
-                self.change_oct(keyList[0], 'all' in prmText)
-        if 'beat' in prmText:
-            pickedTxt = prmText[prmText.find('beat')+4:]
-            if '=' in pickedTxt:
-                beatList = pickedTxt[pickedTxt.find('=')+1:].strip().split()
-                self.changeBeat(beatList[0])
-        if 'bpm' in prmText:
-            pickedTxt = prmText[prmText.find('bpm')+3:]
-            if '=' in pickedTxt:
-                bpmNumList = pickedTxt[pickedTxt.find('=')+1:].strip().split()
-                if bpmNumList[0].isdecimal() == True:
-                    self.sq.getBlock().stock_bpm = int(bpmNumList[0])
+        if 'key' in prm_text:
+            picked_txt = prm_text[prm_text.find('key') + 3:]
+            if '=' in picked_txt:
+                key_list = picked_txt[picked_txt.find('=') + 1:].strip().split()
+                self.change_key(key_list[0], 'all' in prm_text)
+        if 'oct' in prm_text:
+            picked_txt = prm_text[prm_text.find('oct') + 3:]
+            if '=' in picked_txt:
+                key_list = picked_txt[picked_txt.find('=') + 1:].strip().split()
+                self.change_oct(key_list[0], 'all' in prm_text)
+        if 'beat' in prm_text:
+            picked_txt = prm_text[prm_text.find('beat') + 4:]
+            if '=' in picked_txt:
+                beatlist = picked_txt[picked_txt.find('=') + 1:].strip().split()
+                self.change_beat(beatlist[0])
+        if 'bpm' in prm_text:
+            picked_txt = prm_text[prm_text.find('bpm') + 3:]
+            if '=' in picked_txt:
+                bpmnumlist = picked_txt[picked_txt.find('=') + 1:].strip().split()
+                if bpmnumlist[0].isdecimal():
+                    self.sq.block().stock_bpm = int(bpmnumlist[0])
                     self.print_dialogue("BPM has changed!")
 
-    def letterP(self, inputText):
-        if inputText[0:4] == 'play':
-            arg = inputText.split()
+    def letterP(self, input_text):
+        if input_text[0:4] == 'play':
+            arg = input_text.split()
             if len(arg) == 1:
-                welldone = self.sq.play()
-                if welldone:    self.print_dialogue("Phrase has started!")
-        else: self.print_dialogue("what?")
+                well_done = self.sq.play()
+                if well_done:
+                    self.print_dialogue("Phrase has started!")
+        else:
+            self.print_dialogue("what?")
 
-    def letterS(self, inputText):
-        if inputText[0:5] == 'start':
-            welldone = self.sq.play()
-            if welldone:    self.print_dialogue("Phrase has started!")
-            else:           self.print_dialogue("Phrase has no data!")
-        elif inputText[0:4] == 'stop':
+    def letterS(self, input_text):
+        if input_text[0:5] == 'start':
+            well_done = self.sq.play()
+            if well_done:
+                self.print_dialogue("Phrase has started!")
+            else:
+                self.print_dialogue("Phrase has no data!")
+        elif input_text[0:4] == 'stop':
             self.sq.stop()
             self.print_dialogue("Stopped!")
-        elif inputText[0:3] == 'set':
-            self.parseSetCommand(inputText[3:])
-        elif inputText[0:4] == 'show':
-            blk = self.sq.getBlock()
+        elif input_text[0:3] == 'set':
+            self.parse_set_command(input_text[3:])
+        elif input_text[0:4] == 'show':
+            blk = self.sq.block()
             ele = blk.parts[blk.inputPart].description
             self.print_dialogue('~~> N[' + str(ele[1]) + ']')
             self.print_dialogue('~~> D[' + str(ele[2]) + ']')
             self.print_dialogue('~~> V[' + str(ele[3]) + ']')
-        else: self.print_dialogue("what?")
+        else:
+            self.print_dialogue("what?")
 
-    def letterI(self, inputText):
-        if inputText[0:5] == 'input':
-            tx = inputText[5:].replace(' ', '')
-            if tx.isdecimal() == True:
+    def letterI(self, input_text):
+        if input_text[0:5] == 'input':
+            tx = input_text[5:].replace(' ', '')
+            if tx.isdecimal():
                 part = int(tx)
-                if part > 0 and part <= 16:
+                if 0 < part <= 16:
                     self.print_dialogue("Changed current part to " + str(part) + ".")
-                    blk = self.sq.getBlock()
-                    blk.inputPart = part-1
+                    blk = self.sq.block()
+                    blk.inputPart = part - 1
                     self.inputPart = part
                     self.promptStr = self.get_prompt_string(1, part)
-        else: self.print_dialogue("what?")
+        else:
+            self.print_dialogue("what?")
 
-    def letterBracket(self, inputText):
-        # [] のセットを抜き出し、中身を noteInfo に入れる
-        noteInfo = []
-        tx = inputText
+    def letter_bracket(self, input_text):
+        # [] のセットを抜き出し、中身を note_info に入れる
+        note_info = []
+        tx = input_text
         while True:
             num = tx.find(']')
             if num == -1:
                 break
-            noteInfo.append(tx[1:num])
-            tx = tx[num+1:].strip()
+            note_info.append(tx[1:num])
+            tx = tx[num + 1:].strip()
             if len(tx) == 0:
                 break
             if tx[0:1] != '[':
                 break
 
         # [] の数が 1,2 の時は中身を補填
-        brktNum = len(noteInfo)
-        if brktNum == 1:
-            noteInfo.append('1')    # set default value
-            noteInfo.append('100')
-        elif brktNum == 2:
-            noteInfo.append('100')  # set default velocity value
-        elif brktNum == 0 or brktNum > 3:
+        bracket_num = len(note_info)
+        if bracket_num == 1:
+            note_info.append('1')  # set default value
+            note_info.append('100')
+        elif bracket_num == 2:
+            note_info.append('100')  # set default velocity value
+        elif bracket_num == 0 or bracket_num > 3:
             # [] の数が 1〜3 以外ならエラー
             self.print_dialogue("Error!")
             return
 
         self.print_dialogue("set Phrase!")
-        blk = self.sq.getBlock()
+        blk = self.sq.block()
         blk.clear_description()
-        noteInfo.insert(0,'phrase')
-        blk.add_seq_description(noteInfo)
+        note_info.insert(0, 'phrase')
+        blk.add_seq_description(note_info)
 
-    def letterBrace(self, inputText):
-        # {} のセットを抜き出し、中身を noteInfo に入れる
-        noteInfo = []
-        tx = inputText
+    def letter_brace(self, input_text):
+        # {} のセットを抜き出し、中身を note_info に入れる
+        note_info = []
+        tx = input_text
         while True:
             num = tx.find('}')
             if num == -1:
                 break
-            noteInfo.append(tx[1:num])
-            tx = tx[num+1:].strip()
+            note_info.append(tx[1:num])
+            tx = tx[num + 1:].strip()
             if len(tx) == 0:
                 break
             if tx[0:1] != '{':
                 break
 
         # [] の数が 1,2 の時は中身を補填
-        brktNum = len(noteInfo)
+        brktNum = len(note_info)
         if brktNum == 1:
-            noteInfo.append('1')    # set default value
-            noteInfo.append('100')
+            note_info.append('1')  # set default value
+            note_info.append('100')
         elif brktNum == 2:
-            noteInfo.append('100')  # set default velocity value
+            note_info.append('100')  # set default velocity value
         elif brktNum == 0 or brktNum > 3:
             # [] の数が 1〜3 以外ならエラー
             self.print_dialogue("Error!")
             return
 
-        if noteInfo[0][0:3] == 'rnd':
+        if note_info[0][0:3] == 'rnd':
             self.print_dialogue("set Random Pattern!")
-            blk = self.sq.getBlock()
+            blk = self.sq.block()
             blk.clear_description()
-            noteInfo.insert(0,'random')
-            blk.add_seq_description(noteInfo)
+            note_info.insert(0, 'random')
+            blk.add_seq_description(note_info)
         else:
             self.print_dialogue("what?")
 
-    def letterC(self, inputText):
-        if inputText[0:6] == 'copyto':
-            tx = inputText[7:].replace(' ', '')
-            if tx.isdecimal() == True:
+    def letterC(self, input_text):
+        if input_text[0:6] == 'copyto':
+            tx = input_text[7:].replace(' ', '')
+            if tx.isdecimal():
                 part = int(tx)
-                if part > 0 and part <= 16:
-                    self.sq.current_bk.copyPhrase(part-1)
+                if 0 < part <= 16:
+                    self.sq.current_bk.copy_phrase(part - 1)
                     self.print_dialogue("Phrase copied to part" + tx + ".")
-        else: self.print_dialogue("what?")
+        else:
+            self.print_dialogue("what?")
 
-    def letterF(self, inputText):
-        if inputText[0:4] == "fine":
+    def letterF(self, input_text):
+        if input_text[0:4] == "fine":
             self.sq.fine()
             self.print_dialogue('Will be ended!')
-        else: self.print_dialogue("what?")
+        else:
+            self.print_dialogue("what?")
 
-    def letterQm(self, inputText):
+    def letterQm(self, input_text):
         self.print_dialogue("what?")
 
-    def startParsing(self, inputText):
-        firstLetter = inputText[0:1]
-        if firstLetter == '[': self.letterBracket(inputText)
-        elif firstLetter == '{': self.letterBrace(inputText)
-        elif firstLetter == 'b': self.letterP(inputText)
-        elif firstLetter == 'c': self.letterC(inputText)
-        elif firstLetter == 'f': self.letterF(inputText)
-        elif firstLetter == 'i': self.letterI(inputText)
-        elif firstLetter == 'k': self.letterP(inputText)
-        elif firstLetter == 'o': self.letterP(inputText)
-        elif firstLetter == 'p': self.letterP(inputText)
-        elif firstLetter == 's': self.letterS(inputText)
-        elif firstLetter == '?': self.letterQm(inputText)
-        else: self.print_dialogue("what?")
-
+    def startParsing(self, input_text):
+        first_letter = input_text[0:1]
+        if first_letter == '[':
+            self.letter_bracket(input_text)
+        elif first_letter == '{':
+            self.letter_brace(input_text)
+        elif first_letter == 'b':
+            self.letterP(input_text)
+        elif first_letter == 'c':
+            self.letterC(input_text)
+        elif first_letter == 'f':
+            self.letterF(input_text)
+        elif first_letter == 'i':
+            self.letterI(input_text)
+        elif first_letter == 'k':
+            self.letterP(input_text)
+        elif first_letter == 'o':
+            self.letterP(input_text)
+        elif first_letter == 'p':
+            self.letterP(input_text)
+        elif first_letter == 's':
+            self.letterS(input_text)
+        elif first_letter == '?':
+            self.letterQm(input_text)
+        else:
+            self.print_dialogue("what?")
