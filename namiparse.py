@@ -78,10 +78,10 @@ class Parsing:
                 oct = int(octave_letter) + 1
         curbk = self.sq.current_bk
         if all:
-            for pt in curbk.parts:
-                change_note(pt, key, oct)
+            for i in range(curbk.get_max_part()):
+                change_note(curbk.part(i), key, oct)
         else:
-            pt = curbk.parts[curbk.inputPart]
+            pt = curbk.part(curbk.inputPart)
             change_note(pt, key, oct)
 
     def change_oct(self, text, all):
@@ -105,10 +105,10 @@ class Parsing:
             return
         curbk = self.sq.current_bk
         if all:
-            for pt in curbk.parts:
-                change_oct_to_part(pt, oct)
+            for i in range(curbk.max_part()):
+                change_oct_to_part(curbk.part(i), oct)
         else:
-            pt = curbk.parts[curbk.inputPart]
+            pt = curbk.part(curbk.inputPart)
             change_oct_to_part(pt, oct)
 
     def parse_set_command(self, input_text):
@@ -167,7 +167,7 @@ class Parsing:
             self.parse_set_command(input_text[3:])
         elif input_text[0:4] == 'show':
             blk = self.sq.block()
-            ele = blk.parts[blk.inputPart].description
+            ele = blk.part(blk.inputPart).description
             self.print_dialogue('~~> N[' + str(ele[1]) + ']')
             self.print_dialogue('~~> D[' + str(ele[2]) + ']')
             self.print_dialogue('~~> V[' + str(ele[3]) + ']')
