@@ -206,8 +206,8 @@ class BlockIndependentLoop(Block):
         self.waitForFine = False
         self.__stock_bpm = self.bpm
         self.__stock_tick_for_one_measure = self.tick_for_one_measure
-        self.last_time = 0          # 前回の時間
-        self.current_measure = 0    # 現在の通算小節数
+        self.current_measure = 0        # 現在の通算小節数
+        self.current_measure_time = 0   # 現在の小節数の先頭時間
 
     def get_whole_tick(self, op):
         return self.tick_for_one_measure*op.maxMeasure
@@ -238,47 +238,46 @@ class BlockIndependentLoop(Block):
     def max_part(self):
         return len(self.part_operator)
 
-    def _return_to_loop_top(self, op):
+    def _return_to_loop_top(self, op, timenow):
         # Part の loop 先頭に戻り、loop 小節数の再計算
         op.maxMeasure = 1
         total_tick = op.part.return_to_top(self.tick_for_one_measure) # <<Part>>
         while total_tick > self.get_whole_tick(op):
             op.maxMeasure += 1
         # Part の Loop Start Time, Next Loop Start Time を算出
-        op.currentLoopStartTime = op.nextLoopStartTime
-        op.nextLoopStartTime += self.get_whole_tick(op)/(self.bpm*TICK_PER_SEC)
+        op.currentLoopStartTime = timenow
+        op.nextLoopStartTime = timenow + self.get_whole_tick(op)/(self.bpm*TICK_PER_SEC)
 
     # Main IF : Start Sequencer
     def start(self):
         # block の初期化
         self.bpm = self.__stock_bpm
         self.tick_for_one_measure = self.__stock_tick_for_one_measure
-        self.last_time = 0
         self.current_measure = 0
+        self.current_measure_time = 0
 
         for op in self.part_operator:
             op.reset()
-            self._return_to_loop_top(op)
-
-            if self.get_whole_tick(op) == 0:
-                return False
+            self._return_to_loop_top(op, 0)
             op.part.start() # <<Part>>
         return True
 
     # Main IF : Generate Music Event
     def generate_event(self, ev_time):
         one_measure_time = self.tick_for_one_measure/(self.bpm*TICK_PER_SEC) # 1小節の長さ
-        next_time = ev_time + one_measure_time
-        if int(self.last_time/one_measure_time) < int(ev_time/one_measure_time):
+        real_measure = int(ev_time/one_measure_time)
+        if real_measure > self.current_measure:
             # 小節先頭
             self.bpm = self.__stock_bpm
             self.tick_for_one_measure = self.__stock_tick_for_one_measure
-            self.current_measure = int(ev_time/one_measure_time)
+            self.current_measure = real_measure
+            self.current_measure_time = one_measure_time*self.current_measure
 
+        next_time = (real_measure+1)*one_measure_time # 次の小節の頭に初期値設定
         for op in self.part_operator:
             if ev_time > op.nextLoopStartTime:
                 # loop 先頭に戻る
-                self._return_to_loop_top(op)
+                self._return_to_loop_top(op, self.current_measure_time)
 
             pt_next_time = op.nextLoopStartTime
             current_tick = (ev_time - op.currentLoopStartTime)*self.bpm*TICK_PER_SEC
@@ -291,8 +290,6 @@ class BlockIndependentLoop(Block):
             # 一番近い将来のイベントがある時間算出
             if next_time > pt_next_time:
                 next_time = pt_next_time
-
-        self.last_time = ev_time
         return next_time
 
     # Main IF : Stop Sequencer
