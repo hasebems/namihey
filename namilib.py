@@ -3,7 +3,7 @@
 REST = 1000
 NONE = 1000
 DEFAULT_TICK_FOR_ONE_MEASURE = 1920  # 480 * 4
-INVALID_TICK = -1
+END_OF_DATA = -1
 
 CHORD_SCALE = {  # ±2オクターブ分
     'all': [-24, -23, -22, -21, -20, -19, -18, -17, -16, -15, -14, -13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2,

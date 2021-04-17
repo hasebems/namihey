@@ -155,7 +155,7 @@ class RandomGenerator:
         if not self.chord_flow:
             # Data がない場合
             self.next_tick = whole_tick
-            return nlib.INVALID_TICK
+            return nlib.END_OF_DATA
 
         crnt_tick = self.next_tick                                              # 全体 Loop Size 中の tick
         crnt_tick_for_one_measure = crnt_tick % self.tick_for_one_measure       # １小節内の tick
@@ -177,7 +177,7 @@ class RandomGenerator:
         if crnt_tick >= whole_tick:
             # Block の Loop Size を越えたとき 
             self.next_tick = whole_tick
-            return nlib.INVALID_TICK
+            return nlib.END_OF_DATA
         else:
             self.next_tick = crnt_tick
             return crnt_tick
@@ -200,7 +200,7 @@ class RandomGenerator:
     def generate_random(self, tick):
         if tick >= self.next_tick:
             if tick >= self.max_measure_num * self.tick_for_one_measure:
-                rtn_value = nlib.INVALID_TICK
+                rtn_value = nlib.END_OF_DATA
             else:
                 rtn_value = self._generate_rnd_pattern()
         else:

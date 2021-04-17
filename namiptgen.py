@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import namiphrase as nph
+import namilib as nlib
 
 
 class PartGenPlay:
@@ -20,7 +21,7 @@ class PartGenPlay:
         max_ev = len(self.sqdata)
         if max_ev == 0:
             # データを持っていない
-            return -1
+            return nlib.END_OF_DATA
 
         if tick == 0:
             self.play_counter = 0
@@ -29,7 +30,7 @@ class PartGenPlay:
         next_tick = 0
         while True:
             if max_ev <= trace:
-                next_tick = -1   # means sequence finished
+                next_tick = nlib.END_OF_DATA   # means sequence finished
                 break
             next_tick = self.sqdata[trace][0]
             if next_tick < tick:
