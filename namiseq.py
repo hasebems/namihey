@@ -184,13 +184,15 @@ class BlockIndependentLoop(Block):
             self.part = npt.Part(blk, num)
             self.part_num = num
             self.maxMeasure = 1  # データが無くても、loop start time を更新するため、1にしておく
-            self.next_tick = 0
+            self.next_tick = 0              # 次回 event の tick
+            self.has_looped = False         # 次回 event が loop に戻るか
             self.nextLoopStartTime = 0      # 次回 loop 先頭の Start からの経過時間
             self.currentLoopStartTime = 0   # 現 loop 先頭の Start からの経過時間
 
         def reset(self):
             self.maxMeasure = 1
             self.next_tick = 0
+            self.has_looped = False
             self.nextLoopStartTime = 0
             self.currentLoopStartTime = 0
 
@@ -211,14 +213,15 @@ class BlockIndependentLoop(Block):
         return self.tick_for_one_measure*op.maxMeasure
 
     def _input_phrase(self, data, pt):
-        op.maxMeasure = 1
         op = self.part_operator[pt]
+        op.maxMeasure = 1
         tick = op.part.add_seq_description(data)
         while tick > self.get_whole_tick(op):
             op.maxMeasure += 1
 
     def add_seq_description(self, data):
-        self.part_operator[self.inputPart].part.add_seq_description(data)
+        op = self.part_operator[self.inputPart]
+        op.part.add_seq_description(data)
 
     def clear_description(self):
         self.part_operator[self.inputPart].part.clear_description()
@@ -270,21 +273,27 @@ class BlockIndependentLoop(Block):
             self.tick_for_one_measure = self.__stock_tick_for_one_measure
             self.current_measure = real_measure
             self.current_measure_time = one_measure_time*self.current_measure
+            nlib.log.record(str(ev_time))
 
         next_time = (real_measure+1)*one_measure_time # 次の小節の頭に初期値設定
         for op in self.part_operator:
-            if ev_time > op.nextLoopStartTime:
+            if ev_time > op.nextLoopStartTime and op.has_looped:
                 # loop 先頭に戻る
+                op.has_looped = False
                 self._return_to_loop_top(op, self.current_measure_time)
 
+            # 今回の tick に対応する Event 出力と、次回 tick の算出
             pt_next_time = op.nextLoopStartTime
             current_tick = (ev_time - op.currentLoopStartTime)*self.bpm*TICK_PER_SEC
-            if current_tick > op.next_tick:
+            if current_tick > op.next_tick and not op.has_looped:
+                old_next_tick = op.next_tick
                 op.next_tick = op.part.generate_event(current_tick) # <<Part>>
                 if op.next_tick != nlib.END_OF_DATA:
                     pt_next_time = op.currentLoopStartTime + op.next_tick/(self.bpm*TICK_PER_SEC)
                 else:
                     op.next_tick = 0
+                if old_next_tick >= op.next_tick: 
+                    op.has_looped = True   # 次回のイベントは Loop 先頭に戻る
             # 一番近い将来のイベントがある時間算出
             if next_time > pt_next_time:
                 next_time = pt_next_time
