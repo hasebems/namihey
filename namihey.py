@@ -7,6 +7,7 @@
 import  threading
 import  namiparse as ps
 import  namiseq as sq
+import  namilib as nlib
 import  readline    # add history function
 
 def quit_job():
@@ -49,4 +50,5 @@ while True:
     if not loop:
         break
 cui_job.join()
+nlib.log.save_file()
 pas.print_dialogue("That's it! Bye!")

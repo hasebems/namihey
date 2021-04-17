@@ -41,6 +41,7 @@ class Block:
         else:
             msg = mido.Message('note_off', channel=ch, note=nt)
         self.port.send(msg)
+        # nlib.log.record(str(nt)+'-'+str(vel))
 
     def part(self, num):
         return 0

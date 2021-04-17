@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import datetime
 
 REST = 1000
 NONE = 1000
@@ -135,3 +136,21 @@ def note_limit(num, min_value, max_value):
     while num < min_value:
         num += 12
     return num
+
+
+class Log:
+
+    def __init__(self):
+        self.log_text = 'Start Log\n'
+
+    def record(self, log_str):
+        date = datetime.datetime.now()
+        add_str = str(date) + ' : ' + log_str + '\n'
+        self.log_text += add_str
+
+    def save_file(self):
+        self.log_text += 'End Log\n'
+        with open("log.txt", mode='w') as lf:
+            lf.write(self.log_text)
+
+log = Log()
