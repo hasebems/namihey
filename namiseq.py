@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 import time
 import mido
-import namiconf
+import namiconf as ncf
 import namipart as npt
 import namilib as nlib
 
 
-MAX_PART_COUNT = 16
-DEFAULT_BPM = 100
 TICK_PER_SEC = 8    # convert [bpm] to [tick per sec] := 480(tick)/60(sec)
 STOP_PLAYING = 0
 
@@ -78,8 +76,8 @@ class BlockRegular(Block):
     #   の値を part に送り、loop 先頭から再度鳴らす
     def __init__(self, midiport):
         super().__init__(midiport)
-        self.parts = [npt.Part(self, i) for i in range(MAX_PART_COUNT)]
-        self.bpm = DEFAULT_BPM
+        self.parts = [npt.Part(self, i) for i in range(ncf.MAX_PART_COUNT)]
+        self.bpm = ncf.DEFAULT_BPM
         self.maxMeasure = 0
         self.tick_for_one_measure = nlib.DEFAULT_TICK_FOR_ONE_MEASURE
         self.inputPart = 0      # 0origin
@@ -199,8 +197,8 @@ class BlockIndependentLoop(Block):
     #   BlockIndependentLoop は、Block を継承して、block の各 part が独立で loop する
     def __init__(self, midiport):
         super().__init__(midiport)
-        self.part_operator = [self.PartOperator(self,i) for i in range(MAX_PART_COUNT)]
-        self.bpm = DEFAULT_BPM
+        self.part_operator = [self.PartOperator(self,i) for i in range(ncf.MAX_PART_COUNT)]
+        self.bpm = ncf.DEFAULT_BPM
         self.tick_for_one_measure = nlib.DEFAULT_TICK_FOR_ONE_MEASURE
         self.inputPart = 0      # 0origin
         self.waitForFine = False
@@ -307,11 +305,10 @@ class Seq:
     def __init__(self):
         self.start_time = time.time()
         self.during_play = False
-        self.bk = []
         self.all_port = mido.get_output_names()
         self.port_name = self.all_port[-1]
-        midi_port = mido.open_output(self.port_name)
-        self.bk.append(BlockIndependentLoop(midi_port))
+        self.midi_port = mido.open_output(self.port_name)
+        self.bk = [BlockRegular(self.midi_port), BlockIndependentLoop(self.midi_port)]
         self.current_bk = self.bk[0]
         self.next_time = 0
 
@@ -327,8 +324,11 @@ class Seq:
             return True
         else: return False
 
-    def block(self, block=1):
-        return self.bk[block-1]
+    def block(self):
+        return self.current_bk
+
+    def change_block(self, blk):
+        self.current_bk = self.bk[blk]
 
     def periodic(self):
         if not self.during_play:
@@ -339,12 +339,11 @@ class Seq:
             if self.next_time == STOP_PLAYING:
                 self.during_play = False             # Stop playing
 
-    def play(self, block=1, repeat='on'):
+    def play(self, repeat='on'):
         if self.during_play: return False
         self.during_play = True
         self.start_time = time.time()                # Get current time
         self.next_time = 0
-        self.current_bk = self.bk[block-1]
         return self.current_bk.start()
 
     def stop(self):

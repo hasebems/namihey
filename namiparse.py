@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import namilib as nlib
+import namiconf as ncf
 
 T_WATER = '\033[96m'
 T_PINK = '\033[95m'
@@ -13,12 +14,13 @@ class Parsing:
     def __init__(self, seq):
         self.sq = seq
         self.inputPart = 1  # 1origin
-        self.promptStr = self.get_prompt_string(1, 1)
+        self.inputBlock = 'S'
+        self.promptStr = self.get_prompt_string(self.inputBlock, self.inputPart)
 
     @staticmethod
     def get_prompt_string(blk, part):
         # return T_WATER + '[' + str(blk) + '][' + str(part) + ']~~> ' + T_END
-        return '[' + str(blk) + '][' + str(part) + ']~~> '
+        return '[' + blk + '][' + str(part) + ']~~> '
 
     @staticmethod
     def print_dialogue(rpy):
@@ -143,6 +145,23 @@ class Parsing:
                     self.sq.block().stock_bpm = int(bpmnumlist[0])
                     self.print_dialogue("BPM has changed!")
 
+    def letterB(self, input_text):
+        if input_text[0:5] == 'block':
+            if self.sq.during_play:
+                return
+            tx = input_text[5:].replace(' ', '')
+            if tx == 's':
+                self.sq.change_block(0)
+                self.print_dialogue("Block changed to Sync Type.")
+                self.inputBlock = 'S'
+            elif tx == 'i':
+                self.sq.change_block(1)
+                self.print_dialogue("Block changed to Independent Type.")
+                self.inputBlock = 'I'
+            self.promptStr = self.get_prompt_string(self.inputBlock, self.inputPart)
+        else:
+            self.print_dialogue("what?")
+
     def letterP(self, input_text):
         if input_text[0:4] == 'play':
             arg = input_text.split()
@@ -150,6 +169,16 @@ class Parsing:
                 well_done = self.sq.play()
                 if well_done:
                     self.print_dialogue("Phrase has started!")
+        elif input_text[0:4] == 'part':
+            tx = input_text[4:].replace(' ', '')
+            if tx.isdecimal():
+                part = int(tx)
+                if 0 < part <= ncf.MAX_PART_COUNT:
+                    self.print_dialogue("Changed current part to " + str(part) + ".")
+                    blk = self.sq.block()
+                    blk.inputPart = part - 1
+                    self.inputPart = part
+                    self.promptStr = self.get_prompt_string(self.inputBlock, part)
         else:
             self.print_dialogue("what?")
 
@@ -179,12 +208,12 @@ class Parsing:
             tx = input_text[5:].replace(' ', '')
             if tx.isdecimal():
                 part = int(tx)
-                if 0 < part <= 16:
+                if 0 < part <= ncf.MAX_PART_COUNT:
                     self.print_dialogue("Changed current part to " + str(part) + ".")
                     blk = self.sq.block()
                     blk.inputPart = part - 1
                     self.inputPart = part
-                    self.promptStr = self.get_prompt_string(1, part)
+                    self.promptStr = self.get_prompt_string(self.inputBlock, part)
         else:
             self.print_dialogue("what?")
 
@@ -262,7 +291,7 @@ class Parsing:
             tx = input_text[7:].replace(' ', '')
             if tx.isdecimal():
                 part = int(tx)
-                if 0 < part <= 16:
+                if 0 < part <= ncf.MAX_PART_COUNT:
                     self.sq.current_bk.copy_phrase(part - 1)
                     self.print_dialogue("Phrase copied to part" + tx + ".")
         else:
@@ -285,7 +314,7 @@ class Parsing:
         elif first_letter == '{':
             self.letter_brace(input_text)
         elif first_letter == 'b':
-            self.letterP(input_text)
+            self.letterB(input_text)
         elif first_letter == 'c':
             self.letterC(input_text)
         elif first_letter == 'f':
