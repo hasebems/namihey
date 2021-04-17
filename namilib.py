@@ -141,16 +141,19 @@ def note_limit(num, min_value, max_value):
 class Log:
 
     def __init__(self):
-        self.log_text = 'Start Log\n'
+        self.log_text = ['Start Log\n']
 
     def record(self, log_str):
         date = datetime.datetime.now()
         add_str = str(date) + ' : ' + log_str + '\n'
-        self.log_text += add_str
+        self.log_text.append(add_str)
+        while len(self.log_text) > 200:
+            del self.log_text[0]
 
     def save_file(self):
-        self.log_text += 'End Log\n'
+        self.log_text.append('End Log')
         with open("log.txt", mode='w') as lf:
-            lf.write(self.log_text)
+            for lstr in self.log_text:
+                lf.write(lstr)
 
 log = Log()
