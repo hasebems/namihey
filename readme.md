@@ -1,5 +1,5 @@
 
-namihey Alpha-version(0.210327)
+namihey Alpha-version(0.210418)
 =================================
 
 about namihey
@@ -26,8 +26,8 @@ python によって記述され、mido というライブラリにより、MIDI�
 - 起動
     - 'python namihey.py'  : 通常の python スクリプトと同じ
 - 入力
-    - '[1][1]~~> ' : nami prompt
-        - [1][1]は、block 1/part 1の入力状態であることを示す
+    - '[S][1]~~> ' : nami prompt
+        - [S][1]は、Sync Type block/part 1の入力状態であることを示す
         - このプロンプトの後に、コマンドやフレーズを書き込む
     - カーソルによる過去入力のヒストリー呼び出しが可能
 - 終了
@@ -141,8 +141,10 @@ python によって記述され、mido というライブラリにより、MIDI�
 ----------------
 
 - 'copyto 2' : 入力中のpartのフレーズを part2 にコピー
-- 'input 1' : part 1への入力切り替え（1〜16)
-- 'input b1' : block 1への入力切り替え (1〜?)     【未実装】
+- 'input 1' 'part 1' : part 1への入力切り替え（1〜16)
+- 'block s' 'block i' : s は Sync. Type、i は Independent Type の block に切り替える
+    - Sync Type とは、全パートのループが同期していて、最大長のパートに合わせる
+    - Independent Type とは、各パートのループが独立して動作する
 - 'show' : 現在のフレーズ情報を、階名(N)、音価(D)、音量(V)を nami prompt と一緒に、それぞれ一行ずつにして表示
 
 
@@ -161,4 +163,11 @@ python によって記述され、mido というライブラリにより、MIDI�
 - 'set oct=+1' : 現状から１オクターブ上げる
     - set 以降に all を付け足すと、全 part に効果、付けなければ入力中の part に対してのみ効果
 - 再生中でも設定可能。再生中の場合、次のループから反映される
+
+
+既知のバグ
+----------
+
+- 最初に play してから、後でフレーズ入力しても再生されない
+- Independent Type block で、[x,d] のように冒頭にデータがないフレーズを入力し、別パートに random を割り当てると、フレーズの最初の音の時に、random パートの音が出ない
 

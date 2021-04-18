@@ -15,6 +15,8 @@ class Block:
     #   本クラスは Block の IF を表す抽象クラス
     def __init__(self, midiport):
         self.port = midiport
+        self.__stock_bpm = ncf.DEFAULT_BPM
+        self.__stock_tick_for_one_measure = nlib.DEFAULT_TICK_FOR_ONE_MEASURE
 
     @property
     def stock_bpm(self):
@@ -78,14 +80,12 @@ class BlockRegular(Block):
         super().__init__(midiport)
         self.parts = [npt.Part(self, i) for i in range(ncf.MAX_PART_COUNT)]
         self.bpm = ncf.DEFAULT_BPM
-        self.maxMeasure = 0
         self.tick_for_one_measure = nlib.DEFAULT_TICK_FOR_ONE_MEASURE
+        self.maxMeasure = 0
         self.inputPart = 0      # 0origin
         self.waitForFine = False
         self.nextLoopStartTime = 0      # 次回 loop 先頭の Start からの経過時間
         self.currentLoopStartTime = 0   # 現 loop 先頭の Start からの経過時間
-        self.__stock_bpm = self.bpm
-        self.__stock_tick_for_one_measure = self.tick_for_one_measure
 
     def get_whole_tick(self):
         return self.tick_for_one_measure*self.maxMeasure
@@ -116,8 +116,8 @@ class BlockRegular(Block):
 
     def _return_to_loop_top(self):
         # 前回の loop 時に来た値を、loop 先頭で反映
-        self.bpm = self.__stock_bpm
-        self.tick_for_one_measure = self.__stock_tick_for_one_measure
+        self.bpm = self.stock_bpm
+        self.tick_for_one_measure = self.stock_tick_for_one_measure
 
         # loop 先頭に戻り、loop 小節数の再計算
         self.maxMeasure = 0
@@ -204,8 +204,6 @@ class BlockIndependentLoop(Block):
         self.tick_for_one_measure = nlib.DEFAULT_TICK_FOR_ONE_MEASURE
         self.inputPart = 0      # 0origin
         self.waitForFine = False
-        self.__stock_bpm = self.bpm
-        self.__stock_tick_for_one_measure = self.tick_for_one_measure
         self.current_measure = 0        # 現在の通算小節数
         self.current_measure_time = 0   # 現在の小節数の先頭時間
 
@@ -252,8 +250,8 @@ class BlockIndependentLoop(Block):
     # Main IF : Start Sequencer
     def start(self):
         # block の初期化
-        self.bpm = self.__stock_bpm
-        self.tick_for_one_measure = self.__stock_tick_for_one_measure
+        self.bpm = self.stock_bpm
+        self.tick_for_one_measure = self.stock_tick_for_one_measure
         self.current_measure = 0
         self.current_measure_time = 0
 
@@ -269,8 +267,8 @@ class BlockIndependentLoop(Block):
         real_measure = int(ev_time/one_measure_time)
         if real_measure > self.current_measure:
             # 小節先頭
-            self.bpm = self.__stock_bpm
-            self.tick_for_one_measure = self.__stock_tick_for_one_measure
+            self.bpm = self.stock_bpm
+            self.tick_for_one_measure = self.stock_tick_for_one_measure
             self.current_measure = real_measure
             self.current_measure_time = one_measure_time*self.current_measure
             nlib.log.record(str(ev_time))
