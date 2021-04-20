@@ -199,10 +199,7 @@ class RandomGenerator:
 
     def generate_random(self, tick):
         if tick >= self.next_tick:
-            if tick >= self.max_measure_num * self.tick_for_one_measure:
-                rtn_value = nlib.END_OF_DATA
-            else:
-                rtn_value = self._generate_rnd_pattern()
+            rtn_value = self._generate_rnd_pattern()
         else:
             rtn_value = self.next_tick
         return rtn_value
