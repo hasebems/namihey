@@ -169,6 +169,8 @@ class Parsing:
                 well_done = self.sq.play()
                 if well_done:
                     self.print_dialogue("Phrase has started!")
+                else:
+                    self.print_dialogue("Unable to start!")
         elif input_text[0:4] == 'part':
             tx = input_text[4:].replace(' ', '')
             if tx.isdecimal():
@@ -188,7 +190,7 @@ class Parsing:
             if well_done:
                 self.print_dialogue("Phrase has started!")
             else:
-                self.print_dialogue("Phrase has no data!")
+                self.print_dialogue("Unable to start!")
         elif input_text[0:4] == 'stop':
             self.sq.stop()
             self.print_dialogue("Stopped!")
