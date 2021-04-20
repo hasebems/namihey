@@ -205,7 +205,7 @@ class BlockIndependentLoop(Block):
         self.inputPart = 0      # 0origin
         self.waitForFine = False
         self.current_measure = 0        # 現在の通算小節数
-        self.current_measure_time = 0   # 現在の小節数の先頭時間
+        self.one_measure_time = 0       # 1小節の時間の長さ
 
     def get_whole_tick(self, op):
         return self.tick_for_one_measure*op.maxMeasure
@@ -247,13 +247,34 @@ class BlockIndependentLoop(Block):
         op.currentLoopStartTime = timenow
         op.nextLoopStartTime = timenow + self.get_whole_tick(op)/(self.bpm*TICK_PER_SEC)
 
+    def _generate_event_for_one_part(self, op, ev_time):
+        if ev_time > op.nextLoopStartTime and op.has_looped:
+            # loop 先頭に戻る
+            op.has_looped = False
+            self._return_to_loop_top(op, self.one_measure_time*self.current_measure)
+
+        # 今回の tick に対応する Event 出力と、次回 tick の算出
+        pt_next_time = op.nextLoopStartTime
+        current_tick = (ev_time - op.currentLoopStartTime)*self.bpm*TICK_PER_SEC
+        if current_tick > op.next_tick and not op.has_looped:
+            old_next_tick = op.next_tick
+            op.next_tick = op.part.generate_event(current_tick) # <<Part>>
+            if op.next_tick is not nlib.END_OF_DATA:
+                pt_next_time = op.currentLoopStartTime + op.next_tick/(self.bpm*TICK_PER_SEC)
+            else:
+                op.next_tick = 0
+                op.has_looped = True   # 次回のイベントは Loop 先頭に戻る
+            if old_next_tick > op.next_tick:
+                op.has_looped = True   # 次回のイベントは Loop 先頭に戻る
+        return pt_next_time
+
     # Main IF : Start Sequencer
     def start(self):
         # block の初期化
         self.bpm = self.stock_bpm
         self.tick_for_one_measure = self.stock_tick_for_one_measure
         self.current_measure = 0
-        self.current_measure_time = 0
+        self.one_measure_time = self.tick_for_one_measure/(self.bpm*TICK_PER_SEC) # 1小節の長さ
 
         for op in self.part_operator:
             op.reset()
@@ -263,35 +284,20 @@ class BlockIndependentLoop(Block):
 
     # Main IF : Generate Music Event
     def generate_event(self, ev_time):
-        one_measure_time = self.tick_for_one_measure/(self.bpm*TICK_PER_SEC) # 1小節の長さ
-        real_measure = int(ev_time/one_measure_time)
+        real_measure = int(ev_time/self.one_measure_time)
         if real_measure > self.current_measure:
-            # 小節先頭
-            self.bpm = self.stock_bpm
-            self.tick_for_one_measure = self.stock_tick_for_one_measure
             self.current_measure = real_measure
-            self.current_measure_time = one_measure_time*self.current_measure
-            nlib.log.record(str(ev_time))
+            self.bpm = self.stock_bpm
+            # 小節先頭
+            if self.waitForFine:
+                # Fine で終了
+                self.waitForFine = False
+                self.stop()
+                return STOP_PLAYING
 
-        next_time = (real_measure+1)*one_measure_time # 次の小節の頭に初期値設定
+        next_time = (real_measure+1)*self.one_measure_time # 次の小節の頭に初期値設定
         for op in self.part_operator:
-            if ev_time > op.nextLoopStartTime and op.has_looped:
-                # loop 先頭に戻る
-                op.has_looped = False
-                self._return_to_loop_top(op, self.current_measure_time)
-
-            # 今回の tick に対応する Event 出力と、次回 tick の算出
-            pt_next_time = op.nextLoopStartTime
-            current_tick = (ev_time - op.currentLoopStartTime)*self.bpm*TICK_PER_SEC
-            if current_tick > op.next_tick and not op.has_looped:
-                old_next_tick = op.next_tick
-                op.next_tick = op.part.generate_event(current_tick) # <<Part>>
-                if op.next_tick != nlib.END_OF_DATA:
-                    pt_next_time = op.currentLoopStartTime + op.next_tick/(self.bpm*TICK_PER_SEC)
-                else:
-                    op.next_tick = 0
-                if old_next_tick >= op.next_tick: 
-                    op.has_looped = True   # 次回のイベントは Loop 先頭に戻る
+            pt_next_time = self._generate_event_for_one_part(op, ev_time)
             # 一番近い将来のイベントがある時間算出
             if next_time > pt_next_time:
                 next_time = pt_next_time
@@ -302,6 +308,10 @@ class BlockIndependentLoop(Block):
         # 演奏強制終了
         for op in self.part_operator:
             op.part.stop()  # <<Part>>
+
+    def fine(self):
+        # Blockの最後で演奏終了
+        self.waitForFine = True
 
 
 class Seq:
