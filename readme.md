@@ -1,5 +1,5 @@
 
-namihey Alpha-version(0.210418)
+namihey Alpha-version(0.210420)
 =================================
 
 about namihey
@@ -19,6 +19,21 @@ namihey は、Live Coding などで使うために開発しているテキスト
 python によって記述され、mido というライブラリにより、MIDI出力します。
 
 
+用語集 (Glossary)
+-------------------
+
+- フレーズ (phrase) : 階名にて指定された音の連なりのことをフレーズと呼ぶ
+- パターン (pattern) : ランダムなど決められたアルゴリズムに従って自動生成された音の連なりのことをパターンと呼ぶ
+    - パターンの大分類は現在 Random のみ。（ Arpeggio も対応予定 )
+- loop : namihey は基本的に、フレーズやパターンの繰り返しを延々と演奏する。この繰り返しのことを loop と呼ぶ
+- part : 一つの音色による演奏を part と呼ぶ
+    - フレーズやパターンは part ごとに設定できる
+    - part は必ず小節の切れ目まで演奏される
+- block : 最大16partをひとまとめにして演奏できる単位
+    - block には、Sync Type block と Independent Type block の二種類がある
+        - Sync Type とは、全パートのループが同期していて、最大長のパートに合わせる
+        - Independent Type とは、各パートのループが独立して動作する
+
 
 記述の基本ルール
 --------------
@@ -37,17 +52,23 @@ python によって記述され、mido というライブラリにより、MIDI�
 音を出す方法
 ----------
 
-- MIDI 音源を繋ぐ
-- Logic などマルチパートで MIDI受信するアプリを同時に起動する
+- 外部 MIDI 音源を繋ぐ
+- マルチパートで MIDI受信するアプリを同時に起動する。以下のアプリで動作確認済。
+    - Logic : Mac で MIDI 演奏するための DAW
+        - なお Garage Band では同時に複数チャンネルのMIDI Inを入れることが出来ない
+    - Super Collider
 
 
 再生コントロール
 --------------
 
 - 'play' 'start' : シーケンス開始
+    - Sync Type block のときはデータが無いと再生されない
 - 'mute 2,3' : part2 と part3 をミュートする        【未実装】
 - 'mutecancel' : ミュートしていたパートのミュート解除する    【未実装】
-- 'fine' : ブロックの最後でシーケンス終了
+- 'fine' : 小節の最後でシーケンス終了
+    - Sync Type block の場合、loopの最後の小節で終了する
+    - Independent Type block の場合、次の小節の頭で終了する
 - 'stop' : 直ちにシーケンス終了
 
 
@@ -143,8 +164,6 @@ python によって記述され、mido というライブラリにより、MIDI�
 - 'copyto 2' : 入力中のpartのフレーズを part2 にコピー
 - 'input 1' 'part 1' : part 1への入力切り替え（1〜16)
 - 'block s' 'block i' : s は Sync. Type、i は Independent Type の block に切り替える
-    - Sync Type とは、全パートのループが同期していて、最大長のパートに合わせる
-    - Independent Type とは、各パートのループが独立して動作する
 - 'show' : 現在のフレーズ情報を、階名(N)、音価(D)、音量(V)を nami prompt と一緒に、それぞれ一行ずつにして表示
 
 
@@ -153,6 +172,7 @@ python によって記述され、mido というライブラリにより、MIDI�
 
 - 'set bpm=100' : BPM（テンポ）=100 にセット
 - 'set beat=4/4' : 拍子を 4/4 にセット
+    - Independent Type block のときは、演奏中の変更は不可
 - 'set key=C4' : key を C4 にセット
     - namihey にとって key とは [d]（ド） と指示されたときの音名を表す
     - デフォルト値は C4(midi note number=60)
@@ -165,9 +185,4 @@ python によって記述され、mido というライブラリにより、MIDI�
 - 再生中でも設定可能。再生中の場合、次のループから反映される
 
 
-既知のバグ
-----------
-
-- 最初に play してから、後でフレーズ入力しても再生されない
-- Independent Type block で、[x,d] のように冒頭にデータがないフレーズを入力し、別パートに random を割り当てると、フレーズの最初の音の時に、random パートの音が出ない
 
