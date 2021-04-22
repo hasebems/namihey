@@ -208,6 +208,7 @@ class BlockIndependentLoop(Block):
         self.waitForFine = False
         self.current_measure = 0        # 現在の通算小節数
         self.one_measure_time = 0       # 1小節の時間の長さ
+        self.reset_time = 0
 
     def get_whole_tick(self, op):
         return self.tick_for_one_measure*op.max_measure
@@ -275,6 +276,7 @@ class BlockIndependentLoop(Block):
         self.bpm = self.stock_bpm
         self.tick_for_one_measure = self.stock_tick_for_one_measure
         self.current_measure = 0
+        self.reset_time = 0
         self.one_measure_time = self.tick_for_one_measure/(self.bpm*TICK_PER_SEC) # 1小節の長さ
 
         for op in self.part_operator:
@@ -286,6 +288,7 @@ class BlockIndependentLoop(Block):
 
     # Main IF : Generate Music Event
     def generate_event(self, ev_time):
+        ev_time -= self.reset_time
         real_measure = int(ev_time/self.one_measure_time)
         if real_measure > self.current_measure:
             # 小節先頭
@@ -299,6 +302,7 @@ class BlockIndependentLoop(Block):
             if self.bpm is not self.stock_bpm or \
               self.tick_for_one_measure is not self.stock_tick_for_one_measure:
                 self.start()    # Tempo が変わったら、Start からやり直す
+                self.reset_time = ev_time
                 return 0
 
         next_time = (real_measure+100)*self.one_measure_time # 100小節先に初期値設定
