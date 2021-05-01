@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import time
-import mido
+#import mido
+import pygame.midi as pmd
 import namiconf as ncf
 import namipart as npt
 import namilib as nlib
@@ -37,10 +38,9 @@ class Block:
     def send_midi_note(self, ch, nt, vel):
         if nt > 127 or vel > 127: return
         if vel != 0:
-            msg = mido.Message('note_on', channel=ch, note=nt, velocity=vel)
+            self.port.note_on(nt, velocity=vel, channel=ch)
         else:
-            msg = mido.Message('note_off', channel=ch, note=nt)
-        self.port.send(msg)
+            self.port.note_off(nt, channel=ch)
         nlib.log.record(str(nt)+'-'+str(vel))
 
     def part(self, num):
@@ -86,6 +86,7 @@ class BlockRegular(Block):
         self.waitForFine = False
         self.nextLoopStartTime = 0      # 次回 loop 先頭の Start からの経過時間
         self.current_loop_start_time = 0   # 現 loop 先頭の Start からの経過時間
+        self.one_measure_time = 0       # 1小節の時間の長さ
 
     def get_whole_tick(self):
         return self.tick_for_one_measure*self.max_measure
@@ -118,6 +119,7 @@ class BlockRegular(Block):
         # 前回の loop 時に来た値を、loop 先頭で反映
         self.bpm = self.stock_bpm
         self.tick_for_one_measure = self.stock_tick_for_one_measure
+        self.one_measure_time = self.tick_for_one_measure/(self.bpm*TICK_PER_SEC) # 1小節の長さ
 
         # loop 先頭に戻り、loop 小節数の再計算
         self.max_measure = 0
@@ -337,17 +339,38 @@ class Seq:
     #   その他の機能： mido の生成、CUIに情報を送る
     #   Block: 現状 [0] の一つだけ生成
     def __init__(self):
+        # MIDI settings
+        pmd.init()
+        devnum = pmd.get_count()
+        self.all_port = []
+        lastid = 0
+        self.port_name = ''
+        for i in range(devnum):
+            dev = pmd.get_device_info(i)
+            if dev[3] == 1:
+                self.all_port.append(dev[1].decode())
+                lastid = i
+                self.port_name = dev[1].decode()
+        self.midi_port = pmd.Output(lastid)
+
         self.start_time = time.time()
         self.during_play = False
-        self.all_port = mido.get_output_names()
-        self.port_name = self.all_port[-1]
-        self.midi_port = mido.open_output(self.port_name)
         self.bk = [BlockRegular(self.midi_port), BlockIndependentLoop(self.midi_port)]
         self.current_bk = self.bk[0]
         self.next_time = 0
+        self.current_time = 0
 
     def get_midi_all_port(self):
         return self.all_port
+
+    def get_tick(self):
+        tm = 0
+        one_beat = 1
+        one_measure = self.current_bk.one_measure_time
+        if one_measure != 0:
+            tm = self.current_time % one_measure
+            one_beat = 60/self.current_bk.bpm
+        return tm//one_beat, (tm%one_beat)/one_beat
 
     def get_midi_port(self):
         return self.port_name
@@ -367,9 +390,9 @@ class Seq:
     def periodic(self):
         if not self.during_play:
             return
-        current_time = time.time() - self.start_time  # calculate elapsed time
-        if current_time > self.next_time:             # if time of next event come,
-            self.next_time = self.current_bk.generate_event(current_time)
+        self.current_time = time.time() - self.start_time  # calculate elapsed time
+        if self.current_time > self.next_time:             # if time of next event come,
+            self.next_time = self.current_bk.generate_event(self.current_time)
             if self.next_time == STOP_PLAYING:
                 self.during_play = False             # Stop playing
 
