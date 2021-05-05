@@ -37,7 +37,11 @@ class Parsing:
             if onpu_str.isdecimal():
                 onpu = int(onpu_str)
             if btnum >= 1 and onpu >= 1:
-                self.sq.block().stock_tick_for_one_measure = (nlib.DEFAULT_TICK_FOR_ONE_MEASURE / onpu) * btnum
+                self.sq.block().stock_tick_for_one_measure = \
+                    [(nlib.DEFAULT_TICK_FOR_ONE_MEASURE / onpu) * btnum, btnum, onpu]
+                self.print_dialogue("Beat has changed!")
+            else:
+                self.print_dialogue("what?")
 
     def change_key(self, key_text, all):
         def change_note(ptx, keyx, octx):

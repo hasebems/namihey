@@ -17,7 +17,8 @@ class Block:
     def __init__(self, midiport):
         self.port = midiport
         self.__stock_bpm = ncf.DEFAULT_BPM
-        self.__stock_tick_for_one_measure = nlib.DEFAULT_TICK_FOR_ONE_MEASURE
+        self.__stock_tick_for_one_measure = [nlib.DEFAULT_TICK_FOR_ONE_MEASURE,4,4]
+        self.su_one_measure_time = 0       # 1小節の時間の長さ
 
     @property
     def stock_bpm(self):
@@ -32,8 +33,8 @@ class Block:
         return self.__stock_tick_for_one_measure
 
     @stock_tick_for_one_measure.setter
-    def stock_tick_for_one_measure(self, value):
-        self.__stock_tick_for_one_measure = value
+    def stock_tick_for_one_measure(self, beat_list):
+        self.__stock_tick_for_one_measure = beat_list
 
     def send_midi_note(self, ch, nt, vel):
         if nt > 127 or vel > 127: return
@@ -80,16 +81,15 @@ class BlockRegular(Block):
         super().__init__(midiport)
         self.parts = [npt.Part(self, i) for i in range(ncf.MAX_PART_COUNT)]
         self.bpm = ncf.DEFAULT_BPM
-        self.tick_for_one_measure = nlib.DEFAULT_TICK_FOR_ONE_MEASURE
+        self.tick_for_one_measure = [nlib.DEFAULT_TICK_FOR_ONE_MEASURE,4,4]
         self.max_measure = 0
         self.inputPart = 0      # 0origin
         self.waitForFine = False
-        self.nextLoopStartTime = 0      # 次回 loop 先頭の Start からの経過時間
+        self.next_loop_start_time = 0      # 次回 loop 先頭の Start からの経過時間
         self.current_loop_start_time = 0   # 現 loop 先頭の Start からの経過時間
-        self.one_measure_time = 0       # 1小節の時間の長さ
 
     def get_whole_tick(self):
-        return self.tick_for_one_measure*self.max_measure
+        return self.tick_for_one_measure[0]*self.max_measure
 
     def _input_phrase(self, data, pt):
         self.max_measure = 0
@@ -115,29 +115,32 @@ class BlockRegular(Block):
     def max_part(self):
         return len(self.parts)
 
-    def _return_to_loop_top(self):
-        # 前回の loop 時に来た値を、loop 先頭で反映
-        self.bpm = self.stock_bpm
-        self.tick_for_one_measure = self.stock_tick_for_one_measure
-        self.one_measure_time = self.tick_for_one_measure/(self.bpm*TICK_PER_SEC) # 1小節の長さ
+    def _return_to_loop_top(self, ev_time=0):
+        # bpm/beat に変更があった場合
+        if self.bpm is not self.stock_bpm or \
+          self.tick_for_one_measure is not self.stock_tick_for_one_measure:
+            self.bpm = self.stock_bpm
+            self.tick_for_one_measure = self.stock_tick_for_one_measure
+            self.su_one_measure_time = self.tick_for_one_measure[0]/(self.bpm*TICK_PER_SEC) # 1小節の長さ
 
         # loop 先頭に戻り、loop 小節数の再計算
         self.max_measure = 0
         largest_tick = 0    # 全パートの最大 tick を調べる
         for pt in self.parts:
-            pt_tick = pt.return_to_top(self.tick_for_one_measure) # <<Part>>
+            pt_tick = pt.return_to_top(self.tick_for_one_measure[0]) # <<Part>>
             if pt_tick > largest_tick:
                 largest_tick = pt_tick
         while largest_tick > self.get_whole_tick():
             self.max_measure += 1
 
         # 今回の Loop Start と次回の Loop Start の時間を更新
-        self.current_loop_start_time = self.nextLoopStartTime
-        self.nextLoopStartTime += self.get_whole_tick()/(self.bpm*TICK_PER_SEC)
+        self.current_loop_start_time = self.next_loop_start_time
+        self.next_loop_start_time += self.get_whole_tick()/(self.bpm*TICK_PER_SEC)
 
     # Main IF : Start Sequencer
     def start(self):
-        self.nextLoopStartTime = 0
+        self.next_loop_start_time = 0
+        self.su_one_measure_time = self.tick_for_one_measure[0]/(self.bpm*TICK_PER_SEC) # 1小節の長さ
         self._return_to_loop_top()
 
         if self.get_whole_tick() == 0:
@@ -149,16 +152,20 @@ class BlockRegular(Block):
 
     # Main IF : Generate Music Event
     def generate_event(self, ev_time):
-        if ev_time > self.nextLoopStartTime:
+        clear_ev = False
+        # Loop 先頭かどうかの判断
+        if ev_time > self.next_loop_start_time:
             if self.waitForFine:
                 # Fine で終了
                 self.waitForFine = False
                 self.stop()
-                return STOP_PLAYING
+                return STOP_PLAYING, True
             else:
                 # loop 先頭に戻る
-                self._return_to_loop_top()
+                clear_ev = True
+                self._return_to_loop_top(ev_time)
 
+        # Part ごとのイベント処理
         current_tick = (ev_time - self.current_loop_start_time)*self.bpm*TICK_PER_SEC
         next_tick = self.get_whole_tick() # 最大値で初期化
         for pt in self.parts:
@@ -166,7 +173,7 @@ class BlockRegular(Block):
             if pt_next_tick != nlib.END_OF_DATA and next_tick > pt_next_tick:
                 next_tick = pt_next_tick
 
-        return self.current_loop_start_time + next_tick/(self.bpm*TICK_PER_SEC)    # time(sec)
+        return self.current_loop_start_time + next_tick/(self.bpm*TICK_PER_SEC), clear_ev    # time(sec)
 
     # Main IF : Stop Sequencer
     def stop(self):
@@ -205,15 +212,14 @@ class BlockIndependentLoop(Block):
         super().__init__(midiport)
         self.part_operator = [self.PartOperator(self,i) for i in range(ncf.MAX_PART_COUNT)]
         self.bpm = ncf.DEFAULT_BPM
-        self.tick_for_one_measure = nlib.DEFAULT_TICK_FOR_ONE_MEASURE
+        self.tick_for_one_measure = [nlib.DEFAULT_TICK_FOR_ONE_MEASURE,4,4]
         self.inputPart = 0      # 0origin
         self.waitForFine = False
-        self.current_measure = 0        # 現在の通算小節数
-        self.one_measure_time = 0       # 1小節の時間の長さ
-        self.reset_time = 0
+        self.su_reset_time = 0             # 最後のtempo/bpm変更時の絶対時間
+        self.su_current_measure = 0        # 現在の通算小節数
 
     def get_whole_tick(self, op):
-        return self.tick_for_one_measure*op.max_measure
+        return self.tick_for_one_measure[0]*op.max_measure
 
     def _input_phrase(self, data, pt):
         op = self.part_operator[pt]
@@ -248,14 +254,14 @@ class BlockIndependentLoop(Block):
         #    nlib.log.record('No Measure Count!')  # DEBUG
         op.current_loop_start_time = start_time
         op.max_measure = 1
-        op.total_tick = op.part.return_to_top(self.tick_for_one_measure) # <<Part>>
+        op.total_tick = op.part.return_to_top(self.tick_for_one_measure[0]) # <<Part>>
         while op.total_tick > self.get_whole_tick(op):
             op.max_measure += 1
 
     def _generate_event_for_one_part(self, op, current_tick):
         if op.total_tick == 0:
             op.has_looped = True
-            return self.tick_for_one_measure
+            return self.tick_for_one_measure[0]
 
         # 今回の tick に対応する Event 出力と、次回 tick の算出
         if current_tick >= op.next_tick:
@@ -266,20 +272,20 @@ class BlockIndependentLoop(Block):
             else:
                 op.next_tick = 0
                 op.has_looped = True
-                return self.tick_for_one_measure*op.max_measure
+                return self.tick_for_one_measure[0]*op.max_measure
         else:
             nlib.log.record(str(current_tick)+'xx'+str(op.next_tick))  # DEBUG
             op.has_looped = True
-            return self.tick_for_one_measure*op.max_measure
+            return self.tick_for_one_measure[0]*op.max_measure
 
     # Main IF : Start Sequencer
     def start(self):
         # block の初期化
         self.bpm = self.stock_bpm
         self.tick_for_one_measure = self.stock_tick_for_one_measure
-        self.current_measure = 0
-        self.reset_time = 0
-        self.one_measure_time = self.tick_for_one_measure/(self.bpm*TICK_PER_SEC) # 1小節の長さ
+        self.su_current_measure = 0
+        self.su_reset_time = 0
+        self.su_one_measure_time = self.tick_for_one_measure[0]/(self.bpm*TICK_PER_SEC) # 1小節の長さ
 
         for op in self.part_operator:
             op.reset()
@@ -290,37 +296,39 @@ class BlockIndependentLoop(Block):
 
     # Main IF : Generate Music Event
     def generate_event(self, ev_time):
-        ev_time -= self.reset_time
-        real_measure = int(ev_time/self.one_measure_time)
-        if real_measure > self.current_measure:
+        clear_ev = False
+        ev_timex = ev_time - self.su_reset_time    # ev_timex は、Tempo/beat が変わった以降の経過時間
+        real_measure = int(ev_timex/self.su_one_measure_time)
+        if real_measure > self.su_current_measure:
             # 小節先頭
-            self.current_measure = real_measure
+            self.su_current_measure = real_measure
+            clear_ev = True
             if self.waitForFine:
                 # Fine で終了
                 self.waitForFine = False
                 self.stop()
-                return STOP_PLAYING
+                return STOP_PLAYING, True
 
             if self.bpm is not self.stock_bpm or \
               self.tick_for_one_measure is not self.stock_tick_for_one_measure:
                 self.start()    # Tempo が変わったら、Start からやり直す
-                self.reset_time = ev_time
-                return 0
+                self.su_reset_time = ev_time
+                return 0, True
 
-        next_time = (real_measure+100)*self.one_measure_time # 100小節先に初期値設定
+        next_time = (real_measure+100)*self.su_one_measure_time # 100小節先に初期値設定
         for op in self.part_operator:
-            if ev_time > op.next_time:
+            if ev_timex > op.next_time:
                 if op.has_looped:
                     # loop 先頭に戻る
-                    self._return_to_loop_top(op, real_measure*self.one_measure_time)
+                    self._return_to_loop_top(op, real_measure*self.su_one_measure_time)
                     op.has_looped = False
-                current_tick = (ev_time - op.current_loop_start_time)*self.bpm*TICK_PER_SEC
+                current_tick = (ev_timex - op.current_loop_start_time)*self.bpm*TICK_PER_SEC
                 pt_next_tick = self._generate_event_for_one_part(op, current_tick)
                 op.next_time = op.current_loop_start_time + pt_next_tick/(self.bpm*TICK_PER_SEC)
             # 一番近い将来のイベントがある時間算出
             if next_time > op.next_time:
                 next_time = op.next_time
-        return next_time
+        return next_time, clear_ev
 
     # Main IF : Stop Sequencer
     def stop(self):
@@ -359,6 +367,7 @@ class Seq:
         self.current_bk = self.bk[0]
         self.next_time = 0
         self.current_time = 0
+        self.latest_clear_time = 0
 
     def get_midi_all_port(self):
         return self.all_port
@@ -366,11 +375,12 @@ class Seq:
     def get_tick(self):
         tm = 0
         one_beat = 1
-        one_measure = self.current_bk.one_measure_time
-        if one_measure != 0:
-            tm = self.current_time % one_measure
-            one_beat = 60/self.current_bk.bpm
-        return tm//one_beat, (tm%one_beat)/one_beat
+        block_tick_info = self.current_bk.tick_for_one_measure
+        tm = self.current_time - self.latest_clear_time
+        one_beat = 60/(self.current_bk.bpm*(block_tick_info[2]/4)) # 1拍の時間
+        while tm > one_beat*block_tick_info[1]:
+            tm -= one_beat*block_tick_info[1]
+        return int(tm//one_beat), int((tm%one_beat)*1000/one_beat), block_tick_info[1]
 
     def get_midi_port(self):
         return self.port_name
@@ -387,20 +397,24 @@ class Seq:
     def change_block(self, blk):
         self.current_bk = self.bk[blk]
 
-    def periodic(self):
+    def periodic(self):     # 別スレッド
         if not self.during_play:
             return
         self.current_time = time.time() - self.start_time  # calculate elapsed time
         if self.current_time > self.next_time:             # if time of next event come,
-            self.next_time = self.current_bk.generate_event(self.current_time)
+            # Call Block
+            self.next_time, clear_ev = self.current_bk.generate_event(self.current_time)
             if self.next_time == STOP_PLAYING:
                 self.during_play = False             # Stop playing
+            if clear_ev:
+                self.latest_clear_time = self.current_time
 
     def play(self, repeat='on'):
         if self.during_play: return False
         self.during_play = True
         self.start_time = time.time()                # Get current time
         self.next_time = 0
+        self.latest_clear_time = 0
         return self.current_bk.start()
 
     def stop(self):
