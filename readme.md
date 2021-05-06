@@ -1,5 +1,5 @@
 
-namihey Alpha-version(0.210420)
+namihey Alpha-version(0.210506)
 =================================
 
 about namihey
@@ -29,7 +29,7 @@ python によって記述され、pygame を使用して MIDI 出力します。
 - part : 一つの音色による演奏を part と呼ぶ
     - フレーズやパターンは part ごとに設定できる
     - part は必ず小節の切れ目まで演奏される
-- block : 最大16partをひとまとめにして演奏できる単位
+- block : 最大5partをひとまとめにして演奏できる単位
     - block には、Sync Type block と Independent Type block の二種類がある
         - Sync Type とは、全パートのループが同期していて、最大長のパートに合わせる
         - Independent Type とは、各パートのループが独立して動作する
@@ -162,7 +162,7 @@ python によって記述され、pygame を使用して MIDI 出力します。
 ----------------
 
 - 'copyto 2' : 入力中のpartのフレーズを part2 にコピー
-- 'input 1' 'part 1' : part 1への入力切り替え（1〜16)
+- 'input 1' 'part 1' : part 1への入力切り替え（1〜5)
 - 'block s' 'block i' : s は Sync. Type、i は Independent Type の block に切り替える
 - 'show' : 現在のフレーズ情報を、階名(N)、音価(D)、音量(V)を nami prompt と一緒に、それぞれ一行ずつにして表示
 
