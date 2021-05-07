@@ -117,6 +117,16 @@ class Parsing:
             pt = curbk.part(curbk.inputPart)
             change_oct_to_part(pt, oct)
 
+    def midi_setting(self, num):
+        midi_port = self.sq.get_midi_all_port()
+        self.print_dialogue("==MIDI OUT LIST==")
+        for i, pt in enumerate(midi_port):
+            self.print_dialogue("PORT " + str(i) + ": " + str(pt))
+        self.print_dialogue("==SELECTED MIDI OUT==")
+        if num != -1 and num < len(midi_port):
+            self.sq.set_midi_port(num)
+        self.print_dialogue(self.sq.get_midi_port())
+
     def parse_set_command(self, input_text):
         prm_text = input_text.strip()
         if 'part' in prm_text:
@@ -313,6 +323,12 @@ class Parsing:
     def letterQm(self, input_text):
         self.print_dialogue("what?")
 
+    def letterM(self, input_text):
+        if input_text[0:4] == "midi":
+            picked_txt = input_text[input_text.find('midi') + 4:].strip().split()
+            if picked_txt[0].isdecimal():
+                self.midi_setting(int(picked_txt[0]))
+
     def startParsing(self, input_text):
         first_letter = input_text[0:1]
         if first_letter == '[':
@@ -335,6 +351,8 @@ class Parsing:
             self.letterP(input_text)
         elif first_letter == 's':
             self.letterS(input_text)
+        elif first_letter == 'm':
+            self.letterM(input_text)
         elif first_letter == '?':
             self.letterQm(input_text)
         else:

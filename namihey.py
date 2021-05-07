@@ -11,14 +11,6 @@ import  namilib as nlib
 import  namigui as ngui
 import  readline    # add history function
 
-def midi_setting(seq, pas):
-    midi_port = seq.get_midi_all_port()
-    pas.print_dialogue("==MIDI OUT LIST==")
-    for i, pt in enumerate(midi_port):
-        pas.print_dialogue("PORT " + str(i) + ": " + str(pt))
-    pas.print_dialogue("==SELECTED MIDI OUT==")
-    pas.print_dialogue(seq.get_midi_port())
-
 def quit_job(seq):
     if seq.during_play:
         seq.stop()
@@ -45,7 +37,7 @@ def main():
     seq = sq.Seq()
     pas = ps.Parsing(seq)
     gui = ngui.NamiGui()
-    midi_setting(seq, pas)
+    pas.midi_setting(-1)
 
     cui_job = threading.Thread(target=cui, args=(loop, seq, pas))
     cui_job.start()

@@ -165,6 +165,7 @@ python によって記述され、pygame を使用して MIDI 出力します。
 - 'input 1' 'part 1' : part 1への入力切り替え（1〜5)
 - 'block s' 'block i' : s は Sync. Type、i は Independent Type の block に切り替える
 - 'show' : 現在のフレーズ情報を、階名(N)、音価(D)、音量(V)を nami prompt と一緒に、それぞれ一行ずつにして表示
+- 'midi 1' : MIDI PORT 1 を選択
 
 
 調、テンポ、拍子
