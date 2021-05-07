@@ -23,8 +23,8 @@ class RandomGenerator:
         self.rnd_rgn = 12
         self.rnd_ofs = 0
         self.rnd_dur = 8
-        self.measure_flow = []
-        self.velocity_flow = []
+        self.measure_flow = []      # 各 Pattern の小節数
+        self.velocity_flow = []     # 各 Pattern のベロシティ
 
     def set_random(self, pattern, key):
         self.description = pattern
@@ -155,6 +155,8 @@ class RandomGenerator:
         if not self.chord_flow:
             # Data がない場合
             self.next_tick = whole_tick
+            return nlib.END_OF_DATA
+        if self.next_tick >= whole_tick:
             return nlib.END_OF_DATA
 
         crnt_tick = self.next_tick                                              # 全体 Loop Size 中の tick

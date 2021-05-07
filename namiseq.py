@@ -380,6 +380,7 @@ class Seq:
         one_beat = 60/(self.current_bk.bpm*(block_tick_info[2]/4)) # 1拍の時間
         while tm > one_beat*block_tick_info[1]:
             tm -= one_beat*block_tick_info[1]
+        # 戻り値： 拍、拍以下の数値0-0.999、小節内の拍数
         return int(tm//one_beat), int((tm%one_beat)*1000/one_beat), block_tick_info[1]
 
     def get_midi_port(self):
