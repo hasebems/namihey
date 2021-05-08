@@ -10,14 +10,16 @@ class Loop:
 
 class NamiGui:
 
-    SURFACE_X_SZ = 880  #   Window Size
+    SURFACE_X_SZ = 890  #   Window Size
     SURFACE_Y_SZ = 120  #   Window Size
 
+    # 縦の位置
     LINE1_Y = 10
     LINE2_Y = 50
     LINE3_Y = 90
-    POINT_OFS = 10
+    LAMP_OFS = 10
 
+    # 横の位置
     COLUMN1_X = 10
     COLUMN12_X = 150
 
@@ -54,7 +56,7 @@ class NamiGui:
             if i==beat:
                 color_str = 'magenta'
             pygame.draw.circle(self.SURFACE,color_str, \
-                (self.COLUMN2_X+i*self.LAMP_INTERVAL, self.LINE3_Y+self.POINT_OFS), 5)
+                (self.COLUMN2_X+i*self.LAMP_INTERVAL, self.LINE3_Y+self.LAMP_OFS), 5)
 
     def _display_part(self, seq):
         for num in range(ncf.MAX_PART_COUNT):
@@ -65,7 +67,7 @@ class NamiGui:
             if len(pt.retained_note) > 0:
                 color_str = 'magenta'
             pygame.draw.circle(self.SURFACE, color_str, \
-                (self.COLUMN31_X+num*self.PART_INTERVAL, self.LINE2_Y+self.POINT_OFS), 5)
+                (self.COLUMN31_X+num*self.PART_INTERVAL, self.LINE2_Y+self.LAMP_OFS), 5)
             self.SURFACE.blit(self.font.render(str(pt.keynote-60), True, 'lightblue'), \
                 [self.COLUMN3_X+num*self.PART_INTERVAL, self.LINE3_Y])
 
@@ -91,5 +93,3 @@ class NamiGui:
             if not loop.running:
                 pygame.quit()       # Pygameの終了（画面を閉じる）
                 return
-
-
