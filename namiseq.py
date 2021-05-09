@@ -347,30 +347,45 @@ class Seq:
     #   その他の機能： mido の生成、CUIに情報を送る
     #   Block: 現状 [0] の一つだけ生成
     def __init__(self):
-        # MIDI settings
-        pmd.init()
-        devnum = pmd.get_count()
-        self.all_port = []
-        lastid = 0
-        self.port_name = ''
-        for i in range(devnum):
-            dev = pmd.get_device_info(i)
-            if dev[3] == 1:
-                self.all_port.append(dev[1].decode())
-                lastid = i
-                self.port_name = dev[1].decode()
-        self.midi_port = pmd.Output(lastid)
+        pmd.init()  # MIDI Init
+
+        self.all_ports = []
+        self.midi_port = []
+        self.scan_midi_all_port()
+        self.set_midi_port(0)
 
         self.start_time = time.time()
         self.during_play = False
-        self.bk = [BlockRegular(self.midi_port), BlockIndependentLoop(self.midi_port)]
-        self.current_bk = self.bk[0]
+        self.blocks = [BlockRegular(self.midi_port), BlockIndependentLoop(self.midi_port)]
+        self.current_bk = self.blocks[0]
         self.next_time = 0
         self.current_time = 0
         self.latest_clear_time = 0
 
-    def get_midi_all_port(self):
-        return self.all_port
+    def scan_midi_all_port(self):
+        self.all_ports = []
+        devnum = pmd.get_count()
+        for i in range(devnum):
+            dev = pmd.get_device_info(i)
+            if dev[3] == 1: # MIDI Output なら
+                name = dev[1].decode()
+                self.all_ports.append([i,name,False])
+        return self.all_ports
+
+    def set_midi_port(self, idx):
+        if idx < len(self.all_ports) and idx >= 0:
+            devid = self.all_ports[idx][0]
+            self.all_ports[idx][2] = True
+        else:
+            devid = pmd.get_default_output_id()
+            for pt in self.all_ports:
+                if devid == pt[0]:
+                    pt[2] = True
+        try:
+            self.midi_port = pmd.Output(devid)
+        except:
+            devid = -1
+        return devid
 
     def get_tick(self):
         tm = 0
@@ -383,20 +398,11 @@ class Seq:
         # 戻り値： 拍、拍以下の数値0-0.999、小節内の拍数
         return int(tm//one_beat), int((tm%one_beat)*1000/one_beat), block_tick_info[1]
 
-    def get_midi_port(self):
-        return self.port_name
-
-    def set_midi_port(self, idx):
-        if idx < len(self.all_port):
-            self.port_name = self.all_port[idx]
-            return True
-        else: return False
-
     def block(self):
         return self.current_bk
 
     def change_block(self, blk):
-        self.current_bk = self.bk[blk]
+        self.current_bk = self.blocks[blk]
 
     def periodic(self):     # 別スレッド
         if not self.during_play:

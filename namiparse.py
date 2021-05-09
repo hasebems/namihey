@@ -117,15 +117,31 @@ class Parsing:
             pt = curbk.part(curbk.inputPart)
             change_oct_to_part(pt, oct)
 
+    CONFIRM_MIDI_OUT_ID = -1
+
     def midi_setting(self, num):
-        midi_port = self.sq.get_midi_all_port()
+        if num == self.CONFIRM_MIDI_OUT_ID:
+            ports = self.sq.all_ports
+        else:
+            ports = self.sq.scan_midi_all_port()
         self.print_dialogue("==MIDI OUT LIST==")
-        for i, pt in enumerate(midi_port):
-            self.print_dialogue("PORT " + str(i) + ": " + str(pt))
+        for i, pt in enumerate(ports):
+            self.print_dialogue(str(i) + ": " + str(pt[1]) + '(' + str(pt[0]) + ')')
+
         self.print_dialogue("==SELECTED MIDI OUT==")
-        if num != -1 and num < len(midi_port):
-            self.sq.set_midi_port(num)
-        self.print_dialogue(self.sq.get_midi_port())
+        if num == self.CONFIRM_MIDI_OUT_ID:  # 設定せず、設定内容をみたい場合
+            for pt in ports:
+                if pt[2]:
+                    self.print_dialogue(pt[1] + '(' + str(pt[0]) + ')')
+        else:
+            real_id = self.sq.set_midi_port(num)
+            if real_id != -1:
+                for pt in ports:
+                    if pt[0] == real_id:
+                        break
+                self.print_dialogue(pt[1] + '(' + str(pt[0]) + ')')
+            else:
+                self.print_dialogue("MIDI setting is something wrong!")
 
     def parse_set_command(self, input_text):
         prm_text = input_text.strip()
@@ -326,8 +342,10 @@ class Parsing:
     def letterM(self, input_text):
         if input_text[0:4] == "midi":
             picked_txt = input_text[input_text.find('midi') + 4:].strip().split()
-            if picked_txt[0].isdecimal():
+            if picked_txt and picked_txt[0].isdecimal():
                 self.midi_setting(int(picked_txt[0]))
+            else:
+                self.midi_setting(self.CONFIRM_MIDI_OUT_ID)
 
     def startParsing(self, input_text):
         first_letter = input_text[0:1]

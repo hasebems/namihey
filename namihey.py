@@ -37,7 +37,7 @@ def main():
     seq = sq.Seq()
     pas = ps.Parsing(seq)
     gui = ngui.NamiGui()
-    pas.midi_setting(-1)
+    pas.midi_setting(pas.CONFIRM_MIDI_OUT_ID)
 
     cui_job = threading.Thread(target=cui, args=(loop, seq, pas))
     cui_job.start()
