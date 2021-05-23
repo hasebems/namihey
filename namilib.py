@@ -64,6 +64,10 @@ def convert_exp2vel(exp_text):
             vel = 48
         elif exp_text == 'ppp':
             vel = 24
+        elif exp_text == 'pppp':
+            vel = 12
+        elif exp_text == 'ppppp':
+            vel = 1
     else:
         vel = int(exp_text)
         if vel > 127:
