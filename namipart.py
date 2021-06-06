@@ -20,6 +20,7 @@ class Part:
         self.state_reserve = False       # Change Phrase at next loop top
         self.keynote = DEFAULT_NOTE_NUMBER
         self.is_onebyone = False
+        self.volume = 100
         self.rnd = nrnd.RandomGenerator(DEFAULT_NOTE_NUMBER, self._send_midi_note)
         self.ptgen = nptgen.PartGenPlay(self._send_midi_note)
 
@@ -49,6 +50,12 @@ class Part:
         else:
             self._generate_sequence()
 
+    # Controller IF
+    def change_volume(self, vol):
+        if vol >= 0 and vol < 128:
+            self.volume = vol
+            self.parent_block.send_control(self.midich, 7, vol)
+
     # Data Input IF
     def clear_description(self):
         self.description = [None for _ in range(4)]
@@ -69,6 +76,7 @@ class Part:
             self.ptgen.start()
         else:
             self.rnd.start()
+        self.change_volume(self.volume)
 
     # Sequence Control IF
     def return_to_top(self, tick_for_one_measure):        # Phrase sequence return to top during playing 

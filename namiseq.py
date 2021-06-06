@@ -44,6 +44,10 @@ class Block:
             self.port.note_off(nt, channel=ch)
         nlib.log.record(str(nt)+'-'+str(vel))
 
+    def send_control(self, ch, cntnum, value):
+        if ch < 16 and cntnum < 120 and value < 128:
+            self.port.write_short(0xb0+ch, cntnum, value)
+
     def part(self, num):
         return 0
 

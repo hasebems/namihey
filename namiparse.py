@@ -117,6 +117,14 @@ class Parsing:
             pt = curbk.part(curbk.inputPart)
             change_oct_to_part(pt, oct)
 
+    def change_balance(self, bl_list):
+        if len(bl_list) > ncf.MAX_PART_COUNT:
+            del bl_list[ncf.MAX_PART_COUNT:]
+        curbk = self.sq.current_bk
+        for i, vol in enumerate(bl_list):
+            if vol.isdecimal():
+                curbk.part(i).change_volume(int(vol))
+
     CONFIRM_MIDI_OUT_ID = -1
 
     def midi_setting(self, num):
@@ -145,35 +153,38 @@ class Parsing:
 
     def parse_set_command(self, input_text):
         prm_text = input_text.strip()
-        if 'part' in prm_text:
-            picked_txt = prm_text[prm_text.find('part') + 4:]
-            if '=' in picked_txt:
-                ptNumList = picked_txt[picked_txt.find('=') + 1:].strip().split()
-                # print(ptNumList[0])
-        if 'block' in prm_text:
+        if '=' in prm_text:
+            tx = prm_text.split('=',2)
+        else:
+            return
+
+        command = tx[0].strip()
+        if command == 'part':
             pass
-        if 'key' in prm_text:
-            picked_txt = prm_text[prm_text.find('key') + 3:]
-            if '=' in picked_txt:
-                key_list = picked_txt[picked_txt.find('=') + 1:].strip().split()
-                self.change_key(key_list[0], 'all' in prm_text)
-        if 'oct' in prm_text:
-            picked_txt = prm_text[prm_text.find('oct') + 3:]
-            if '=' in picked_txt:
-                key_list = picked_txt[picked_txt.find('=') + 1:].strip().split()
-                self.change_oct(key_list[0], 'all' in prm_text)
-        if 'beat' in prm_text:
-            picked_txt = prm_text[prm_text.find('beat') + 4:]
-            if '=' in picked_txt:
-                beatlist = picked_txt[picked_txt.find('=') + 1:].strip().split()
-                self.change_beat(beatlist[0])
-        if 'bpm' in prm_text:
-            picked_txt = prm_text[prm_text.find('bpm') + 3:]
-            if '=' in picked_txt:
-                bpmnumlist = picked_txt[picked_txt.find('=') + 1:].strip().split()
-                if bpmnumlist[0].isdecimal():
-                    self.sq.block().stock_bpm = int(bpmnumlist[0])
-                    self.print_dialogue("BPM has changed!")
+        elif command == 'block':
+            pass
+        elif command == 'key':
+            key_list = tx[1].strip().split()
+            self.change_key(key_list, 'all' in prm_text)
+            self.print_dialogue("Key has changed!")
+        elif command == 'oct':
+            oct_list = tx[1].strip().split()
+            self.change_oct(oct_list[0], 'all' in prm_text)
+            self.print_dialogue("Octave has changed!")
+        elif command == 'beat':
+            beat_list = tx[1].strip().split()
+            self.change_beat(beat_list)
+            self.print_dialogue("Beat has changed!")
+        elif command == 'bpm':
+            bpmnumlist = tx[1].strip().split()
+            if bpmnumlist[0].isdecimal():
+                self.sq.block().stock_bpm = int(bpmnumlist[0])
+                self.print_dialogue("BPM has changed!")
+        elif command == 'balance':
+            bl_list = tx[1].strip().split(',')
+            self.change_balance(bl_list)
+            self.print_dialogue("Balance has changed!")
+
 
     def letterB(self, input_text):
         if input_text[0:5] == 'block':
