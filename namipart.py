@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import copy
-import namirandom as nrnd
+import namipattern
 import namiptgen as nptgen
 
 
@@ -21,7 +21,7 @@ class Part:
         self.keynote = DEFAULT_NOTE_NUMBER
         self.is_onebyone = False
         self.volume = 100
-        self.rnd = nrnd.RandomGenerator(DEFAULT_NOTE_NUMBER, self._send_midi_note)
+        self.rnd = namipattern.PatternGenerator(DEFAULT_NOTE_NUMBER, self._send_midi_note)
         self.ptgen = nptgen.PartGenPlay(self._send_midi_note)
 
     def _send_midi_note(self, nt, vel):

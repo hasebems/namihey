@@ -6,7 +6,7 @@ import namilib as nlib
 NOTE_OFF_MARGIN = 20
 
 
-class RandomGenerator:
+class PatternGenerator:
 
     def __init__(self, key, func):
         self.description = []
@@ -25,12 +25,6 @@ class RandomGenerator:
         self.rnd_dur = 8
         self.measure_flow = []      # 各 Pattern の小節数
         self.velocity_flow = []     # 各 Pattern のベロシティ
-
-    def set_random(self, pattern, key):
-        self.description = pattern
-        self.keynote = key
-        self._analyse_random_braces()
-        return self.max_measure_num * self.tick_for_one_measure
 
     def _analyse_chord_brace(self, chord_description):
         chord_flow = chord_description.split(':')
@@ -105,21 +99,38 @@ class RandomGenerator:
 
     def _detect_chord_scale(self, chord):
         root = 0
+        letter = chord[0]
         dtbl = nlib.CHORD_SCALE['diatonic']
-        doremi_set = nlib.CHORD_SCALE.get(chord)
-        if doremi_set is None:
-            l1 = chord[0:1]     # 最初の一文字
-            l2 = chord[1:2]     # 最初から二文字目
-            if l1.isdecimal():
-                root = dtbl[len(dtbl)//2+int(l1)-1]
-            elif l1 == '+' and l2.isdecimal():
-                root = dtbl[len(dtbl)//2+int(l2)-1] + 1
-            elif l1 == '-' and l2.isdecimal():
-                root = dtbl[len(dtbl)//2+int(l2)-1] - 1
+        if letter == 'I' or letter == 'V':
+            root_cnt = 0
+            root_str = ''
+            while letter == 'I' or letter == 'V':
+                root_str += letter
+                root_cnt += 1
+                if len(chord) > root_cnt:
+                    letter = chord[root_cnt]
+                else:
+                    break
+            # #/b のチェック
+            if letter == '#':
+                root += 1
+                root_cnt += 1
+            elif letter == 'b':
+                root -= 1
+                root_cnt += 1
+            # ローマ数字の文字列から root を求める
+            try:
+                ofs = nlib.ROOT_NAME.index(root_str)
+                root += dtbl[len(dtbl)//2+ofs]
+            except ValueError as error:
+                root = 0
+            
+            if len(chord) > root_cnt:
+                chord = '_' + chord[root_cnt:]
             else:
-                root = nlib.convert_doremi(chord)
-            chord = '_' + chord[1:]
-            doremi_set = nlib.CHORD_SCALE.get(chord, dtbl)
+                chord = '_'
+
+        doremi_set = nlib.CHORD_SCALE.get(chord, dtbl)
         return root, doremi_set
 
     def _detect_index(self, root, doremi_set):
@@ -183,6 +194,13 @@ class RandomGenerator:
         else:
             self.next_tick = crnt_tick
             return crnt_tick
+
+    # Public
+    def set_random(self, pattern, key):
+        self.description = pattern
+        self.keynote = key
+        self._analyse_random_braces()
+        return self.max_measure_num * self.tick_for_one_measure
 
     def start(self):
         self.state_play = True
