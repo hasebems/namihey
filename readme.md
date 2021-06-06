@@ -1,5 +1,5 @@
 
-namihey Alpha-version(0.210506)
+namihey Alpha-version(0.210606)
 =================================
 
 about namihey
