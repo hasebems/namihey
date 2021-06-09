@@ -46,58 +46,58 @@ class NamiGui:
     PART_INTERVAL = 40
 
     def __init__(self):
-        super(NamiGui, self).__init__()
         pygame.init()
-        self.SURFACE = pygame.display.set_mode((self.SURFACE_X_SZ, self.SURFACE_Y_SZ))
+        self.screen = pygame.display.set_mode((self.SURFACE_X_SZ, self.SURFACE_Y_SZ))
         pygame.display.set_caption("Namihey Indicator")    # タイトル文字を指定
         self.font = pygame.font.Font(None, 28)   # フォントの設定
 
     def _display_time(self):
         date = self.font.render(str(datetime.date.today()), True, 'magenta')
         time = self.font.render(datetime.datetime.now().strftime("%H:%M:%S"), True, 'lightblue')
-        self.SURFACE.blit(date, [NamiGui.COLUMN1_X, NamiGui.LINE1_Y])   # 文字列の位置を指定
-        self.SURFACE.blit(time, [NamiGui.COLUMN12_X, NamiGui.LINE1_Y])  # 文字列の位置を指定
+        self.screen.blit(date, [NamiGui.COLUMN1_X, NamiGui.LINE1_Y])   # 文字列の位置を指定
+        self.screen.blit(time, [NamiGui.COLUMN12_X, NamiGui.LINE1_Y])  # 文字列の位置を指定
 
     def _display_beat(self, seq):
         bpm_str = self.font.render('bpm : ' + str(seq.current_bk.bpm), True, 'lightblue')
-        self.SURFACE.blit(bpm_str, [NamiGui.COLUMN2_X, NamiGui.LINE1_Y])   # 文字列の位置を指定
+        self.screen.blit(bpm_str, [NamiGui.COLUMN2_X, NamiGui.LINE1_Y])   # 文字列の位置を指定
         beat, tick, count = seq.get_tick()
         beat_str = self.font.render(str(beat+1) + ' : ' + str(tick), True, 'magenta')
-        self.SURFACE.blit(beat_str, [NamiGui.COLUMN21_X, NamiGui.LINE2_Y])   # 文字列の位置を指定
+        self.screen.blit(beat_str, [NamiGui.COLUMN21_X, NamiGui.LINE2_Y])   # 文字列の位置を指定
         for i in range(count):
             color_str = 'lightblue'
             if i==beat:
                 color_str = 'magenta'
-            pygame.draw.circle(self.SURFACE,color_str, \
+            pygame.draw.circle(self.screen,color_str, \
                 (NamiGui.COLUMN2_X+i*NamiGui.LAMP_INTERVAL, NamiGui.LINE3_Y+NamiGui.LAMP_OFS), 5)
 
     def _display_part(self, seq):
         for num in range(ncf.MAX_PART_COUNT):
-            self.SURFACE.blit(self.font.render(str(num+1), True, 'lightblue'), \
+            self.screen.blit(self.font.render(str(num+1), True, 'lightblue'), \
                 [NamiGui.COLUMN3_X+num*NamiGui.PART_INTERVAL, NamiGui.LINE1_Y])
             color_str = 'lightblue'
             pt = seq.current_bk.part(num)
             if len(pt.retained_note) > 0:
                 color_str = 'magenta'
-            pygame.draw.circle(self.SURFACE, color_str, \
+            pygame.draw.circle(self.screen, color_str, \
                 (NamiGui.COLUMN31_X+num*NamiGui.PART_INTERVAL, NamiGui.LINE2_Y+NamiGui.LAMP_OFS), 5)
-            self.SURFACE.blit(self.font.render(str(pt.keynote-60), True, 'lightblue'), \
+            self.screen.blit(self.font.render(str(pt.keynote-60), True, 'lightblue'), \
                 [NamiGui.COLUMN3_X+num*NamiGui.PART_INTERVAL, NamiGui.LINE3_Y])
 
     def _debug_support(self, seq):
         value = '<Debug Space>'      # 見たい変数を記載する
         debug = self.font.render(str(value), True, 'lightblue')
-        self.SURFACE.blit(debug, [NamiGui.COLUMN1_X, NamiGui.LINE3_Y])
+        self.screen.blit(debug, [NamiGui.COLUMN1_X, NamiGui.LINE3_Y])
 
     def main_loop(self, loop, seq):
         clock = pygame.time.Clock()
         while True:
             clock.tick(60)     # 60FPS
-            self.SURFACE.fill((0,0,100))
+            self.screen.fill((0,0,100))
             self._display_time()
             self._display_beat(seq)
             self._display_part(seq)
             self._debug_support(seq)
+            # 画面更新
             pygame.display.update()
 
             # イベントを処理
