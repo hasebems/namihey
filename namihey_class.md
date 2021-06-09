@@ -46,9 +46,10 @@
 - Note:
     - PartGen からコールされる
 
-### RandomGenerator
-- File: namirandom.py
+### PatternGenerator
+- File: namipattern.py
 - Role: ユーザーが入力したデータをもとに、再生時に逐次シーケンスを生成し、再生コントロールするオブジェクト(oneByOne型)
+    - Random 型と Arpeggio 型の二つのタイプがある
 
 ### NamiGui
 - File: namigui.py

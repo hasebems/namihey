@@ -5,6 +5,7 @@ import namilib as nlib
 
 NOTE_OFF_MARGIN = 20
 
+ARP_TYPE = ('sawup4','sawup2','sawdwn4','sawdwn2','triup4','triup2','tridwn4','tridwn2')
 
 class PatternGenerator:
 
@@ -14,6 +15,7 @@ class PatternGenerator:
         self.tick_for_one_measure = 0
         self.midi_handler = func
         self.state_play = False
+        self.random_ptn = True
         self.next_tick = 0
         self.event_counter = 0
         self.max_measure_num = 0        # No Data
@@ -23,6 +25,7 @@ class PatternGenerator:
         self.rnd_rgn = 12
         self.rnd_ofs = 0
         self.rnd_dur = 8
+        self.arp_type = 0
         self.measure_flow = []      # 各 Pattern の小節数
         self.velocity_flow = []     # 各 Pattern のベロシティ
 
@@ -36,7 +39,7 @@ class PatternGenerator:
                 elm = prm.strip().split('=')
                 if elm[1].isdecimal():
                     value = int(elm[1])
-                    if elm[0] == 'rgn':
+                    if elm[0] == 'rgn' and self.random_ptn:
                         if value < 1: value = 1
                         elif value > 12: value = 12
                         self.rnd_rgn = value
@@ -46,6 +49,8 @@ class PatternGenerator:
                         self.rnd_ofs = value
                     elif elm[0] == 'dur':
                         self.rnd_dur = value
+                elif elm[0] == 'ptn' and not self.random_ptn:
+                    self.arp_type = ARP_TYPE.index(elm[1])
         if len(chord_flow) >= 2:
             self.chord_flow_next = chord_flow[1].strip().split(',') # chord
         else:
@@ -82,10 +87,13 @@ class PatternGenerator:
         else:
             self.velocity_flow = [100 for _ in range(len(self.chord_flow_next))]
 
-    def _analyse_random_braces(self):
+    def _analyse_ptn_braces(self, pattern, key):
+        self.description = pattern
+        self.keynote = key
         self._analyse_chord_brace(self.description[0])
         self._analyse_measure_brace(self.description[1])
         self._analyse_velocity_brace(self.description[2])
+        return self.max_measure_num * self.tick_for_one_measure
 
     def _detect_locate(self, tick):
         current_num = int(tick/self.tick_for_one_measure)
@@ -130,37 +138,39 @@ class PatternGenerator:
             else:
                 chord = '_'
 
-        doremi_set = nlib.CHORD_SCALE.get(chord, dtbl)
-        return root, doremi_set
+        chord_scale_tbl = nlib.CHORD_SCALE.get(chord, dtbl)
+        return root, chord_scale_tbl
 
-    def _detect_index(self, root, doremi_set):
+    def _detect_index(self, root, tbl):
         min_doremi = self.rnd_ofs - self.rnd_rgn - root
-        start_idx = len(doremi_set)-1
-        while doremi_set[start_idx] > min_doremi: start_idx -= 1
+        start_idx = len(tbl)-1
+        while tbl[start_idx] > min_doremi: start_idx -= 1
         max_doremi = self.rnd_ofs + self.rnd_rgn - root
         end_idx = 0
-        while doremi_set[end_idx] < max_doremi: end_idx += 1
+        while tbl[end_idx] < max_doremi: end_idx += 1
         return start_idx, end_idx
 
-    def _detect_note_number(self, tick):
+    def _detect_note_number(self, measure_num, tick):
         # detect random chord array
-        measure_num = self._detect_locate(tick)
         chord = self.chord_flow[measure_num]
-        root, doremi_set = self._detect_chord_scale(chord)
+        root, chord_scale_tbl = self._detect_chord_scale(chord)
 
-        # Random の Index値を作るための最小値、最大値を算出
-        start_idx, end_idx = self._detect_index(root, doremi_set)
+        if self.random_ptn == True:
+            # Random の Index値を作るための最小値、最大値を算出
+            start_idx, end_idx = self._detect_index(root, chord_scale_tbl)
 
-        # Random な Index値を発生させて、Tableからノート番号を読み出す 
-        while True:
-            idx = random.randint(start_idx, end_idx)
-            note = doremi_set[idx] + self.keynote + root
-            if note != self.last_note:  # don't decide same note as last note
-                break
-        return note, self.velocity_flow[measure_num]
-        # if self.event_counter >= 16: print("something wrong!")
+            # Random な Index値を発生させて、Tableからノート番号を読み出す 
+            while True:
+                idx = random.randint(start_idx, end_idx)
+                note = chord_scale_tbl[idx] + self.keynote + root
+                if note != self.last_note:  # don't decide same note as last note
+                    break
+            return note
+            # if self.event_counter >= 16: print("something wrong!")
+        else:   # Arpeggio の場合
+            return 60
 
-    def _generate_rnd_pattern(self):
+    def _generate_pattern_note(self):
         # print(self.next_tick)
         whole_tick = self.max_measure_num * self.tick_for_one_measure
         if not self.chord_flow:
@@ -173,8 +183,11 @@ class PatternGenerator:
         crnt_tick = self.next_tick                                              # 全体 Loop Size 中の tick
         crnt_tick_for_one_measure = crnt_tick % self.tick_for_one_measure       # １小節内の tick
         tick_reso = round(nlib.DEFAULT_TICK_FOR_ONE_MEASURE/self.rnd_dur, 0)    # 音価
-        if crnt_tick_for_one_measure % tick_reso == 0:    # Note On
-            note, vel = self._detect_note_number(crnt_tick)
+        if crnt_tick_for_one_measure % tick_reso == 0:
+            # Note On
+            measure_num = self._detect_locate(crnt_tick)
+            note = self._detect_note_number(measure_num, crnt_tick)
+            vel = self.velocity_flow[measure_num]
             self.midi_handler(note, vel)
             self.last_note = note
             if self.tick_for_one_measure - crnt_tick_for_one_measure < tick_reso:
@@ -197,17 +210,19 @@ class PatternGenerator:
 
     # Public
     def set_random(self, pattern, key):
-        self.description = pattern
-        self.keynote = key
-        self._analyse_random_braces()
-        return self.max_measure_num * self.tick_for_one_measure
+        self.random_ptn = True
+        return self._analyse_ptn_braces(pattern, key)
+
+    def set_arp(self, pattern, key):
+        self.random_ptn = False
+        return self._analyse_ptn_braces(pattern, key)
 
     def start(self):
         self.state_play = True
         self.event_counter = 0
         self.next_tick = 0
         self.chord_flow = self.chord_flow_next
-        return self.generate_random(0)
+        return self.generate_pattern(0)
 
     def return_to_top(self, tick_for_one_measure):
         self.event_counter = 0
@@ -217,9 +232,9 @@ class PatternGenerator:
             self.chord_flow = self.chord_flow_next
         return self.max_measure_num * self.tick_for_one_measure
 
-    def generate_random(self, tick):
+    def generate_pattern(self, tick):
         if tick >= self.next_tick:
-            rtn_value = self._generate_rnd_pattern()
+            rtn_value = self._generate_pattern_note()
         else:
             rtn_value = self.next_tick
         return rtn_value
