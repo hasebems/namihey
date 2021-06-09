@@ -21,7 +21,7 @@ class Part:
         self.keynote = DEFAULT_NOTE_NUMBER
         self.is_onebyone = False
         self.volume = 100
-        self.rnd = namipattern.PatternGenerator(DEFAULT_NOTE_NUMBER, self._send_midi_note)
+        self.ptn = namipattern.PatternGenerator(DEFAULT_NOTE_NUMBER, self._send_midi_note)
         self.ptgen = nptgen.PartGenPlay(self._send_midi_note)
 
     def _send_midi_note(self, nt, vel):
@@ -39,7 +39,10 @@ class Part:
             self.whole_tick = self.ptgen.set_phrase(self.description[1:], self.keynote)
             self.is_onebyone = False
         elif seq_type == 'random':
-            self.whole_tick = self.rnd.set_random(self.description[1:], self.keynote)
+            self.whole_tick = self.ptn.set_random(self.description[1:], self.keynote)
+            self.is_onebyone = True
+        elif seq_type == 'arp':
+            self.whole_tick = self.ptn.set_arp(self.description[1:], self.keynote)
             self.is_onebyone = True
 
     # Settings IF
@@ -75,7 +78,7 @@ class Part:
         if not self.is_onebyone:
             self.ptgen.start()
         else:
-            self.rnd.start()
+            self.ptn.start()
         self.change_volume(self.volume)
 
     # Sequence Control IF
@@ -86,14 +89,14 @@ class Part:
         if not self.is_onebyone:
             return self.ptgen.return_to_top()
         else:
-            return self.rnd.return_to_top(tick_for_one_measure)
+            return self.ptn.return_to_top(tick_for_one_measure)
 
     # Sequence Control IF
     def generate_event(self, tick):
         if not self.is_onebyone:
             return self.ptgen.generate_event(tick)
         else:
-            return self.rnd.generate_random(tick)
+            return self.ptn.generate_pattern(tick)
 
     # Sequence Control IF
     def stop(self):
@@ -104,4 +107,4 @@ class Part:
         if not self.is_onebyone:
             self.ptgen.stop()
         else:
-            self.rnd.stop()
+            self.ptn.stop()

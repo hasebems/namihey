@@ -326,6 +326,12 @@ class Parsing:
             blk.clear_description()
             note_info.insert(0, 'random')
             blk.add_seq_description(note_info)
+        elif note_info[0][0:3] == 'arp':
+            self.print_dialogue("set Arpeggio Pattern!")
+            blk = self.sq.block()
+            blk.clear_description()
+            note_info.insert(0, 'arp')
+            blk.add_seq_description(note_info)
         else:
             self.print_dialogue("what?")
 
