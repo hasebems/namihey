@@ -5,8 +5,6 @@ import namilib as nlib
 
 NOTE_OFF_MARGIN = 20
 
-ARP_TYPE = ('sawup4','sawup2','sawdwn4','sawdwn2','triup4','triup2','tridwn4','tridwn2')
-
 class PatternGenerator:
 
     def __init__(self, key, func):
@@ -25,7 +23,7 @@ class PatternGenerator:
         self.rnd_rgn = 12
         self.rnd_ofs = 0
         self.rnd_dur = 8
-        self.arp_type = 0
+        self.arp_type = 'sawup'
         self.measure_flow = []      # 各 Pattern の小節数
         self.velocity_flow = []     # 各 Pattern のベロシティ
 
@@ -37,6 +35,8 @@ class PatternGenerator:
             prms = inside[0].split(',')
             for prm in prms:
                 elm = prm.strip().split('=')
+                if len(elm) < 2:
+                    break
                 if elm[1].isdecimal():
                     value = int(elm[1])
                     if elm[0] == 'rgn' and self.random_ptn:
@@ -50,7 +50,7 @@ class PatternGenerator:
                     elif elm[0] == 'dur':
                         self.rnd_dur = value
                 elif elm[0] == 'ptn' and not self.random_ptn:
-                    self.arp_type = ARP_TYPE.index(elm[1])
+                    self.arp_type = elm[1]
         if len(chord_flow) >= 2:
             self.chord_flow_next = chord_flow[1].strip().split(',') # chord
         else:
@@ -141,7 +141,7 @@ class PatternGenerator:
         chord_scale_tbl = nlib.CHORD_SCALE.get(chord, dtbl)
         return root, chord_scale_tbl
 
-    def _detect_index(self, root, tbl):
+    def _detect_index_rnd(self, root, tbl):
         min_doremi = self.rnd_ofs - self.rnd_rgn - root
         start_idx = len(tbl)-1
         while tbl[start_idx] > min_doremi: start_idx -= 1
@@ -150,14 +150,21 @@ class PatternGenerator:
         while tbl[end_idx] < max_doremi: end_idx += 1
         return start_idx, end_idx
 
-    def _detect_note_number(self, measure_num, tick):
+    def _detect_index_arp(self, root, tbl):
+        # root より小さい、最も近い note を探す
+        min_doremi = self.rnd_ofs - root
+        start_idx = len(tbl)-1
+        while tbl[start_idx] > min_doremi: start_idx -= 1
+        return start_idx
+
+    def _detect_note_number(self, measure_num, tick, reso):
         # detect random chord array
         chord = self.chord_flow[measure_num]
         root, chord_scale_tbl = self._detect_chord_scale(chord)
 
-        if self.random_ptn == True:
+        if self.random_ptn == True:  # Random の場合
             # Random の Index値を作るための最小値、最大値を算出
-            start_idx, end_idx = self._detect_index(root, chord_scale_tbl)
+            start_idx, end_idx = self._detect_index_rnd(root, chord_scale_tbl)
 
             # Random な Index値を発生させて、Tableからノート番号を読み出す 
             while True:
@@ -167,8 +174,25 @@ class PatternGenerator:
                     break
             return note
             # if self.event_counter >= 16: print("something wrong!")
+
         else:   # Arpeggio の場合
-            return 60
+            interval = nlib.DEFAULT_TICK_FOR_ONE_MEASURE//2 if reso >= 240 else nlib.DEFAULT_TICK_FOR_ONE_MEASURE//4
+            if self.arp_type == 'tridwn':
+                if (tick//interval)%2 == 0:
+                    arp_count = int((interval-(tick%interval))//reso)
+                else:
+                    arp_count = int((tick%interval)//reso)
+            elif self.arp_type == 'triup':
+                if (tick//interval)%2 == 0:
+                    arp_count = int((tick%interval)//reso)
+                else:
+                    arp_count = int((interval-(tick%interval))//reso)
+            elif self.arp_type == 'sawdwn':
+                arp_count = int((interval-(tick%interval))//reso) - 1
+            else: # 'sawup' or others
+                arp_count = int((tick%interval)//reso)
+            start_idx = self._detect_index_arp(root, chord_scale_tbl)
+            return chord_scale_tbl[start_idx+arp_count] + self.keynote + root
 
     def _generate_pattern_note(self):
         # print(self.next_tick)
@@ -186,7 +210,7 @@ class PatternGenerator:
         if crnt_tick_for_one_measure % tick_reso == 0:
             # Note On
             measure_num = self._detect_locate(crnt_tick)
-            note = self._detect_note_number(measure_num, crnt_tick)
+            note = self._detect_note_number(measure_num, crnt_tick, tick_reso)
             vel = self.velocity_flow[measure_num]
             self.midi_handler(note, vel)
             self.last_note = note

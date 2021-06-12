@@ -1,5 +1,5 @@
 
-namihey Alpha-version(0.210606)
+namihey Alpha-version(0.210612)
 =================================
 
 about namihey
@@ -139,19 +139,19 @@ python によって記述され、pygame を使用して MIDI 出力します。
         - (ptn=5, ofs=5, dur=8) : ptn/ofs/durの指定
         - 必ずデフォルト値を持ち、省略が可能
         - ptn 以下の８種類
-            - 'sawup4'/'sawup2' : 下から上に四分音符分、あるいは二分音符分、アルペジオする
-            - 'sawdwn4'/'sawdwn2' : 上から下にアルペジオ
-            - 'triup4'/'triup2' : 下から上、上から下に往復するアルペジオ
-            - 'tridwn4' / tridwn2' : 上から下、下から上に往復するアルペジオ
+            - 'sawup' : 下から上にアルペジオする
+            - 'sawdwn' : 上から下にアルペジオ
+            - 'triup' : 下から上、上から下に往復するアルペジオ
+            - 'tridwn' : 上から下、下から上に往復するアルペジオ
         - ofs   : 中心音の位置 (0-11 default:0)
         - dur   : アルペジオの1音符の音価。数値は基準音価と同じ（default:8)
+                  8以下は2拍のアルペジオ、8より大きいときは１拍のアルペジオ
     - コード名
         - I : d=m=s（Iの和音)
             - ローマ数字: I, II, III, IV, V, VI, VII
         - I# : di=mi=si (数字の後に # を付けると半音高いコードになる。b は半音）
         - V : s=t=r (Ⅴの和音)
         - VIm : l=d=m (m: minor)
-        - -III7 : ma=s=ta=ra (- を付けると半音低くなる。7: 7th)
         - IVM7 : f=l=d=m (M7: major7th)
         - IIIm7-5 : m=s=ta=r (m7-5: minor7th -5th)
         - diatonic : d=r=m=f=s=l=t (Diatonic Scale)
