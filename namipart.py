@@ -54,10 +54,10 @@ class Part:
             self._generate_sequence()
 
     # Controller IF
-    def change_volume(self, vol):
-        if vol >= 0 and vol < 128:
-            self.volume = vol
-            self.parent_block.send_control(self.midich, 7, vol)
+    def change_cc(self, cc_num, val):
+        if val >= 0 and val < 128:
+            self.volume = val
+            self.parent_block.send_control(self.midich, cc_num, val)
 
     # Data Input IF
     def clear_description(self):

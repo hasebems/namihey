@@ -7,6 +7,8 @@ T_PINK = '\033[95m'
 T_WHITE = '\033[97m'
 T_END = '\033[0m'
 
+PAN_TRANS_TBL = ('L10','L9','L8','L7','L6','L5','L4','L3','L2','L1','C',
+                 'R1','R2','R3','R4','R5','R6','R7','R8','R9','R10')
 
 class Parsing:
     #   入力した文字列の解析
@@ -117,13 +119,12 @@ class Parsing:
             pt = curbk.part(curbk.inputPart)
             change_oct_to_part(pt, oct)
 
-    def change_balance(self, bl_list):
-        if len(bl_list) > ncf.MAX_PART_COUNT:
-            del bl_list[ncf.MAX_PART_COUNT:]
+    def change_cc(self, cc_num, cc_list):
+        if len(cc_list) > ncf.MAX_PART_COUNT:
+            del cc_list[ncf.MAX_PART_COUNT:]
         curbk = self.sq.current_bk
-        for i, vol in enumerate(bl_list):
-            if vol.isdecimal():
-                curbk.part(i).change_volume(int(vol))
+        for i, vol in enumerate(cc_list):
+            curbk.part(i).change_cc(cc_num, int(vol))
 
     CONFIRM_MIDI_OUT_ID = -1
 
@@ -182,9 +183,23 @@ class Parsing:
                 self.print_dialogue("BPM has changed!")
         elif command == 'balance':
             bl_list = tx[1].strip().split(',')
-            self.change_balance(bl_list)
+            cc_list = [88 for _ in range(5)] # default: 7
+            for i, var in enumerate(bl_list):
+                if var.isdecimal():
+                    cc_list[i] = int(int(var)*12.7)
+            self.change_cc(7, cc_list)
             self.print_dialogue("Balance has changed!")
-
+        elif command == 'pan':
+            bl_list = tx[1].strip().split(',')
+            cc_list = [64 for _ in range(5)] # default: C
+            for i, var in enumerate(bl_list):
+                try:
+                    pan = int(PAN_TRANS_TBL.index(var) * 6.4)
+                    cc_list[i] = pan if pan <= 127 else 127
+                except ValueError as error:
+                    continue
+            self.change_cc(10, cc_list)
+            self.print_dialogue("Pan has changed!")
 
     def letterB(self, input_text):
         if input_text[0:5] == 'block':
