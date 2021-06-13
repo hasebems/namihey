@@ -191,6 +191,8 @@ class Parsing:
             if self.sq.during_play:
                 return
             tx = input_text[5:].replace(' ', '')
+
+            part = self.inputPart
             if tx == 's':
                 self.sq.change_block(0)
                 self.print_dialogue("Block changed to Sync Type.")
@@ -199,6 +201,7 @@ class Parsing:
                 self.sq.change_block(1)
                 self.print_dialogue("Block changed to Independent Type.")
                 self.inputBlock = 'I'
+            self.sq.block().inputPart = part - 1
             self.promptStr = self.get_prompt_string(self.inputBlock, self.inputPart)
         else:
             self.print_dialogue("what?")
