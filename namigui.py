@@ -5,6 +5,8 @@ import sys
 import datetime
 import namiconf as ncf
 
+BACK_COLOR = ((100,0,0),(0,100,0),(0,0,100))
+
 class Loop:
     running = True
 
@@ -88,11 +90,11 @@ class NamiGui:
         debug = self.font.render(str(value), True, 'lightblue')
         self.screen.blit(debug, [NamiGui.COLUMN1_X, NamiGui.LINE3_Y])
 
-    def main_loop(self, loop, seq):
+    def main_loop(self, loop, seq, pas):
         clock = pygame.time.Clock()
         while True:
             clock.tick(60)     # 60FPS
-            self.screen.fill((0,0,100))
+            self.screen.fill(BACK_COLOR[pas.back_color])
             self._display_time()
             self._display_beat(seq)
             self._display_part(seq)

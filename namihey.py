@@ -43,7 +43,7 @@ def main():
     cui_job.start()
     ev_job = threading.Thread(target=generate_ev, args=(loop, seq))
     ev_job.start()
-    gui.main_loop(loop, seq)
+    gui.main_loop(loop, seq, pas)
 
     cui_job.join()
     ev_job.join()

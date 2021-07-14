@@ -191,10 +191,11 @@ python によって記述され、pygame を使用して MIDI 出力します。
 - 'block s' 'block i' : s は Sync. Type、i は Independent Type の block に切り替える
 - 'show' : 現在のフレーズ情報を、階名(N)、音価(D)、音量(V)を nami prompt と一緒に、それぞれ一行ずつにして表示
 - 'midi 1' : MIDI PORT 1 を選択
+- 'color 0' : Namihey Indicator の背景色を赤にする（1:緑、2:青)
 
 
-調、テンポ、拍子
----------------
+調、テンポ、拍子、音量
+-------------------
 
 - 'set bpm=100' : BPM（テンポ）=100 にセット
 - 'set beat=4/4' : 拍子を 4/4 にセット

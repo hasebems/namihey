@@ -18,6 +18,7 @@ class Parsing:
         self.inputPart = 1  # 1origin
         self.inputBlock = 'S'
         self.promptStr = self.get_prompt_string(self.inputBlock, self.inputPart)
+        self.back_color = 2
 
     @staticmethod
     def get_prompt_string(blk, part):
@@ -361,6 +362,11 @@ class Parsing:
                 if 0 < part <= ncf.MAX_PART_COUNT:
                     self.sq.current_bk.copy_phrase(part - 1)
                     self.print_dialogue("Phrase copied to part" + tx + ".")
+        elif input_text[0:5] == 'color':
+            color = input_text[6:].replace(' ','')
+            if color.isdecimal() and int(color) < 3:
+                self.back_color = int(color)
+                self.print_dialogue("Back color has changed!")
         else:
             self.print_dialogue("what?")
 
