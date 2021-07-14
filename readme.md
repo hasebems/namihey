@@ -1,5 +1,5 @@
 
-namihey Alpha-version(0.210613)
+namihey Alpha-version(0.210714)
 =================================
 
 about namihey
@@ -209,6 +209,7 @@ python によって記述され、pygame を使用して MIDI 出力します。
 - 'set oct=+1' : 現状から１オクターブ上げる
     - set 以降に all を付け足すと、全 part に効果、付けなければ入力中の part に対してのみ効果
 - 'set balance=7,7,4,4,4' : 5つのパートの音量バランスを変更できる(数値は 0-10, default:7)
+    - 'balance' 以外に 'volume' も可
 - 'set pan=L10,C,R10,R5,L3' : 5つのパートのパンを変更できる(値は L10-C-R10, default:C)
 - 再生中でも設定可能。再生中の場合、次のループから反映される
 

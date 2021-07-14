@@ -181,7 +181,7 @@ class Parsing:
             if bpmnumlist[0].isdecimal():
                 self.sq.block().stock_bpm = int(bpmnumlist[0])
                 self.print_dialogue("BPM has changed!")
-        elif command == 'balance':
+        elif command == 'balance' or command == 'volume':
             bl_list = tx[1].strip().split(',')
             cc_list = [88 for _ in range(5)] # default: 7
             for i, var in enumerate(bl_list):

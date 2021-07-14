@@ -79,7 +79,7 @@ class Part:
             self.ptgen.start()
         else:
             self.ptn.start()
-        self.change_volume(self.volume)
+        self.change_cc(7, self.volume)
 
     # Sequence Control IF
     def return_to_top(self, tick_for_one_measure):        # Phrase sequence return to top during playing 
