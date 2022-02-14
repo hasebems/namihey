@@ -85,9 +85,9 @@ class Parsing:
                     octave_letter = key_text[2:]
             if octave_letter.isdecimal():
                 oct = int(octave_letter) + 1
-        curbk = self.sq.current_bk
+        curbk = self.sq.block()
         if all:
-            for i in range(curbk.get_max_part()):
+            for i in range(curbk.max_part()):
                 change_note(curbk.part(i), key, oct)
         else:
             pt = curbk.part(curbk.inputPart)
@@ -112,7 +112,7 @@ class Parsing:
             oct = int(octave_letter) * pm
         else:
             return
-        curbk = self.sq.current_bk
+        curbk = self.sq.block()
         if all:
             for i in range(curbk.max_part()):
                 change_oct_to_part(curbk.part(i), oct)
@@ -123,7 +123,7 @@ class Parsing:
     def change_cc(self, cc_num, cc_list):
         if len(cc_list) > ncf.MAX_PART_COUNT:
             del cc_list[ncf.MAX_PART_COUNT:]
-        curbk = self.sq.current_bk
+        curbk = self.sq.block()
         for i, vol in enumerate(cc_list):
             curbk.part(i).change_cc(cc_num, int(vol))
 
@@ -167,7 +167,7 @@ class Parsing:
             pass
         elif command == 'key':
             key_list = tx[1].strip().split()
-            self.change_key(key_list, 'all' in prm_text)
+            self.change_key(key_list[0], 'all' in prm_text)
             self.print_dialogue("Key has changed!")
         elif command == 'oct':
             oct_list = tx[1].strip().split()
@@ -257,11 +257,19 @@ class Parsing:
         elif input_text[0:3] == 'set':
             self.parse_set_command(input_text[3:])
         elif input_text[0:4] == 'show':
+            def show_phrase(part):
+                ele = blk.part(part).description
+                if ele[0] == 'phrase':
+                    self.print_dialogue('~~> [' + str(ele[1]) + '][' + str(ele[2]) + '][' + str(ele[3]) + ']')
+                elif ele[0] == 'random' or ele[0] == 'arp':
+                    self.print_dialogue('~~> {' + str(ele[1]) + '}{' + str(ele[2]) + '}{' + str(ele[3]) + '}')
+            option = input_text[4:].replace(' ', '')
             blk = self.sq.block()
-            ele = blk.part(blk.inputPart).description
-            self.print_dialogue('~~> N[' + str(ele[1]) + ']')
-            self.print_dialogue('~~> D[' + str(ele[2]) + ']')
-            self.print_dialogue('~~> V[' + str(ele[3]) + ']')
+            if option == 'all':
+                for i in range(blk.max_part()):
+                    show_phrase(i)
+            else:
+                show_phrase(blk.inputPart)
         else:
             self.print_dialogue("what?")
 
@@ -360,7 +368,7 @@ class Parsing:
             if tx.isdecimal():
                 part = int(tx)
                 if 0 < part <= ncf.MAX_PART_COUNT:
-                    self.sq.current_bk.copy_phrase(part - 1)
+                    self.sq.block().copy_phrase(part - 1)
                     self.print_dialogue("Phrase copied to part" + tx + ".")
         elif input_text[0:5] == 'color':
             color = input_text[6:].replace(' ','')
