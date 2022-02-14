@@ -2,6 +2,12 @@
 
 ## Class Design
 
+```plantuml
+@startuml
+:Parsing
+@enduml
+```
+
 ### Parsing
 - File: namiparse.py
 - Role: 入力コマンドのパース処理
