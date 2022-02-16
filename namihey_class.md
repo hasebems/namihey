@@ -2,11 +2,38 @@
 
 ## Class Design
 
+<!--
 ```plantuml
 @startuml
-:Parsing
+Seq *-- Block
+Block <|-- BlockRegular
+Block <|-- BlockIndependentLoop
+BlockRegular *-- Part
+BlockIndependentLoop *-- Part
+Part *-- PatternGenerator
+Part *-- PartGenPlay
+PartGenPlay *-- PhraseGenerator
+class NamiGui
+class Parsing
 @enduml
 ```
+-->
+
+
+```mermaid
+classDiagram
+Seq *-- Block
+Block <|-- BlockRegular
+Block <|-- BlockIndependentLoop
+BlockRegular *-- Part
+BlockIndependentLoop *-- Part
+Part *-- PatternGenerator
+Part *-- PartGenPlay
+PartGenPlay *-- PhraseGenerator
+class Namigui
+class Parsing
+```
+
 
 ### Parsing
 - File: namiparse.py
