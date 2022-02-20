@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import namilib as nlib
 import namiconf as ncf
+import namifile as nfl
 
 T_WATER = '\033[96m'
 T_PINK = '\033[95m'
@@ -13,8 +14,9 @@ PAN_TRANS_TBL = ('L10','L9','L8','L7','L6','L5','L4','L3','L2','L1','C',
 class Parsing:
     #   入力した文字列の解析
     #   一行単位で入力されるたびに生成される
-    def __init__(self, seq):
+    def __init__(self, seq, nmfile):
         self.sq = seq
+        self.fl = nmfile
         self.inputPart = 1  # 1origin
         self.inputBlock = 'S'
         self.promptStr = self.get_prompt_string(self.inputBlock, self.inputPart)

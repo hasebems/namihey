@@ -9,6 +9,7 @@ import  namiparse as ps
 import  namiseq as sq
 import  namilib as nlib
 import  namigui as ngui
+import  namifile as nfl
 import  readline    # add history function
 
 def quit_job(seq):
@@ -35,7 +36,8 @@ def main():
     # Start from here!
     loop = ngui.Loop()
     seq = sq.Seq()
-    pas = ps.Parsing(seq)
+    fl = nfl.NamiFile()
+    pas = ps.Parsing(seq, fl)
     gui = ngui.NamiGui()
     pas.midi_setting(pas.CONFIRM_MIDI_OUT_ID)
 
