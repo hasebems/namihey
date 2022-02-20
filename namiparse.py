@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import namilib as nlib
 import namiconf as ncf
-import namifile as nfl
 
 T_WATER = '\033[96m'
 T_PINK = '\033[95m'
@@ -11,10 +10,15 @@ T_END = '\033[0m'
 PAN_TRANS_TBL = ('L10','L9','L8','L7','L6','L5','L4','L3','L2','L1','C',
                  'R1','R2','R3','R4','R5','R6','R7','R8','R9','R10')
 
+class Prompt:
+    NORMAL = 0
+    LOAD = 1
+
 class Parsing:
     #   入力した文字列の解析
     #   一行単位で入力されるたびに生成される
     def __init__(self, seq, nmfile):
+        self.prompt_mode = Prompt.NORMAL
         self.sq = seq
         self.fl = nmfile
         self.inputPart = 1  # 1origin
@@ -279,6 +283,16 @@ class Parsing:
             else:
                 ptn_str = self.get_complete_pattern_string(blk, blk.inputPart)
                 if ptn_str is not None: self.print_dialogue('~~> '+ptn_str)
+        elif input_text[0:4] == 'save':
+            file = input_text[4:].replace(' ', '')
+            if self.fl.prepare_save_file(file):
+                blk = self.sq.block()
+                for i in range(blk.max_part()):
+                    ptn_str = self.get_complete_pattern_string(blk, i)
+                    if ptn_str is not None:
+                        self.fl.save_pattern(ptn_str)
+                self.fl.close_save_file()
+                self.print_dialogue('Saved!')
         else:
             self.print_dialogue("what?")
 
@@ -405,8 +419,25 @@ class Parsing:
             else:
                 self.midi_setting(self.CONFIRM_MIDI_OUT_ID)
 
+    def letterL(self, input_text):
+        if input_text[0:4] == "load":
+            file = input_text[4:].replace(' ', '')
+            if self.fl.load_file(file):
+                self.prompt_mode = Prompt.LOAD
+                self.promptStr = '[load]~~>'
+        else:
+            self.print_dialogue("what?")
+
+    def during_load(self, input_text):
+        if self.fl.load_pattern(input_text):
+            self.prompt_mode = Prompt.NORMAL
+            self.promptStr = self.get_prompt_string(self.inputBlock, self.inputPart)
+
     def startParsing(self, input_text):
         first_letter = input_text[0:1]
+        if self.prompt_mode == Prompt.LOAD:
+            self.during_load(input_text)
+            return
         if first_letter == '[':
             self.letter_bracket(input_text)
         elif first_letter == '{':
@@ -419,10 +450,8 @@ class Parsing:
             self.letterF(input_text)
         elif first_letter == 'i':
             self.letterI(input_text)
-        elif first_letter == 'k':
-            self.letterP(input_text)
-        elif first_letter == 'o':
-            self.letterP(input_text)
+        elif first_letter == 'l':
+            self.letterL(input_text)
         elif first_letter == 'p':
             self.letterP(input_text)
         elif first_letter == 's':

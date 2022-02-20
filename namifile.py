@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 import  os
+import  namiseq as sq
 
 class NamiFile:
 
-    def __init__(self):
+    def __init__(self, seq):
+        self.sq = seq
+        self.during_save = False
         all_file_list = os.listdir('./')
         self.available_files = []
         for fl in all_file_list:
@@ -15,5 +18,29 @@ class NamiFile:
         else:
             print("No Namihey Files.")
 
-    def save_file(self):
-        pass
+    def prepare_save_file(self, file_name):
+        if self.during_save:
+            return False
+        if file_name == '':
+            return False
+        self.during_save = True
+        whole_name = file_name + '.nmhy'
+        self.save_file = open(whole_name, 'a')
+        return True
+
+    def save_pattern(self, str):
+        if self.during_save == False:
+            return
+        self.save_file.write(str+'\n')
+
+    def close_save_file(self):
+        if self.during_save == False:
+            return
+        self.save_file.close()
+        self.during_save = False
+
+    def load_file(self, file):
+        return True
+
+    def load_pattern(self, input):
+        return True
