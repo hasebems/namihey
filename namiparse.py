@@ -29,6 +29,16 @@ class Parsing:
     def print_dialogue(rpy):
         print(T_PINK + rpy + T_END)
 
+    @staticmethod
+    def get_complete_pattern_string(blk, part):
+        ele = blk.part(part).description
+        ptn_str = None
+        if ele[0] == 'phrase':
+            ptn_str = '[' + str(ele[1]) + '][' + str(ele[2]) + '][' + str(ele[3]) + ']'
+        elif ele[0] == 'random' or ele[0] == 'arp':
+            ptn_str = '{' + str(ele[1]) + '}{' + str(ele[2]) + '}{' + str(ele[3]) + '}'
+        return ptn_str
+
     def change_beat(self, text):
         if '/' in text:
             beat_list = text.strip().split('/')
@@ -257,19 +267,16 @@ class Parsing:
         elif input_text[0:3] == 'set':
             self.parse_set_command(input_text[3:])
         elif input_text[0:4] == 'show':
-            def show_phrase(part):
-                ele = blk.part(part).description
-                if ele[0] == 'phrase':
-                    self.print_dialogue('~~> [' + str(ele[1]) + '][' + str(ele[2]) + '][' + str(ele[3]) + ']')
-                elif ele[0] == 'random' or ele[0] == 'arp':
-                    self.print_dialogue('~~> {' + str(ele[1]) + '}{' + str(ele[2]) + '}{' + str(ele[3]) + '}')
             option = input_text[4:].replace(' ', '')
             blk = self.sq.block()
             if option == 'all':
                 for i in range(blk.max_part()):
-                    show_phrase(i)
+                    ptn_str = self.get_complete_pattern_string(blk, i)
+                    if ptn_str is not None:
+                        self.print_dialogue('['+str(i+1)+']'+'~~> '+ptn_str)
             else:
-                show_phrase(blk.inputPart)
+                ptn_str = self.get_complete_pattern_string(blk, blk.inputPart)
+                if ptn_str is not None: self.print_dialogue('~~> '+ptn_str)
         else:
             self.print_dialogue("what?")
 
