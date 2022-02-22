@@ -424,12 +424,12 @@ class Parsing:
             file = input_text[4:].replace(' ', '')
             if self.fl.load_file(file):
                 self.prompt_mode = Prompt.LOAD
-                self.promptStr = '[load]~~>'
+                self.promptStr = '[load]~~> '
         else:
             self.print_dialogue("what?")
 
     def during_load(self, input_text):
-        if self.fl.load_pattern(input_text):
+        if self.fl.load_pattern(self, input_text):
             self.prompt_mode = Prompt.NORMAL
             self.promptStr = self.get_prompt_string(self.inputBlock, self.inputPart)
 
@@ -437,8 +437,7 @@ class Parsing:
         first_letter = input_text[0:1]
         if self.prompt_mode == Prompt.LOAD:
             self.during_load(input_text)
-            return
-        if first_letter == '[':
+        elif first_letter == '[':
             self.letter_bracket(input_text)
         elif first_letter == '{':
             self.letter_brace(input_text)

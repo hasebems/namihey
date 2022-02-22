@@ -36,7 +36,7 @@ def main():
     # Start from here!
     loop = ngui.Loop()
     seq = sq.Seq()
-    fl = nfl.NamiFile(seq)
+    fl = nfl.NamiFile()
     pas = ps.Parsing(seq, fl)
     gui = ngui.NamiGui()
     pas.midi_setting(pas.CONFIRM_MIDI_OUT_ID)
