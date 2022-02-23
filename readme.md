@@ -192,6 +192,7 @@ python によって記述され、pygame を使用して MIDI 出力します。
 - 'show [all]' : 現在の入力パートのフレーズ/パターンを一行で表示（allで全パートを5行で表示）
 - 'midi 1' : MIDI PORT 1 を選択
 - 'color 0' : Namihey Indicator の背景色を赤にする（1:緑、2:青)
+- 'panic' : 今鳴っている音を消音する
 
 
 調、テンポ、拍子、音量

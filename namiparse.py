@@ -265,6 +265,10 @@ class Parsing:
                     blk.inputPart = part - 1
                     self.inputPart = part
                     self.promptStr = self.get_prompt_string(self.inputBlock, part)
+        elif input_text[0:5] == 'panic':
+            blk = self.sq.block()
+            for i in range(blk.max_part()):
+                blk.part(i).change_cc(120, 0)          
         else:
             self.print_dialogue("what?")
 
