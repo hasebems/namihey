@@ -48,6 +48,10 @@ class Block:
         if ch < 16 and cntnum < 120 and value < 128:
             self.port.write_short(0xb0+ch, cntnum, value)
 
+    def send_program(self, ch, pgn):
+        if ch < 16 and pgn < 128:
+            self.port.set_instrument(pgn, channel=ch)
+
     def part(self, num):
         return 0
 
@@ -348,7 +352,7 @@ class BlockIndependentLoop(Block):
 class Seq:
     #   MIDI シーケンスの制御
     #   開始時に生成され、periodic() がコマンド入力とは別スレッドで、定期的に呼ばれる
-    #   その他の機能： mido の生成、CUIに情報を送る
+    #   その他の機能： pygame.midi/mido の生成、CUIに情報を送る
     #   Block: 現状 [0] の一つだけ生成
     def __init__(self):
         pmd.init()  # MIDI Init

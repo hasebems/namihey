@@ -217,6 +217,14 @@ class Parsing:
                     continue
             self.change_cc(10, cc_list)
             self.print_dialogue("Pan has changed!")
+        elif command == 'pgn':
+            bl_list = tx[1].strip().split(',')
+            for i, var in enumerate(bl_list):
+                if var.isdecimal():
+                    num = int(var)
+                    if num > 0 and num <= 128:
+                        self.sq.block().send_program(i, num-1)
+            self.print_dialogue("Program number has changed!")
 
     def letterB(self, input_text):
         if input_text[0:5] == 'block':
