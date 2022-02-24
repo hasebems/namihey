@@ -432,11 +432,22 @@ class Parsing:
                 self.midi_setting(self.CONFIRM_MIDI_OUT_ID)
 
     def letterL(self, input_text):
+        def set_chain_play():
+            self.sq.stop()
+            curbk = self.sq.block()
+            for i in range(curbk.max_part()):
+                #curbk.part(i) : パートに chain loading データを送る
+                pass
         if input_text[0:4] == "load":
             file = input_text[4:].replace(' ', '')
-            if self.fl.load_file(file):
-                self.prompt_mode = Prompt.LOAD
-                self.promptStr = '[load]~~> '
+            success, prompt = self.fl.load_file(file)
+            if success:
+                if prompt:
+                    self.prompt_mode = Prompt.LOAD
+                    self.promptStr = '[load]~~> '
+                else:
+                    self.print_dialogue("Completed chain loading!")
+                    set_chain_play()  
         else:
             self.print_dialogue("what?")
 
