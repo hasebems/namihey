@@ -25,6 +25,7 @@ class Parsing:
         self.inputBlock = 'S'
         self.promptStr = self.get_prompt_string(self.inputBlock, self.inputPart)
         self.back_color = 2
+        nmfile.display_loadable_files(self.print_dialogue)
 
     @staticmethod
     def get_prompt_string(blk, part):

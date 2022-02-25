@@ -8,12 +8,14 @@ class NamiFile:
         self.during_save = False
         self.list_up_files()
         self.chain_loading = [[] for _ in range(ncf.MAX_PART_COUNT)]
+
+    def display_loadable_files(self, prfunc):
         if len(self.available_files) > 0:
-            print('<<Now you can load these files!!>>')
+            prfunc('<<Now you can load these files!!>>')
             for fl in self.available_files:
                 print('>'+fl)
         else:
-            print("No Namihey Files.")
+            prfunc("No Namihey Files!")
 
     def list_up_files(self):
         self.available_files = []
