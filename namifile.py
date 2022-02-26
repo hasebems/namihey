@@ -9,15 +9,8 @@ class NamiFile:
         self.list_up_files()
         self.chain_loading = [[] for _ in range(ncf.MAX_PART_COUNT)]
 
-    def display_loadable_files(self, prfunc):
-        if len(self.available_files) > 0:
-            prfunc('<<Now you can load these files!!>>')
-            for fl in self.available_files:
-                print('>'+fl)
-        else:
-            prfunc("No Namihey Files!")
-
     def list_up_files(self):
+        # 起動時のファイル一覧取得
         self.available_files = []
         all_file_list = os.listdir('./')
         for fl in all_file_list:
@@ -25,7 +18,17 @@ class NamiFile:
             if fl_ext == '.nmhy':
                 self.available_files.append(fl_name)
 
+    def display_loadable_files(self, prfunc):
+        # 起動時のファイル一覧表示
+        if len(self.available_files) > 0:
+            prfunc('<<Now you can load these files!!>>')
+            for fl in self.available_files:
+                print('>'+fl)
+        else:
+            prfunc("No Namihey Files!")
+
     def prepare_save_file(self, file_name):
+        # 1.Save処理の準備
         if self.during_save:
             return False
         if file_name == '':
@@ -36,11 +39,13 @@ class NamiFile:
         return True
 
     def save_pattern(self, str):
+        # 2.Save処理
         if self.during_save == False:
             return
         self.save_file.write(str+'\n')
 
     def close_save_file(self):
+        # 3.Save File の Close
         if self.during_save == False:
             return
         self.save_file.close()
@@ -48,6 +53,7 @@ class NamiFile:
         self.during_save = False
 
     def is_chain(self):
+        # Chain Load 読み込みと、その可否
         chain = True
         next_lines = [0 for _ in range(ncf.MAX_PART_COUNT)]
         for line in self.load_lines:
@@ -77,6 +83,7 @@ class NamiFile:
         return chain
 
     def load_file(self, file):
+        # 指定されたファイルをロードする
         load_success = False
         load_prompt = False
         self.load_lines = []
@@ -96,6 +103,7 @@ class NamiFile:
         return load_success, load_prompt
 
     def load_pattern(self, parse, input):
+        # ファイル内のパターンをロードする
         num = input.replace( '\n' , '' )
         if num.isdecimal():
             line_num = int(num) - 1
