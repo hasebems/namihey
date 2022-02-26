@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import namilib as nlib
 import namiconf as ncf
+import namiptntxt as ptxt
+import namifile as nfl
 
 T_WATER = '\033[96m'
 T_PINK = '\033[95m'
@@ -17,15 +19,15 @@ class Prompt:
 class Parsing:
     #   入力した文字列の解析
     #   一行単位で入力されるたびに生成される
-    def __init__(self, seq, nmfile):
+    def __init__(self, seq):
         self.prompt_mode = Prompt.NORMAL
         self.sq = seq
-        self.fl = nmfile
+        self.fl = nfl.NamiFile()
         self.inputPart = 1  # 1origin
         self.inputBlock = 'S'
         self.promptStr = self.get_prompt_string(self.inputBlock, self.inputPart)
         self.back_color = 2
-        nmfile.display_loadable_files(self.print_dialogue)
+        self.fl.display_loadable_files(self.print_dialogue)
 
     @staticmethod
     def get_prompt_string(blk, part):
@@ -323,81 +325,6 @@ class Parsing:
         else:
             self.print_dialogue("what?")
 
-    def letter_bracket(self, input_text):
-        # [] のセットを抜き出し、中身を note_info に入れる
-        note_info = []
-        tx = input_text
-        while True:
-            num = tx.find(']')
-            if num == -1:
-                break
-            note_info.append(tx[1:num])
-            tx = tx[num + 1:].strip()
-            if len(tx) == 0:
-                break
-            if tx[0:1] != '[':
-                break
-
-        # [] の数が 1,2 の時は中身を補填
-        bracket_num = len(note_info)
-        if bracket_num == 1:
-            note_info.append('1')  # set default value
-            note_info.append('100')
-        elif bracket_num == 2:
-            note_info.append('100')  # set default velocity value
-        elif bracket_num == 0 or bracket_num > 3:
-            # [] の数が 1〜3 以外ならエラー
-            self.print_dialogue("Error!")
-            return
-
-        self.print_dialogue("set Phrase!")
-        blk = self.sq.block()
-        blk.clear_description()
-        note_info.insert(0, 'phrase')
-        blk.add_seq_description(note_info)
-
-    def letter_brace(self, input_text):
-        # {} のセットを抜き出し、中身を note_info に入れる
-        note_info = []
-        tx = input_text
-        while True:
-            num = tx.find('}')
-            if num == -1:
-                break
-            note_info.append(tx[1:num])
-            tx = tx[num + 1:].strip()
-            if len(tx) == 0:
-                break
-            if tx[0:1] != '{':
-                break
-
-        # [] の数が 1,2 の時は中身を補填
-        brktNum = len(note_info)
-        if brktNum == 1:
-            note_info.append('1')  # set default value
-            note_info.append('100')
-        elif brktNum == 2:
-            note_info.append('100')  # set default velocity value
-        elif brktNum == 0 or brktNum > 3:
-            # [] の数が 1〜3 以外ならエラー
-            self.print_dialogue("Error!")
-            return
-
-        if note_info[0][0:3] == 'rnd':
-            self.print_dialogue("set Random Pattern!")
-            blk = self.sq.block()
-            blk.clear_description()
-            note_info.insert(0, 'random')
-            blk.add_seq_description(note_info)
-        elif note_info[0][0:3] == 'arp':
-            self.print_dialogue("set Arpeggio Pattern!")
-            blk = self.sq.block()
-            blk.clear_description()
-            note_info.insert(0, 'arp')
-            blk.add_seq_description(note_info)
-        else:
-            self.print_dialogue("what?")
-
     def letterC(self, input_text):
         if input_text[0:6] == 'copyto':
             tx = input_text[7:].replace(' ', '')
@@ -449,6 +376,24 @@ class Parsing:
                 else:
                     self.print_dialogue("Completed chain loading!")
                     set_chain_play()  
+        else:
+            self.print_dialogue("what?")
+
+    def letter_bracket(self, input_text):
+        ptx = ptxt.PtnTxt()
+        ptntxt = ptx.complement_bracket(input_text)
+        if ptntxt != None:
+            ptx.set_txt_to_block(self.sq.block(), ptntxt)
+            self.print_dialogue("set Phrase!")
+        else:
+            self.print_dialogue("what?")
+
+    def letter_brace(self, input_text):
+        ptx = ptxt.PtnTxt()
+        ptntxt, dialogue = ptx.complement_brace(input_text)
+        if ptntxt != None:
+            ptx.set_txt_to_block(self.sq.block(), ptntxt)
+            self.print_dialogue(dialogue)
         else:
             self.print_dialogue("what?")
 
