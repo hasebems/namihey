@@ -31,13 +31,23 @@ Part *-- PatternGenerator
 Part *-- PartGenPlay
 PartGenPlay *-- PhraseGenerator
 class Namigui
-class Parsing
+Parsing *-- NamiFile
+PtnTxt <-- Parsing
+PtnTxt <-- NamiFile
 ```
 
 
 ### Parsing
 - File: namiparse.py
 - Role: 入力コマンドのパース処理
+
+### NamiFile
+- File: namifile.py
+- Role: Load/Save コマンド処理、チェーンロード処理
+
+### PtnTxt
+- File: namiptntxt.py
+- Role: 入力されたパターンテキストの内容を整備し、Block に渡す仕組みを提供する
 
 ### Seq
 - File: namiseq.py
