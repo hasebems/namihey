@@ -398,9 +398,12 @@ class Parsing:
             self.print_dialogue("what?")
 
     def during_load(self, input_text):
-        if self.fl.load_pattern(self, input_text):
-            self.prompt_mode = Prompt.NORMAL
-            self.promptStr = self.get_prompt_string(self.inputBlock, self.inputPart)
+        if self.fl.load_pattern(input_text, self.sq.block()):
+            self.print_dialogue("pattern loaded!")
+        else:
+            self.print_dialogue("what?")            
+        self.prompt_mode = Prompt.NORMAL
+        self.promptStr = self.get_prompt_string(self.inputBlock, self.inputPart)
 
     def startParsing(self, input_text):
         first_letter = input_text[0:1]

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import  os
 import  namiconf as ncf
+import  namiptntxt as ptxt
 
 class NamiFile:
 
@@ -102,8 +103,9 @@ class NamiFile:
                 load_success = True # success for loading file
         return load_success, load_prompt
 
-    def load_pattern(self, parse, input):
+    def load_pattern(self, input, blk):
         # ファイル内のパターンをロードする
+        ret_flag = False
         num = input.replace( '\n' , '' )
         if num.isdecimal():
             line_num = int(num) - 1
@@ -111,7 +113,18 @@ class NamiFile:
                 pattern = self.load_lines[line_num]
                 #print(pattern)
                 if pattern[1][0] == '[':
-                    parse.letter_bracket(pattern[1])
+                    ptx = ptxt.PtnTxt()
+                    ptntxt = ptx.complement_bracket(pattern[1])
+                    if ptntxt != None:
+                        ptx.set_txt_to_block(blk, ptntxt)
+                        ret_flag = True
                 elif pattern[1][0] == '{':
-                    parse.letter_brace(pattern[1])
-        return True
+                    ptx = ptxt.PtnTxt()
+                    ptntxt, dialogue = ptx.complement_brace(pattern[1])
+                    if ptntxt != None:
+                        ptx.set_txt_to_block(blk, ptntxt)
+                        ret_flag = True
+        return ret_flag
+
+    def chain_loading(self):
+        pass
