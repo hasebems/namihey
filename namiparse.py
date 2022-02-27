@@ -2,7 +2,6 @@
 import namilib as nlib
 import namiconf as ncf
 import namidscrpt as dscrpt
-import namifile as nfl
 
 T_WATER = '\033[96m'
 T_PINK = '\033[95m'
@@ -19,10 +18,10 @@ class Prompt:
 class Parsing:
     #   入力した文字列の解析
     #   一行単位で入力されるたびに生成される
-    def __init__(self, seq):
+    def __init__(self, seq, nfl):
         self.prompt_mode = Prompt.NORMAL
         self.sq = seq
-        self.fl = nfl.NamiFile()
+        self.fl = nfl
         self.inputPart = 1  # 1origin
         self.inputBlock = 'S'
         self.promptStr = self.get_prompt_string(self.inputBlock, self.inputPart)

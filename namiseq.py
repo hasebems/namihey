@@ -6,7 +6,6 @@ import namiconf as ncf
 import namipart as npt
 import namilib as nlib
 
-
 TICK_PER_SEC = 8    # convert [bpm] to [tick per sec] := 480(tick)/60(sec)
 STOP_PLAYING = -1
 
@@ -63,7 +62,7 @@ class Block:
         pass
 
     # Main IF : Stop Sequencer
-    def generate_event(self, ev_time):
+    def generate_event(self, ev_time, cl):
         pass
 
     # Main IF : Stop Sequencer
@@ -123,7 +122,7 @@ class BlockRegular(Block):
     def max_part(self):
         return len(self.parts)
 
-    def _return_to_loop_top(self, ev_time=0):
+    def _return_to_loop_top(self, cl=None, ev_time=0):
         # bpm/beat に変更があった場合
         if self.bpm is not self.stock_bpm or \
           self.tick_for_one_measure is not self.stock_tick_for_one_measure:
@@ -135,7 +134,7 @@ class BlockRegular(Block):
         self.max_measure = 0
         largest_tick = 0    # 全パートの最大 tick を調べる
         for pt in self.parts:
-            pt_tick = pt.return_to_top(self.tick_for_one_measure[0]) # <<Part>>
+            pt_tick = pt.return_to_top(self.tick_for_one_measure[0], cl) # <<Part>>
             if pt_tick > largest_tick:
                 largest_tick = pt_tick
         while largest_tick > self.get_whole_tick():
@@ -159,7 +158,7 @@ class BlockRegular(Block):
         return True
 
     # Main IF : Generate Music Event
-    def generate_event(self, ev_time):
+    def generate_event(self, ev_time, cl):
         clear_ev = False
         # Loop 先頭かどうかの判断
         if ev_time > self.next_loop_start_time:
@@ -171,7 +170,7 @@ class BlockRegular(Block):
             else:
                 # loop 先頭に戻る
                 clear_ev = True
-                self._return_to_loop_top(ev_time)
+                self._return_to_loop_top(cl, ev_time)
 
         # Part ごとのイベント処理
         current_tick = (ev_time - self.current_loop_start_time)*self.bpm*TICK_PER_SEC
@@ -256,13 +255,13 @@ class BlockIndependentLoop(Block):
     def max_part(self):
         return len(self.part_operator)
 
-    def _return_to_loop_top(self, op, start_time=0):
+    def _return_to_loop_top(self, op, cl=None, start_time=0):
         # Part の loop 先頭に戻り、loop 小節数の再計算
         #if op.current_loop_start_time+0.5 >= start_time:
         #    nlib.log.record('No Measure Count!')  # DEBUG
         op.current_loop_start_time = start_time
         op.max_measure = 1
-        op.total_tick = op.part.return_to_top(self.tick_for_one_measure[0]) # <<Part>>
+        op.total_tick = op.part.return_to_top(self.tick_for_one_measure[0], cl) # <<Part>>
         while op.total_tick > self.get_whole_tick(op):
             op.max_measure += 1
 
@@ -303,7 +302,7 @@ class BlockIndependentLoop(Block):
         return True
 
     # Main IF : Generate Music Event
-    def generate_event(self, ev_time):
+    def generate_event(self, ev_time, cl):
         clear_ev = False
         ev_timex = ev_time - self.su_reset_time    # ev_timex は、Tempo/beat が変わった以降の経過時間
         real_measure = int(ev_timex/self.su_one_measure_time)
@@ -328,7 +327,7 @@ class BlockIndependentLoop(Block):
             if ev_timex > op.next_time:
                 if op.has_looped:
                     # loop 先頭に戻る
-                    self._return_to_loop_top(op, real_measure*self.su_one_measure_time)
+                    self._return_to_loop_top(op, cl, real_measure*self.su_one_measure_time)
                     op.has_looped = False
                 current_tick = (ev_timex - op.current_loop_start_time)*self.bpm*TICK_PER_SEC
                 pt_next_tick = self._generate_event_for_one_part(op, current_tick)
@@ -354,14 +353,13 @@ class Seq:
     #   開始時に生成され、periodic() がコマンド入力とは別スレッドで、定期的に呼ばれる
     #   その他の機能： pygame.midi/mido の生成、CUIに情報を送る
     #   Block: 現状 [0] の一つだけ生成
-    def __init__(self):
+    def __init__(self, nfl):
         pmd.init()  # MIDI Init
 
         self.all_ports = []
         self.midi_port = []
         self.scan_midi_all_port()
         self.set_midi_port(0)
-
         self.start_time = time.time()
         self.during_play = False
         self.blocks = [BlockRegular(self.midi_port), BlockIndependentLoop(self.midi_port)]
@@ -369,6 +367,7 @@ class Seq:
         self.next_time = 0
         self.current_time = 0
         self.latest_clear_time = 0
+        self.fl = nfl
 
     def scan_midi_all_port(self):
         self.all_ports = []
@@ -412,13 +411,15 @@ class Seq:
     def change_block(self, blk):
         self.current_bk = self.blocks[blk]
 
-    def periodic(self):     # 別スレッド
+    def periodic(self):     # different thread from other functions
         if not self.during_play:
             return
         self.current_time = time.time() - self.start_time  # calculate elapsed time
         if self.current_time > self.next_time:             # if time of next event come,
+            # Make Callback Func for chain loading
+            cl = self.fl.exec_chain_loading
             # Call Block
-            self.next_time, clear_ev = self.current_bk.generate_event(self.current_time)
+            self.next_time, clear_ev = self.current_bk.generate_event(self.current_time, cl)
             if self.next_time == STOP_PLAYING:
                 self.during_play = False             # Stop playing
             if clear_ev:

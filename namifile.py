@@ -126,5 +126,5 @@ class NamiFile:
                         ret_flag = True
         return ret_flag
 
-    def chain_loading(self, part):
+    def exec_chain_loading(self, part):
         return []

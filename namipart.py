@@ -82,14 +82,19 @@ class Part:
         self.change_cc(7, self.volume)
 
     # Sequence Control IF
-    def return_to_top(self, tick_for_one_measure):        # Phrase sequence return to top during playing 
+    def return_to_top(self, tick_for_one_measure, cl):        # Phrase sequence return to top during playing 
+        part_tick = 0
         if self.state_reserve:
             self._generate_sequence()
             self.state_reserve = False
         if not self.is_onebyone:
-            return self.ptgen.return_to_top()
+            part_tick = self.ptgen.return_to_top()
         else:
-            return self.ptn.return_to_top(tick_for_one_measure)
+            part_tick = self.ptn.return_to_top(tick_for_one_measure)
+        if cl != None:
+            seq = cl(self)
+            pass
+        return part_tick
 
     # Sequence Control IF
     def generate_event(self, tick):
