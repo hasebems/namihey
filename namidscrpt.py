@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-class PtnTxt:
+class Description:
     def complement_bracket(self, input_text):
         # [] のセットを抜き出し、中身を note_info に入れる
         note_info = []
@@ -67,8 +67,8 @@ class PtnTxt:
             return None
         return note_info, dialogue
 
-    def set_txt_to_block(self, blk, txt):
+    def set_dscrpt_to_block(self, blk, dscrpt):
         # complement_bracket/brace で note_info[] を得た後に txt に入れて呼ばれる
         blk.clear_description()
-        blk.add_seq_description(txt)
+        blk.add_seq_description(dscrpt)
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import namilib as nlib
 import namiconf as ncf
-import namiptntxt as ptxt
+import namidscrpt as dscrpt
 import namifile as nfl
 
 T_WATER = '\033[96m'
@@ -380,19 +380,19 @@ class Parsing:
             self.print_dialogue("what?")
 
     def letter_bracket(self, input_text):
-        ptx = ptxt.PtnTxt()
-        ptntxt = ptx.complement_bracket(input_text)
-        if ptntxt != None:
-            ptx.set_txt_to_block(self.sq.block(), ptntxt)
+        dx = dscrpt.Description()
+        description = dx.complement_bracket(input_text)
+        if description != None:
+            dx.set_dscrpt_to_block(self.sq.block(), description)
             self.print_dialogue("set Phrase!")
         else:
             self.print_dialogue("what?")
 
     def letter_brace(self, input_text):
-        ptx = ptxt.PtnTxt()
-        ptntxt, dialogue = ptx.complement_brace(input_text)
-        if ptntxt != None:
-            ptx.set_txt_to_block(self.sq.block(), ptntxt)
+        dx = dscrpt.Description()
+        description, dialogue = dx.complement_brace(input_text)
+        if description != None:
+            dx.set_dscrpt_to_block(self.sq.block(), description)
             self.print_dialogue(dialogue)
         else:
             self.print_dialogue("what?")

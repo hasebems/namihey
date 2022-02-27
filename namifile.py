@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import  os
 import  namiconf as ncf
-import  namiptntxt as ptxt
+import  namidscrpt as dsc
 
 class NamiFile:
 
@@ -113,18 +113,18 @@ class NamiFile:
                 pattern = self.load_lines[line_num]
                 #print(pattern)
                 if pattern[1][0] == '[':
-                    ptx = ptxt.PtnTxt()
+                    ptx = dsc.Description()
                     ptntxt = ptx.complement_bracket(pattern[1])
                     if ptntxt != None:
-                        ptx.set_txt_to_block(blk, ptntxt)
+                        ptx.set_dscrpt_to_block(blk, ptntxt)
                         ret_flag = True
                 elif pattern[1][0] == '{':
-                    ptx = ptxt.PtnTxt()
+                    ptx = dsc.Description()
                     ptntxt, dialogue = ptx.complement_brace(pattern[1])
                     if ptntxt != None:
-                        ptx.set_txt_to_block(blk, ptntxt)
+                        ptx.set_dscrpt_to_block(blk, ptntxt)
                         ret_flag = True
         return ret_flag
 
-    def chain_loading(self):
-        pass
+    def chain_loading(self, part):
+        return []
