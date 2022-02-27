@@ -31,9 +31,8 @@ Part *-- PatternGenerator
 Part *-- PartGenPlay
 PartGenPlay *-- PhraseGenerator
 class Namigui
-Parsing *-- NamiFile
-PtnTxt <-- Parsing
-PtnTxt <-- NamiFile
+Description <-- Parsing
+Description <-- NamiFile
 ```
 
 
@@ -45,8 +44,8 @@ PtnTxt <-- NamiFile
 - File: namifile.py
 - Role: Load/Save コマンド処理、チェーンロード処理
 
-### PtnTxt
-- File: namiptntxt.py
+### Description
+- File: namidscrpt.py
 - Role: 入力されたパターンテキストの内容を整備し、Block に渡す仕組みを提供する
 
 ### Seq

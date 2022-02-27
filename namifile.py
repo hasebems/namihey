@@ -3,12 +3,16 @@ import  os
 import  namiconf as ncf
 import  namidscrpt as dsc
 
+NO_NOTE = ['phrase','','','']
+
 class NamiFile:
 
     def __init__(self):
         self.during_save = False
         self.list_up_files()
+        self.chain_loading_state = False    # public
         self.chain_loading = [[] for _ in range(ncf.MAX_PART_COUNT)]
+        self.chain_loading_idx = [0 for _ in range(ncf.MAX_PART_COUNT)]
 
     def list_up_files(self):
         # 起動時のファイル一覧取得
@@ -81,6 +85,7 @@ class NamiFile:
             break
         #print(self.chain_loading) # debug
         #print(next_lines) # debug
+        self.chain_loading_state = chain
         return chain
 
     def load_file(self, file):
@@ -96,15 +101,16 @@ class NamiFile:
                     name = line.replace( '\n' , '' )
                     print(str(i+1) + ': ' + name)
                     self.load_lines.append((i,name))
-                if self.is_chain():
+                if self.is_chain():  # check if chain, and load all chain data
                     pass
                 else:
+                    self.chain_loading_state = False
                     load_prompt = True  # [load] will appear
                 load_success = True # success for loading file
         return load_success, load_prompt
 
     def load_pattern(self, input, blk):
-        # ファイル内のパターンをロードする
+        # Load a description selected form input number
         ret_flag = False
         num = input.replace( '\n' , '' )
         if num.isdecimal():
@@ -112,19 +118,50 @@ class NamiFile:
             if line_num >= 0 and len(self.load_lines) > line_num:
                 pattern = self.load_lines[line_num]
                 #print(pattern)
-                if pattern[1][0] == '[':
-                    ptx = dsc.Description()
-                    ptntxt = ptx.complement_bracket(pattern[1])
-                    if ptntxt != None:
-                        ptx.set_dscrpt_to_block(blk, ptntxt)
-                        ret_flag = True
-                elif pattern[1][0] == '{':
-                    ptx = dsc.Description()
-                    ptntxt, dialogue = ptx.complement_brace(pattern[1])
-                    if ptntxt != None:
-                        ptx.set_dscrpt_to_block(blk, ptntxt)
-                        ret_flag = True
+                dscrpt, ptx = self.xxx(pattern[1])
+                if dscrpt != None:
+                    ptx.set_dscrpt_to_block(blk, dscrpt)
+                    ret_flag = True
         return ret_flag
 
-    def exec_chain_loading(self, part):
-        return []
+    def xxx(self, dscrpt_text):
+        dscrpt = None
+        ptx = dsc.Description()
+        if dscrpt_text[0] == '[':
+            dscrpt = ptx.complement_bracket(dscrpt_text)
+        elif dscrpt_text[0] == '{':
+            dscrpt, dialogue = ptx.complement_brace(dscrpt_text)
+        return dscrpt, ptx
+
+    def read_first_chain_loading(self, blk):
+        # for all part
+        if self.chain_loading_state is False: return
+        for i in range(blk.max_part()):
+            dscrpt, ptx = self.xxx(self.chain_loading[i][0])
+            if dscrpt != None:
+                blk.part(i).add_seq_description(dscrpt)
+        self.chain_loading_idx = [1 for _ in range(ncf.MAX_PART_COUNT)]
+
+    def read_second_chain_loading(self, blk):
+        # for all part
+        if self.chain_loading_state is False: return
+        for i in range(blk.max_part()):
+            idx = self.chain_loading_idx[i]
+            if len(self.chain_loading[i]) >= idx+1:
+                self.chain_loading_idx[i] = idx+1
+                dscrpt, ptx = self.xxx(self.chain_loading[i][idx])
+                if dscrpt != None:
+                    blk.part(i).add_seq_description(dscrpt)
+
+    def read_next_chain_loading(self, part_num):
+        # for one part
+        if self.chain_loading_state is False: return NO_NOTE
+        idx = self.chain_loading_idx[part_num]
+        if len(self.chain_loading[part_num]) >= idx+1:
+            self.chain_loading_idx[part_num] = idx+1
+            # print(idx) # debug
+            dscrpt, ptx = self.xxx(self.chain_loading[part_num][idx])
+            if dscrpt != None:
+                return dscrpt
+        return NO_NOTE
+

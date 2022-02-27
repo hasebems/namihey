@@ -22,9 +22,10 @@ python によって記述され、pygame を使用して MIDI 出力します。
 用語集 (Glossary)
 -------------------
 
-- フレーズ (phrase) : 階名にて指定された音の連なりのことをフレーズと呼ぶ
-- パターン (pattern) : ランダムなど決められたアルゴリズムに従って自動生成された音の連なりのことをパターンと呼ぶ
+- phrase : 階名にて指定された音の連なりのことをフレーズと呼ぶ
+- pattern : ランダムなど決められたアルゴリズムに従って自動生成された音の連なりのことをパターンと呼ぶ
     - パターンには Random と Arpeggio がある
+- description : phrase/pattern が記述されたテキストデータ
 - loop : namihey は基本的に、フレーズやパターンの繰り返しを延々と演奏する。この繰り返しのことを loop と呼ぶ
 - part : 一つの音色による演奏を part と呼ぶ
     - フレーズやパターンは part ごとに設定できる
@@ -76,7 +77,7 @@ python によって記述され、pygame を使用して MIDI 出力します。
 フレーズ追加
 -------------
 
-- [*note*][*duration*][*velocity*] : フレーズ追加の基本形式
+- [*note*][*duration*][*velocity*] : フレーズ追加の Description
     - *note*: 階名
     - *duration*: 音価
     - *velocity*: 音量
@@ -125,7 +126,7 @@ python によって記述され、pygame を使用して MIDI 出力します。
 アルペジオパターン追加
 ----------------------------
 
-- {arp(*prm*):*chord*}{*length*}{*velocity*} : アルペジオパターンの基本形式
+- {arp(*prm*):*chord*}{*length*}{*velocity*} : アルペジオパターンの Description
     - *prm*: アルペジオのパラメータ
     - *chord*: アルペジオのコード、カンマで区切って時系列で表現可能
     - *length*: パターンの小節数、カンマで区切って、上の対応するコードが持続する小節数を表現する
@@ -134,7 +135,7 @@ python によって記述され、pygame を使用して MIDI 出力します。
         - 長さを省略した場合全て１小節とみなし、音量を省略した場合100(mf)とみなす。
     - {} : 全データ削除
 
-- アルペジオパターン表現
+- Detail of description
     - パラメータ
         - (ptn=sawup, ofs=5, dur=8) : ptn/ofs/durの指定
         - 必ずデフォルト値を持ち、省略が可能
@@ -165,10 +166,10 @@ python によって記述され、pygame を使用して MIDI 出力します。
 ランダムパターン追加
 ----------------------------
 
-- {rnd(*prm*):*chord*}{*length*}{*velocity*} : ランダムパターンの基本形式
+- {rnd(*prm*):*chord*}{*length*}{*velocity*} : ランダムパターンの Description
     - アルペジオと同じ
 
-- ランダムパターン表現
+- Detail of description
     - パラメータ
         - (rgn=5, ofs=5, dur=8) : rgn/ofs/durの指定
         - 必ずデフォルト値を持ち、省略が可能
