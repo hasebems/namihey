@@ -415,6 +415,11 @@ class Seq:
     def periodic(self):     # different thread from other functions
         if not self.during_play:
             return
+        if self.fl.auto_stop:   # check end of chain loading
+            self.current_bk.stop()
+            self.during_play = False
+            self.fl.auto_stop = False
+
         self.current_time = time.time() - self.start_time  # calculate elapsed time
         if self.current_time > self.next_time:             # if time of next event come,
             # Call Block

@@ -4,6 +4,7 @@ import  namiconf as ncf
 import  namidscrpt as dsc
 
 NO_NOTE = ['phrase','','','']
+INDEX_END = 10000
 
 class NamiFile:
 
@@ -13,6 +14,7 @@ class NamiFile:
         self.chain_loading_state = False    # public
         self.chain_loading = [[] for _ in range(ncf.MAX_PART_COUNT)]
         self.chain_loading_idx = [0 for _ in range(ncf.MAX_PART_COUNT)]
+        self.auto_stop = False
 
     def list_up_files(self):
         # 起動時のファイル一覧取得
@@ -118,50 +120,63 @@ class NamiFile:
             if line_num >= 0 and len(self.load_lines) > line_num:
                 pattern = self.load_lines[line_num]
                 #print(pattern)
-                dscrpt, ptx = self.xxx(pattern[1])
-                if dscrpt != None:
-                    ptx.set_dscrpt_to_block(blk, dscrpt)
+                ni, ptx = self.gen_ni(pattern[1])
+                if ni != None:
+                    ptx.set_dscrpt_to_block(blk, ni)
                     ret_flag = True
         return ret_flag
 
-    def xxx(self, dscrpt_text):
-        dscrpt = None
+    def gen_ni(self, dscrpt_text): # generate note_info
+        ni = None
         ptx = dsc.Description()
         if dscrpt_text[0] == '[':
-            dscrpt = ptx.complement_bracket(dscrpt_text)
+            ni = ptx.complement_bracket(dscrpt_text)
         elif dscrpt_text[0] == '{':
-            dscrpt, dialogue = ptx.complement_brace(dscrpt_text)
-        return dscrpt, ptx
+            ni, dialogue = ptx.complement_brace(dscrpt_text)
+        return ni, ptx
 
     def read_first_chain_loading(self, blk):
-        # for all part
+        # for all part (just after file load)
         if self.chain_loading_state is False: return
         for i in range(blk.max_part()):
-            dscrpt, ptx = self.xxx(self.chain_loading[i][0])
-            if dscrpt != None:
-                blk.part(i).add_seq_description(dscrpt)
+            ni, ptx = self.gen_ni(self.chain_loading[i][0])
+            if ni != None:
+                blk.part(i).add_seq_description(ni)
         self.chain_loading_idx = [1 for _ in range(ncf.MAX_PART_COUNT)]
 
     def read_second_chain_loading(self, blk):
-        # for all part
+        # for all part (play/start command)
         if self.chain_loading_state is False: return
         for i in range(blk.max_part()):
-            idx = self.chain_loading_idx[i]
-            if len(self.chain_loading[i]) >= idx+1:
-                self.chain_loading_idx[i] = idx+1
-                dscrpt, ptx = self.xxx(self.chain_loading[i][idx])
-                if dscrpt != None:
-                    blk.part(i).add_seq_description(dscrpt)
+            if len(self.chain_loading[i]) >= 2:
+                self.chain_loading_idx[i] = 2
+                ni, ptx = self.gen_ni(self.chain_loading[i][1])
+                if ni != None:
+                    blk.part(i).add_seq_description(ni)
+                    continue
+            self.chain_loading_idx[i] = INDEX_END
 
     def read_next_chain_loading(self, part_num):
-        # for one part
+        # for one part (return to top)
         if self.chain_loading_state is False: return NO_NOTE
         idx = self.chain_loading_idx[part_num]
-        if len(self.chain_loading[part_num]) >= idx+1:
+        if len(self.chain_loading[part_num]) > idx:
             self.chain_loading_idx[part_num] = idx+1
             # print(idx) # debug
-            dscrpt, ptx = self.xxx(self.chain_loading[part_num][idx])
-            if dscrpt != None:
-                return dscrpt
+            ni, ptx = self.gen_ni(self.chain_loading[part_num][idx])
+            if ni != None: return ni
+        self.chain_loading_idx[part_num] = INDEX_END
+        #-----
+        # 本当は Independent block において、再生し終わったらシーケンスを止めたいが
+        # 再生終了のタイミングを知ることが面倒なため、当面、シーケンスは止めないことにする。
+        # なお self.auto_stop = True にすると、再生は終了する。
+        #-----
+        # 全パートが終了したかチェック
+        #cnt = 0
+        #for i in range(ncf.MAX_PART_COUNT):
+        #    if self.chain_loading_idx[i] == INDEX_END:
+        #        cnt += 1
+        #if cnt == 5: self.auto_stop = True
+        #print(cnt)
         return NO_NOTE
 
