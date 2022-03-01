@@ -62,6 +62,8 @@ class NamiFile:
     def is_chain(self):
         # Chain Load 読み込みと、その可否
         chain = True
+        self.chain_loading = [[] for _ in range(ncf.MAX_PART_COUNT)]
+        self.chain_loading_idx = [0 for _ in range(ncf.MAX_PART_COUNT)]
         next_lines = [0 for _ in range(ncf.MAX_PART_COUNT)]
         for line in self.load_lines:
             strtmp0 = line[1]
@@ -81,13 +83,13 @@ class NamiFile:
                     next_lines[part] = int(next)
                     continue
                 elif next == 'end':
+                    self.chain_loading[part].append('[]') # not to repeat
                     next_lines[part] = -1 # this part is end
                     continue
             chain = False
             break
         #print(self.chain_loading) # debug
         #print(next_lines) # debug
-        self.chain_loading_state = chain
         return chain
 
     def load_file(self, file):
@@ -104,7 +106,7 @@ class NamiFile:
                     print(str(i+1) + ': ' + name)
                     self.load_lines.append((i,name))
                 if self.is_chain():  # check if chain, and load all chain data
-                    pass
+                    self.chain_loading_state = True
                 else:
                     self.chain_loading_state = False
                     load_prompt = True  # [load] will appear
@@ -138,7 +140,8 @@ class NamiFile:
     def read_first_chain_loading(self, blk):
         # for all part (just after file load)
         if self.chain_loading_state is False: return
-        for i in range(blk.max_part()):
+        # set first description
+        for i in range(ncf.MAX_PART_COUNT):
             ni, ptx = self.gen_ni(self.chain_loading[i][0])
             if ni != None:
                 blk.part(i).add_seq_description(ni)
@@ -147,7 +150,7 @@ class NamiFile:
     def read_second_chain_loading(self, blk):
         # for all part (play/start command)
         if self.chain_loading_state is False: return
-        for i in range(blk.max_part()):
+        for i in range(ncf.MAX_PART_COUNT):
             if len(self.chain_loading[i]) >= 2:
                 self.chain_loading_idx[i] = 2
                 ni, ptx = self.gen_ni(self.chain_loading[i][1])
@@ -166,17 +169,8 @@ class NamiFile:
             ni, ptx = self.gen_ni(self.chain_loading[part_num][idx])
             if ni != None: return ni
         self.chain_loading_idx[part_num] = INDEX_END
-        #-----
-        # 本当は Independent block において、再生し終わったらシーケンスを止めたいが
-        # 再生終了のタイミングを知ることが面倒なため、当面、シーケンスは止めないことにする。
-        # なお self.auto_stop = True にすると、再生は終了する。
-        #-----
         # 全パートが終了したかチェック
-        #cnt = 0
-        #for i in range(ncf.MAX_PART_COUNT):
-        #    if self.chain_loading_idx[i] == INDEX_END:
-        #        cnt += 1
-        #if cnt == 5: self.auto_stop = True
-        #print(cnt)
+        if all([True if num == INDEX_END else False for num in self.chain_loading_idx]):
+            self.auto_stop = True
         return NO_NOTE
 
