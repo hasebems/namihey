@@ -80,17 +80,25 @@ def convert_exp2vel(exp_text):
 
 
 def convert_doremi(doremi_str):
-    # 最初に +/- がある場合、オクターブ(+12/-12)とみなす
+    # 最初に +/-/++/-- がある場合、オクターブ(+12/-12/+24/-24)とみなす
     # +/- を抜いた文字列の最初の一文字、あるいは二文字が移動ドなら、その音程を返す
     base_pitch = 0
     pm_sign = doremi_str[0]
     nx = doremi_str
     if pm_sign == '+':  # octave up
-        nx = doremi_str[1:]
-        base_pitch += 12
+        if doremi_str[1] == '+':
+            nx = doremi_str[2:]
+            base_pitch += 24
+        else:
+            nx = doremi_str[1:]
+            base_pitch += 12
     elif pm_sign == '-':  # octave down
-        nx = doremi_str[1:]
-        base_pitch -= 12
+        if doremi_str[1] == '-':
+            nx = doremi_str[2:]
+            base_pitch -= 24
+        else:
+            nx = doremi_str[1:]
+            base_pitch -= 12
 
     if len(nx) > 1:
         l2 = nx[1]
