@@ -59,16 +59,18 @@ class NamiFile:
         self.list_up_files()
         self.during_save = False
 
-    def is_chain(self):
+    def is_chain(self, load_lines):
         # Chain Load 読み込みと、その可否
         chain = True
         self.chain_loading = [[] for _ in range(ncf.MAX_PART_COUNT)]
         self.chain_loading_idx = [0 for _ in range(ncf.MAX_PART_COUNT)]
         next_lines = [0 for _ in range(ncf.MAX_PART_COUNT)]
-        for line in self.load_lines:
+        for line in load_lines:
             strtmp0 = line[1]
             line_num = line[0] + 1
-            if '->' in strtmp0:
+            if strtmp0[0] == '#':
+                continue            # comment 
+            elif '->' in strtmp0:
                 strtmp1 = strtmp0.split('->')
                 part = 0
                 if line_num in next_lines:
@@ -105,7 +107,7 @@ class NamiFile:
                     name = line.replace( '\n' , '' )
                     print(str(i+1) + ': ' + name)
                     self.load_lines.append((i,name))
-                if self.is_chain():  # check if chain, and load all chain data
+                if self.is_chain(self.load_lines):  # check if chain, and load all chain data
                     self.chain_loading_state = True
                 else:
                     self.chain_loading_state = False
