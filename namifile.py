@@ -77,11 +77,14 @@ class NamiFile:
                     part = next_lines.index(line_num)
                 else:
                     i=0
-                    while next_lines[i] != 0: i=i+1
+                    while next_lines[i] != 0 and i<ncf.MAX_PART_COUNT-1: i=i+1
                     part = i
                 self.chain_loading[part].append(strtmp1[0].strip()) # set chain loading
                 next = strtmp1[1].strip()
-                if next.isdecimal():
+                if next[0] == '+' and next[1:].isdecimal():
+                    next_lines[part] = line_num + int(next[1:])
+                    continue
+                elif next.isdecimal():
                     next_lines[part] = int(next)
                     continue
                 elif next == 'end':
