@@ -118,25 +118,33 @@ class Parsing:
             key = nlib.note_limit(key, 0, 127)
             ptx.change_keynote(key)
 
-        octave_letter = text
-        pm = 1
-        if len(text) > 1:
-            if text[0] == '+':
-                octave_letter = text[1:]
-            elif text[0] == '-':
-                pm = -1
-                octave_letter = text[1:]
-        if octave_letter.isdecimal():
-            oct = int(octave_letter) * pm
-        else:
-            return
+        def generate_oct_number(text):
+            octave_letter = text
+            pm = 1
+            if len(text) > 1:
+                if text[0] == '+':
+                    octave_letter = text[1:]
+                elif text[0] == '-':
+                    pm = -1
+                    octave_letter = text[1:]
+            if octave_letter.isdecimal():
+                return int(octave_letter) * pm
+            else:
+                return 0
+
         curbk = self.sq.block()
-        if all:
-            for i in range(curbk.max_part()):
+        if type(text) == list:
+            for i, letter in enumerate(text):
+                oct = generate_oct_number(letter)
                 change_oct_to_part(curbk.part(i), oct)
         else:
-            pt = curbk.part(curbk.inputPart)
-            change_oct_to_part(pt, oct)
+            oct = generate_oct_number(text)
+            if all:
+                for i in range(curbk.max_part()):
+                    change_oct_to_part(curbk.part(i), oct)
+            else:
+                pt = curbk.part(curbk.inputPart)
+                change_oct_to_part(pt, oct)
 
     def change_cc(self, cc_num, cc_list):
         if len(cc_list) > ncf.MAX_PART_COUNT:
@@ -188,8 +196,12 @@ class Parsing:
             self.change_key(key_list[0], 'all' in prm_text)
             self.print_dialogue("Key has changed!")
         elif command == 'oct':
-            oct_list = tx[1].strip().split()
-            self.change_oct(oct_list[0], 'all' in prm_text)
+            if ',' in tx[1]:
+                oct_list = tx[1].strip().split(',')
+                self.change_oct(oct_list, True)
+            else:
+                oct_list = tx[1].strip().split()
+                self.change_oct(oct_list[0], 'all' in prm_text)
             self.print_dialogue("Octave has changed!")
         elif command == 'beat':
             beat_list = tx[1].strip().split()
