@@ -68,6 +68,8 @@ class NamiFile:
         for line in load_lines:
             strtmp0 = line[1]
             line_num = line[0] + 1
+            if len(strtmp0) == 0:
+                continue
             if strtmp0[0] == '#':
                 continue            # comment 
             elif '->' in strtmp0:
