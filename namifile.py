@@ -15,6 +15,7 @@ class NamiFile:
         self.chain_loading = [[] for _ in range(ncf.MAX_PART_COUNT)]
         self.chain_loading_idx = [0 for _ in range(ncf.MAX_PART_COUNT)]
         self.auto_stop = False
+        self.loaded_file = None
 
     def list_up_files(self):
         # 起動時のファイル一覧取得
@@ -107,6 +108,7 @@ class NamiFile:
         if file in self.available_files:
             real_name = file + '.nmhy'
             with open(real_name) as ld:
+                self.loaded_file = file
                 lines = ld.readlines()
                 for i, line in enumerate(lines):
                     name = line.replace( '\n' , '' )
@@ -144,6 +146,13 @@ class NamiFile:
             ni, dialogue = ptx.complement_brace(dscrpt_text)
         return ni, ptx
 
+    def disp_ni(self, ni):
+        disp = '~~>'
+        if ni[1] != '': disp += '['+ni[1]+']'
+        if ni[2] != '': disp += '['+ni[2]+']'
+        if ni[3] != '': disp += '['+ni[3]+']'
+        if disp != '~~>': print(disp)    # display chain data
+
     def read_first_chain_loading(self, blk):
         # for all part (just after file load)
         if self.chain_loading_state is False: return
@@ -152,6 +161,7 @@ class NamiFile:
             ni, ptx = self.gen_ni(self.chain_loading[i][0])
             if ni != None:
                 blk.part(i).add_seq_description(ni)
+                # self.disp_ni(ni) # load時は表示しない
         self.chain_loading_idx = [1 for _ in range(ncf.MAX_PART_COUNT)]
 
     def read_second_chain_loading(self, blk):
@@ -163,6 +173,7 @@ class NamiFile:
                 ni, ptx = self.gen_ni(self.chain_loading[i][1])
                 if ni != None:
                     blk.part(i).add_seq_description(ni)
+                    self.disp_ni(ni)
                     continue
             self.chain_loading_idx[i] = INDEX_END
 
@@ -174,7 +185,9 @@ class NamiFile:
             self.chain_loading_idx[part_num] = idx+1
             # print(idx) # debug
             ni, ptx = self.gen_ni(self.chain_loading[part_num][idx])
-            if ni != None: return ni
+            if ni != None:
+                self.disp_ni(ni)
+                return ni
         self.chain_loading_idx[part_num] = INDEX_END
         # 全パートが終了したかチェック
         if all([True if num == INDEX_END else False for num in self.chain_loading_idx]):

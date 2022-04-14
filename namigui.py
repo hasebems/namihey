@@ -38,9 +38,9 @@ class NamiGui:
     COLUMN1_X = 10
     COLUMN12_X = 150
 
-    COLUMN2_X = 300
-    COLUMN21_X = 330
-    COLUMN22_X = 360
+    COLUMN2_X = 380
+    COLUMN21_X = 410
+    COLUMN22_X = 440
     LAMP_INTERVAL = 40
 
     COLUMN3_X = 594     # Part Number
@@ -54,11 +54,21 @@ class NamiGui:
         self.font = pygame.font.Font(None, 28)   # フォントの設定
 
     def _display_time(self):
+        title = self.font.render('[Namihey]~~> Text MIDI Sequencer', True, 'lightblue')
         date = self.font.render(str(datetime.date.today()), True, 'magenta')
         time = self.font.render(datetime.datetime.now().strftime("%H:%M:%S"), True, 'lightblue')
-        self.screen.blit(date, [NamiGui.COLUMN1_X, NamiGui.LINE1_Y])   # 文字列の位置を指定
-        self.screen.blit(time, [NamiGui.COLUMN12_X, NamiGui.LINE1_Y])  # 文字列の位置を指定
+        self.screen.blit(title, [NamiGui.COLUMN1_X, NamiGui.LINE1_Y])  # 文字列の位置を指定
+        self.screen.blit(date, [NamiGui.COLUMN1_X, NamiGui.LINE2_Y])   # 文字列の位置を指定
+        self.screen.blit(time, [NamiGui.COLUMN12_X, NamiGui.LINE2_Y])  # 文字列の位置を指定
 
+    def _display_song(self, nfl, seq):
+        if nfl.loaded_file is None or \
+           nfl.chain_loading_state is False or \
+           seq.during_play is False:
+            return
+        title = self.font.render(nfl.loaded_file, True, 'magenta')
+        self.screen.blit(title, [NamiGui.COLUMN1_X, NamiGui.LINE3_Y])   # 文字列の位置を指定
+    
     def _display_beat(self, seq):
         bpm_str = self.font.render('bpm : ' + str(seq.current_bk.bpm), True, 'lightblue')
         self.screen.blit(bpm_str, [NamiGui.COLUMN2_X, NamiGui.LINE1_Y])   # 文字列の位置を指定
@@ -86,16 +96,17 @@ class NamiGui:
                 [NamiGui.COLUMN3_X+num*NamiGui.PART_INTERVAL, NamiGui.LINE3_Y])
 
     def _debug_support(self, seq):
-        value = '<Debug Space>'      # 見たい変数を記載する
+        value = '' #'<Debug Space>'      # 見たい変数を記載する
         debug = self.font.render(str(value), True, 'lightblue')
         self.screen.blit(debug, [NamiGui.COLUMN1_X, NamiGui.LINE3_Y])
 
-    def main_loop(self, loop, seq, pas):
+    def main_loop(self, loop, seq, pas, nfl):
         clock = pygame.time.Clock()
         while True:
             clock.tick(60)     # 60FPS
             self.screen.fill(BACK_COLOR[pas.back_color])
             self._display_time()
+            self._display_song(nfl, seq)
             self._display_beat(seq)
             self._display_part(seq)
             self._debug_support(seq)
