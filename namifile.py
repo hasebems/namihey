@@ -17,6 +17,10 @@ class NamiFile:
         self.auto_stop = False
         self.loaded_file = None
 
+    def clear_chain_loading(self):
+        self.chain_loading = [[] for _ in range(ncf.MAX_PART_COUNT)]
+        self.chain_loading_idx = [0 for _ in range(ncf.MAX_PART_COUNT)]
+
     def list_up_files(self):
         # 起動時のファイル一覧取得
         self.available_files = []
@@ -63,14 +67,13 @@ class NamiFile:
     def is_chain(self, load_lines):
         # Chain Load 読み込みと、その可否
         chain = True
-        self.chain_loading = [[] for _ in range(ncf.MAX_PART_COUNT)]
-        self.chain_loading_idx = [0 for _ in range(ncf.MAX_PART_COUNT)]
-        next_lines = [0 for _ in range(ncf.MAX_PART_COUNT)]
+        self.clear_chain_loading()
+        next_lines = [0 for _ in range(ncf.MAX_PART_COUNT)] # 各パートごとに次の行番号を格納する
         for line in load_lines:
             strtmp0 = line[1]
             line_num = line[0] + 1
-            if len(strtmp0) == 0:
-                continue
+            if len(strtmp0) == 0: 
+                continue            # nothing in the line
             if strtmp0[0] == '#':
                 continue            # comment 
             elif '->' in strtmp0:
@@ -85,12 +88,12 @@ class NamiFile:
                 self.chain_loading[part].append(strtmp1[0].strip()) # set chain loading
                 next = strtmp1[1].strip()
                 if next[0] == '+' and next[1:].isdecimal():
-                    next_lines[part] = line_num + int(next[1:])
+                    next_lines[part] = line_num + int(next[1:]) # 次の行番号を調べ格納
                     continue
                 elif next.isdecimal():
-                    next_lines[part] = int(next)
+                    next_lines[part] = int(next) # その数値をそのまま次の行番号とする
                     continue
-                elif next == 'end':
+                elif next == 'end': # end なら最終行
                     self.chain_loading[part].append('[]') # not to repeat
                     next_lines[part] = -1 # this part is end
                     continue
