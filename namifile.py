@@ -65,7 +65,7 @@ class NamiFile:
         self.during_save = False
 
     def is_chain(self, load_lines):
-        # Chain Load 読み込みと、その可否
+        # Chain Load 時のファイル読み込みと解析、その可否
         chain = True
         self.clear_chain_loading()
         next_lines = [0 for _ in range(ncf.MAX_PART_COUNT)] # 各パートごとに次の行番号を格納する
