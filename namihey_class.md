@@ -50,8 +50,17 @@ Description <-- NamiFile
 
 ### Seq
 - File: namiseq.py
-- Role: 複数ブロックの管理
+- Role: 複数ブロックの管理、MIDI PORT設定、chain load制御
 - Note:
+    - 現在ブロックは、Regular と Independent の二種類を一つずつ生成している
+    - MIDI PORT の設定を行う
+    - chain load 時、ファイルからの Description を呼び出す制御を行う
+- Variables:
+    - self.during_play          : 再生中か
+    - self.current_time         : start から現在までの経過時間
+    - self.next_time            : 次回再生イベントがある時間
+    - self.latest_clear_time    : 前回再生イベントがあった時間
+- Methods:
     - def _calc_max_measure():
         - この中で、各パートの return_to_top() をコールし、各パートの最大tickから最大小節数を算出
     - def periodic()
@@ -60,10 +69,14 @@ Description <-- NamiFile
 ### Block
 - File: namiseq.py
 - Role: ブロックの Super Class
+- Variables:
+    - self.tick_for_one_measure     : [１小節のtick数, 分子, 分母]
 
 ### BlockRegular
 - File: namiseq.py
 - Role: 各パートが同期したループを持つ普通のブロック
+- Note:
+    - 全パートが同じ周期でループするので、内部的には一周期分の tick で時間管理される
 
 ### BlockIndependentLoop
 - File: namiseq.py

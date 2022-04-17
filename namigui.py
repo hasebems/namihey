@@ -70,7 +70,7 @@ class NamiGui:
         self.screen.blit(title, [NamiGui.COLUMN1_X, NamiGui.LINE3_Y])   # 文字列の位置を指定
     
     def _display_beat(self, seq):
-        bpm_str = self.font.render('bpm : ' + str(seq.current_bk.bpm), True, 'lightblue')
+        bpm_str = self.font.render('bpm : ' + str(seq.current_bk.measure.bpm), True, 'lightblue')
         self.screen.blit(bpm_str, [NamiGui.COLUMN2_X, NamiGui.LINE1_Y])   # 文字列の位置を指定
         beat, tick, count = seq.get_tick()
         beat_str = self.font.render(str(beat+1) + ' : ' + str(tick), True, 'magenta')
