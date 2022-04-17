@@ -158,7 +158,6 @@ class NamiFile:
 
     def read_first_chain_loading(self, blk):
         # for all part (just after file load)
-        if self.chain_loading_state is False: return
         # set first description
         for i in range(ncf.MAX_PART_COUNT):
             ni, ptx = self.gen_ni(self.chain_loading[i][0])
@@ -169,7 +168,6 @@ class NamiFile:
 
     def read_second_chain_loading(self, blk):
         # for all part (play/start command)
-        if self.chain_loading_state is False: return
         for i in range(ncf.MAX_PART_COUNT):
             if len(self.chain_loading[i]) >= 2:
                 self.chain_loading_idx[i] = 2
@@ -182,7 +180,6 @@ class NamiFile:
 
     def read_next_chain_loading(self, part_num):
         # for one part (return to top)
-        if self.chain_loading_state is False: return NO_NOTE
         idx = self.chain_loading_idx[part_num]
         if len(self.chain_loading[part_num]) > idx:
             self.chain_loading_idx[part_num] = idx+1

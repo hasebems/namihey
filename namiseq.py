@@ -368,7 +368,6 @@ class Seq:
         self.current_time = 0
         self.latest_clear_time = 0
         self.fl = nfl
-        self.cl = nfl.read_next_chain_loading
 
     def scan_midi_all_port(self):
         self.all_ports = []
@@ -422,8 +421,9 @@ class Seq:
 
         self.current_time = time.time() - self.start_time  # calculate elapsed time
         if self.current_time > self.next_time:             # if time of next event come,
+            callback = self.fl.read_next_chain_loading if self.fl.chain_loading_state else None
             # Call Block
-            self.next_time, clear_ev = self.current_bk.generate_event(self.current_time, self.cl)
+            self.next_time, clear_ev = self.current_bk.generate_event(self.current_time, callback)
             if self.next_time == STOP_PLAYING:
                 self.during_play = False             # Stop playing
             if clear_ev:
@@ -431,12 +431,14 @@ class Seq:
 
     def play(self, repeat='on'):
         if self.during_play: return False
+        if self.fl.chain_loading_state:
         self.fl.read_first_chain_loading(self.current_bk)   # chain loading
         self.during_play = True
         self.start_time = time.time()                # Get current time
         self.next_time = 0
         self.latest_clear_time = 0
         start_success = self.current_bk.start()
+        if self.fl.chain_loading_state:
         self.fl.read_second_chain_loading(self.current_bk)   # chain loading
         return start_success
 
