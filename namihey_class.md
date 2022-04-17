@@ -23,6 +23,7 @@ class Parsing
 ```mermaid
 classDiagram
 Seq *-- Block
+Block <|-- Measure
 Block <|-- BlockRegular
 Block <|-- BlockIndependentLoop
 BlockRegular *-- Part
@@ -50,9 +51,10 @@ Description <-- NamiFile
 
 ### Seq
 - File: namiseq.py
-- Role: 複数ブロックの管理、MIDI PORT設定、chain load制御
+- Role: 複数ブロックのタイミング管理、MIDI PORT設定、chain load制御
 - Note:
-    - 現在ブロックは、Regular と Independent の二種類を一つずつ生成している
+    - あくまでタイミングは時間で管理し、小節や tick という概念は、このクラスでは扱わない
+    - ブロックは、Regular と Independent の二種類を一つずつ生成する
     - MIDI PORT の設定を行う
     - chain load 時、ファイルからの Description を呼び出す制御を行う
 - Variables:
@@ -66,21 +68,27 @@ Description <-- NamiFile
     - def periodic()
         - generate_ev() から呼ばれ続ける別スレッドの関数
 
-### Block
-- File: namiseq.py
-- Role: ブロックの Super Class
+### Measure
+- File: namiblock.py
+- Role: ブロックの小節と時間の管理
 - Variables:
     - self.tick_for_one_measure     : [１小節のtick数, 分子, 分母]
 
+### Block
+- File: namiblock.py
+- Role: ブロックの Super Class
+
 ### BlockRegular
-- File: namiseq.py
+- File: namiblock.py
 - Role: 各パートが同期したループを持つ普通のブロック
 - Note:
     - 全パートが同じ周期でループするので、内部的には一周期分の tick で時間管理される
 
 ### BlockIndependentLoop
-- File: namiseq.py
+- File: namiblock.py
 - Role: 各パートが独立したループを持つブロック
+- Note:
+    - 全パートが個別にループするので、
 
 ### Part
 - File: namipart.py
