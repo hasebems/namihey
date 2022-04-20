@@ -54,7 +54,7 @@ class Seq:
     def get_tick(self): # for GUI
         tm = self.current_time - self.latest_clear_time
         tick_info = self.current_bk.get_tick_info()
-        one_beat = 60/(self.current_bk.measure.bpm*(tick_info[2]/4)) # 1拍の時間
+        one_beat = 60/(self.current_bk.tt.bpm*(tick_info[2]/4)) # 1拍の時間
 
         while tm > one_beat*tick_info[1]:
             tm -= one_beat*tick_info[1]

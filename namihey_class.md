@@ -59,9 +59,10 @@ Description <-- NamiFile
     - chain load 時、ファイルからの Description を呼び出す制御を行う
 - Variables:
     - self.during_play          : 再生中か
-    - self.current_time         : start から現在までの経過時間
-    - self.next_time            : 次回再生イベントがある時間
-    - self.latest_clear_time    : 前回再生イベントがあった時間
+    - self.start_time           : start したときの絶対時間
+    - self.current_time         : start から現在までの経過時間(startからの相対時間)
+    - self.next_time            : 次回再生イベントがある時間(startからの相対時間)
+    - self.latest_clear_time    : 前回再生イベントがあった時間(startからの相対時間)
 - Methods:
     - def _calc_max_measure():
         - この中で、各パートの return_to_top() をコールし、各パートの最大tickから最大小節数を算出
@@ -88,7 +89,9 @@ Description <-- NamiFile
 - File: namiblock.py
 - Role: 各パートが独立したループを持つブロック
 - Note:
-    - 全パートが個別にループするので、
+    - 全パートが同時にスタートする時 ev_time が 0 に初期化され、そこからの相対時間が記録される
+    - 各パートは、パターンが開始された時間を ev_time からの相対値として looptop_msr に記録する
+    - 小節の頭で小節数と絶対時間を記録し、また各パートはそのときのループの位置も把握する。これによって、再生中にテンポを変えられるようにする。
 
 ### Part
 - File: namipart.py
