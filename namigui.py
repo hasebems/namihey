@@ -72,9 +72,9 @@ class NamiGui:
     def _display_beat(self, seq):
         bpm_str = self.font.render('bpm : ' + str(seq.current_bk.tt.bpm), True, 'lightblue')
         self.screen.blit(bpm_str, [NamiGui.COLUMN2_X, NamiGui.LINE1_Y])   # 文字列の位置を指定
-        beat, tick, count = seq.get_tick()
-        beat_str = self.font.render(str(beat+1) + ' : ' + str(tick), True, 'magenta')
-        self.screen.blit(beat_str, [NamiGui.COLUMN21_X, NamiGui.LINE2_Y])   # 文字列の位置を指定
+        msr, beat, tick, count = seq.get_tick()
+        beat_str = self.font.render(str(msr) + ' : ' + str(beat+1) + ' : ' + str(tick), True, 'magenta')
+        self.screen.blit(beat_str, [NamiGui.COLUMN2_X, NamiGui.LINE2_Y])   # 文字列の位置を指定
         for i in range(count):
             color_str = 'lightblue'
             if i==beat:

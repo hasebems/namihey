@@ -55,11 +55,12 @@ class Seq:
         tm = self.current_time - self.latest_clear_time
         tick_info = self.current_bk.get_tick_info()
         one_beat = 60/(self.current_bk.tt.bpm*(tick_info[2]/4)) # 1拍の時間
+        msr = self.current_bk.tt.crnt_msr + 1
 
         while tm > one_beat*tick_info[1]:
             tm -= one_beat*tick_info[1]
         # 戻り値： 拍、拍以下の数値0-0.999、小節内の拍数
-        return int(tm//one_beat), int((tm%one_beat)*1000/one_beat), tick_info[1]
+        return msr, int(tm//one_beat), int((tm%one_beat)*1000/one_beat), tick_info[1]
 
     def block(self):
         return self.current_bk
