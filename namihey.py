@@ -19,7 +19,7 @@ def quit_job(seq):
 
 def cui(loop, seq, pas):
     while True:
-        input_text = input(pas.promptStr)
+        input_text = input(pas.prompt_str)
         if input_text == 'quit' or input_text == 'exit':
             quit_job(seq)
             break

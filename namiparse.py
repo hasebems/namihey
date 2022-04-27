@@ -24,7 +24,7 @@ class Parsing:
         self.fl = nfl
         self.inputPart = 1  # 1origin
         self.inputBlock = 'S'
-        self.promptStr = self.get_prompt_string(self.inputBlock, self.inputPart)
+        self.prompt_str = self.get_prompt_string(self.inputBlock, self.inputPart)
         self.back_color = 2
         self.fl.display_loadable_files(self.print_dialogue)
 
@@ -256,7 +256,7 @@ class Parsing:
                 self.print_dialogue("Block changed to Independent Type.")
                 self.inputBlock = 'I'
             self.sq.block().inputPart = part - 1
-            self.promptStr = self.get_prompt_string(self.inputBlock, self.inputPart)
+            self.prompt_str = self.get_prompt_string(self.inputBlock, self.inputPart)
         else:
             self.print_dialogue("what?")
 
@@ -278,7 +278,7 @@ class Parsing:
                     blk = self.sq.block()
                     blk.inputPart = part - 1
                     self.inputPart = part
-                    self.promptStr = self.get_prompt_string(self.inputBlock, part)
+                    self.prompt_str = self.get_prompt_string(self.inputBlock, part)
         elif input_text[0:5] == 'panic':
             blk = self.sq.block()
             for i in range(blk.max_part()):
@@ -332,7 +332,7 @@ class Parsing:
                     blk = self.sq.block()
                     blk.inputPart = part - 1
                     self.inputPart = part
-                    self.promptStr = self.get_prompt_string(self.inputBlock, part)
+                    self.prompt_str = self.get_prompt_string(self.inputBlock, part)
         else:
             self.print_dialogue("what?")
 
@@ -378,7 +378,7 @@ class Parsing:
                 if prompt:
                     # normal load
                     self.prompt_mode = Prompt.LOAD
-                    self.promptStr = '[load]~~> '
+                    self.prompt_str = '[load]~~> '
                 else:
                     # chain loading
                     self.print_dialogue("Completed chain loading!")
@@ -411,7 +411,7 @@ class Parsing:
         else:
             self.print_dialogue("what?")            
         self.prompt_mode = Prompt.NORMAL
-        self.promptStr = self.get_prompt_string(self.inputBlock, self.inputPart)
+        self.prompt_str = self.get_prompt_string(self.inputBlock, self.inputPart)
 
     def startParsing(self, input_text):
         first_letter = input_text[0:1]
