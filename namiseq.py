@@ -68,13 +68,16 @@ class Seq:
     def change_block(self, blk):
         self.current_bk = self.blocks[blk]
 
-    def periodic(self):     # different thread from other functions
-        if not self.during_play:
-            return
+    def file_auto_play(self, pas):
         if self.fl.auto_stop:   # check end of chain loading
             self.current_bk.stop()
             self.during_play = False
             self.fl.auto_stop = False
+            pas.print_dialogue("The End!")
+
+    def periodic(self):     # different thread from other functions
+        if not self.during_play:
+            return
 
         self.current_time = time.time() - self.start_time  # calculate elapsed time
         if self.current_time > self.next_time:             # if time of next event come,

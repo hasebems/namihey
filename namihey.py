@@ -26,9 +26,10 @@ def cui(loop, seq, pas):
         pas.startParsing(input_text)
     loop.running = False
 
-def generate_ev(loop, seq):
+def generate_ev(loop, seq, pas):
     while True:
         seq.periodic()
+        seq.file_auto_play(pas)
         if not loop.running:
             break
 
@@ -43,7 +44,7 @@ def main():
 
     cui_job = threading.Thread(target=cui, args=(loop, seq, pas))
     cui_job.start()
-    ev_job = threading.Thread(target=generate_ev, args=(loop, seq))
+    ev_job = threading.Thread(target=generate_ev, args=(loop, seq, pas))
     ev_job.start()
     gui.main_loop(loop, seq, pas, fl)
 
