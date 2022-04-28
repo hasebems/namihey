@@ -105,7 +105,7 @@ class Parsing:
                 oct = int(octave_letter) + 1
         curbk = self.sq.block()
         if all:
-            for i in range(curbk.max_part()):
+            for i in range(ncf.MAX_PART_COUNT):
                 change_note(curbk.part(i), key, oct)
         else:
             pt = curbk.part(curbk.inputPart)
@@ -140,7 +140,7 @@ class Parsing:
         else:
             oct = generate_oct_number(text)
             if all:
-                for i in range(curbk.max_part()):
+                for i in range(ncf.MAX_PART_COUNT):
                     change_oct_to_part(curbk.part(i), oct)
             else:
                 pt = curbk.part(curbk.inputPart)
@@ -281,7 +281,7 @@ class Parsing:
                     self.prompt_str = self.get_prompt_string(self.inputBlock, part)
         elif input_text[0:5] == 'panic':
             blk = self.sq.block()
-            for i in range(blk.max_part()):
+            for i in range(ncf.MAX_PART_COUNT):
                 blk.part(i).change_cc(120, 0)          
         else:
             self.print_dialogue("what?")
@@ -302,7 +302,7 @@ class Parsing:
             option = input_text[4:].replace(' ', '')
             blk = self.sq.block()
             if option == 'all':
-                for i in range(blk.max_part()):
+                for i in range(ncf.MAX_PART_COUNT):
                     ptn_str = self.get_complete_pattern_string(blk, i)
                     if ptn_str is not None:
                         self.print_dialogue('['+str(i+1)+']'+'~~> '+ptn_str)
@@ -313,7 +313,7 @@ class Parsing:
             file = input_text[4:].replace(' ', '')
             if self.fl.prepare_save_file(file):
                 blk = self.sq.block()
-                for i in range(blk.max_part()):
+                for i in range(ncf.MAX_PART_COUNT):
                     ptn_str = self.get_complete_pattern_string(blk, i)
                     if ptn_str is not None:
                         self.fl.save_pattern(ptn_str)

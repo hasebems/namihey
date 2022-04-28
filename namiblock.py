@@ -96,9 +96,6 @@ class Block:
     def part(self, num):
         return 0
 
-    def max_part(self):
-        return 0
-
     # Main IF : Start Sequencer
     def start(self):
         pass
@@ -160,14 +157,11 @@ class BlockRegular(Block):
     def part(self, num):
         return self.parts[num]
 
-    def max_part(self):
-        return len(self.parts)
-
     def _return_to_loop_top(self, cl=None, ev_time=0):
         # bpm/beat に変更があった場合
         if self.tt.bpm is not self.stock_bpm:
             self.tt.set_bpm(self.stock_bpm)
-        if self.tt.tick_for_one_measure is not self.stock_tick_for_one_measure:
+        if self.tt.msr_info is not self.stock_tick_for_one_measure:
             self.tt.set_tick_for_one_measure(self.stock_tick_for_one_measure)
 
         # loop 先頭に戻り、loop 小節数の再計算
@@ -235,12 +229,15 @@ class BlockRegular(Block):
 
 
 class BlockIndependentLoop(Block):
+    #   BlockIndependent は、個々のパートのループが独立して動作するブロックを扱う
 
     class PartOperator:
+        #   各 Part が独立してループするために、Block 内部に Part の時間計測のための
+        #   Class を持ち、そこから Part のメソドを呼び出す
         def __init__(self, blk, num):
             self.part = npt.Part(blk, num)
             self.part_num = num
-            self.max_msr = 1    # データが無くても、loop start time を更新するため、1にしておく
+            self.max_msr = 1                # データが無くても 1、whole_tick より大きい小節数
             self.next_tick = 0              # 次回 event の tick
             self.wait_for_looptop = False   # 次回 event が loop に戻るか
             self.whole_tick = 0             # Phrase Data の総 tick 数
@@ -298,8 +295,7 @@ class BlockIndependentLoop(Block):
                 nlib.log.record(str(elapsed_tick)+'xx'+str(self.next_tick))  # DEBUG
                 return nothing_todo(tt)
 
-
-    #   BlockIndependentLoop は、Block を継承して、block の各 part が独立で loop する
+    #   BlockIndependentLoop はここから
     def __init__(self, midiport):
         super().__init__(midiport)
         self.part_operator = [self.PartOperator(self,i) for i in range(ncf.MAX_PART_COUNT)]
@@ -332,9 +328,6 @@ class BlockIndependentLoop(Block):
 
     def part(self, num):
         return self.part_operator[num].part
-
-    def max_part(self):
-        return len(self.part_operator)
 
     # Main IF : Start Sequencer
     def start(self):
