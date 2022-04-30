@@ -10,20 +10,20 @@ class TimeTick:
 
     def __init__(self):
         self.bpm = ncf.DEFAULT_BPM
-        self.msr_info = [nlib.DEFAULT_TICK_FOR_ONE_MEASURE,4,4]
+        self.beat_info = [nlib.DEFAULT_TICK_FOR_ONE_MEASURE,4,4]
         self.crnt_msr = 0
         self.last_msr_time = 0
         self._calc_one_msr_time()
 
     def _calc_one_msr_time(self):
-        self.one_msr_time = self.msr_info[0]/self.TICK_PER_SEC()
+        self.one_msr_time = self.beat_info[0]/self.TICK_PER_SEC()
 
     def TICK_PER_SEC(self): # convert [bpm] to [tick per sec] := 480(tick)/60(sec)
         return 8*self.bpm
 
     def start(self, bpm, tick_for_one_measure):
         self.bpm = bpm
-        self.msr_info = tick_for_one_measure
+        self.beat_info = tick_for_one_measure
         self.crnt_msr = 0
         self.last_msr_time = 0
         self._calc_one_msr_time()
@@ -37,11 +37,11 @@ class TimeTick:
         self._calc_one_msr_time()
 
     def set_tick_for_one_measure(self, tick_for_one_measure):
-        self.msr_info = tick_for_one_measure
+        self.beat_info = tick_for_one_measure
         self._calc_one_msr_time()
 
     def get_one_msr_tick(self):
-        return self.msr_info[0]
+        return self.beat_info[0]
 
     def get_one_msr_time(self):  # 1小節の時間
         self._calc_one_msr_time()
@@ -75,7 +75,7 @@ class Block:
         self.__stock_tick_for_one_measure = beat_list
 
     def get_tick_info(self):
-        return self.tt.msr_info
+        return self.tt.beat_info
 
     def send_midi_note(self, ch, nt, vel):
         if nt > 127 or vel > 127: return
@@ -161,7 +161,7 @@ class BlockRegular(Block):
         # bpm/beat に変更があった場合
         if self.tt.bpm is not self.stock_bpm:
             self.tt.set_bpm(self.stock_bpm)
-        if self.tt.msr_info is not self.stock_tick_for_one_measure:
+        if self.tt.beat_info != self.stock_tick_for_one_measure:
             self.tt.set_tick_for_one_measure(self.stock_tick_for_one_measure)
 
         # loop 先頭に戻り、loop 小節数の再計算
