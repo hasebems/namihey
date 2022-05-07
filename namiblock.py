@@ -93,12 +93,7 @@ class Block:
         for i in range(5):
             self.md.send_control(i, 7, 7)
 
-    @property
-    def stock_tick_for_one_measure(self):
-        return self.__stock_beat_info
-
-    @stock_tick_for_one_measure.setter
-    def stock_tick_for_one_measure(self, beat_list):
+    def stock_beat_info(self, beat_list):
         self.__stock_beat_info = beat_list
 
     def get_beat_info(self):
@@ -109,6 +104,15 @@ class Block:
 
     def midi(self):
         return self.md
+
+    def change_beat(self):
+        # 拍子が変わったとき
+        self.beat_info = self.__stock_beat_info
+
+    def no_running(self):
+        # beat_info に更新がないかチェック
+        if self.beat_info != self.__stock_beat_info:
+            self.change_beat()
 
     # Main IF : Start Sequencer
     def start(self):
@@ -133,12 +137,14 @@ class Block:
                 self.stop()
                 return STOP_PLAYING
 
+            # 小節先頭処理
+            self.abs_tick_of_msrtop += self.beat_info[0]
+
             # beat_info に更新がないかチェック
             if self.beat_info != self.__stock_beat_info:
-                # 拍子が変わったとき
-                self.beat_info = self.__stock_beat_info
+                self.change_beat()
 
-            self.abs_tick_of_msrtop += self.beat_info[0]
+            # 小節カウンタの更新
             self.abs_msr_counter += 1
             for op in self.part_operator:
                 op.msrtop()

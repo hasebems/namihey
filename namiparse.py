@@ -57,8 +57,8 @@ class Parsing:
             if onpu_str.isdecimal():
                 onpu = int(onpu_str)
             if btnum >= 1 and onpu >= 1:
-                self.sq.blk().stock_tick_for_one_measure = \
-                    [(nlib.DEFAULT_TICK_FOR_ONE_MEASURE / onpu) * btnum, btnum, onpu]
+                self.sq.blk().stock_beat_info(  \
+                    [(nlib.DEFAULT_TICK_FOR_ONE_MEASURE/onpu)*btnum, btnum, onpu])
                 self.print_dialogue("Beat has changed!")
             else:
                 self.print_dialogue("what?")
@@ -204,8 +204,7 @@ class Parsing:
             self.print_dialogue("Octave has changed!")
         elif command == 'beat':
             beat_list = tx[1].strip().split()
-            self.change_beat(beat_list)
-            self.print_dialogue("Beat has changed!")
+            self.change_beat(beat_list[0])
         elif command == 'bpm':
             bpmnumlist = tx[1].strip().split()
             if bpmnumlist[0].isdecimal():

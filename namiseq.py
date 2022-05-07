@@ -72,6 +72,7 @@ class Seq:
             self.one_tick_time = 1/((self.tempo/60)*480)
 
         if not self.during_play:
+            self.block.no_running()
             return
         total_time = time.time() - self.start_time
         diff_time = total_time - self.current_time
