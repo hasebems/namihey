@@ -90,6 +90,8 @@ class Block:
         self.tick_inmsr = 0
         self.abs_tick_of_msrtop = 0
         self.abs_msr_counter = 0
+        for i in range(5):
+            self.md.send_control(i, 7, 7)
 
     @property
     def stock_tick_for_one_measure(self):
