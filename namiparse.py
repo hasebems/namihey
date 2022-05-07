@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import namilib as nlib
-import namiconf as ncf
 import namidscrpt as dscrpt
 
 T_WATER = '\033[96m'
@@ -18,13 +17,13 @@ class Prompt:
 class Parsing:
     #   入力した文字列の解析
     #   一行単位で入力されるたびに生成される
-    def __init__(self, seq, nfl):
+    def __init__(self, seq, nfl, md):
         self.prompt_mode = Prompt.NORMAL
         self.sq = seq
         self.fl = nfl
-        self.inputPart = 1  # 1origin
-        self.inputBlock = 'S'
-        self.prompt_str = self.get_prompt_string(self.inputBlock, self.inputPart)
+        self.md = md
+        self.input_part = 1  # 1origin
+        self.prompt_str = self.get_prompt_string('0', self.input_part)
         self.back_color = 2
         self.fl.display_loadable_files(self.print_dialogue)
 
@@ -58,7 +57,7 @@ class Parsing:
             if onpu_str.isdecimal():
                 onpu = int(onpu_str)
             if btnum >= 1 and onpu >= 1:
-                self.sq.block().stock_tick_for_one_measure = \
+                self.sq.blk().stock_tick_for_one_measure = \
                     [(nlib.DEFAULT_TICK_FOR_ONE_MEASURE / onpu) * btnum, btnum, onpu]
                 self.print_dialogue("Beat has changed!")
             else:
@@ -103,12 +102,12 @@ class Parsing:
                     octave_letter = key_text[2:]
             if octave_letter.isdecimal():
                 oct = int(octave_letter) + 1
-        curbk = self.sq.block()
+        curbk = self.sq.blk()
         if all:
-            for i in range(ncf.MAX_PART_COUNT):
+            for i in range(nlib.MAX_PART_COUNT):
                 change_note(curbk.part(i), key, oct)
         else:
-            pt = curbk.part(curbk.inputPart)
+            pt = curbk.part(self.input_part-1)
             change_note(pt, key, oct)
 
     def change_oct(self, text, all):
@@ -132,7 +131,7 @@ class Parsing:
             else:
                 return 0
 
-        curbk = self.sq.block()
+        curbk = self.sq.blk()
         if type(text) == list:
             for i, letter in enumerate(text):
                 oct = generate_oct_number(letter)
@@ -140,16 +139,16 @@ class Parsing:
         else:
             oct = generate_oct_number(text)
             if all:
-                for i in range(ncf.MAX_PART_COUNT):
+                for i in range(nlib.MAX_PART_COUNT):
                     change_oct_to_part(curbk.part(i), oct)
             else:
-                pt = curbk.part(curbk.inputPart)
+                pt = curbk.part(self.input_part-1)
                 change_oct_to_part(pt, oct)
 
     def change_cc(self, cc_num, cc_list):
-        if len(cc_list) > ncf.MAX_PART_COUNT:
-            del cc_list[ncf.MAX_PART_COUNT:]
-        curbk = self.sq.block()
+        if len(cc_list) > nlib.MAX_PART_COUNT:
+            del cc_list[nlib.MAX_PART_COUNT:]
+        curbk = self.sq.blk()
         for i, vol in enumerate(cc_list):
             curbk.part(i).change_cc(cc_num, int(vol))
 
@@ -157,9 +156,9 @@ class Parsing:
 
     def midi_setting(self, num):
         if num == self.CONFIRM_MIDI_OUT_ID:
-            ports = self.sq.all_ports
+            ports = self.md.all_ports
         else:
-            ports = self.sq.scan_midi_all_port()
+            ports = self.md.scan_midi_all_port()
         self.print_dialogue("==MIDI OUT LIST==")
         for i, pt in enumerate(ports):
             self.print_dialogue(str(i) + ": " + str(pt[1]) + '(' + str(pt[0]) + ')')
@@ -170,7 +169,7 @@ class Parsing:
                 if pt[2]:
                     self.print_dialogue(pt[1] + '(' + str(pt[0]) + ')')
         else:
-            real_id = self.sq.set_midi_port(num)
+            real_id = self.md.set_midi_port(num)
             if real_id != -1:
                 for pt in ports:
                     if pt[0] == real_id:
@@ -210,7 +209,7 @@ class Parsing:
         elif command == 'bpm':
             bpmnumlist = tx[1].strip().split()
             if bpmnumlist[0].isdecimal():
-                self.sq.block().stock_bpm = int(bpmnumlist[0])
+                self.sq.change_tempo(int(bpmnumlist[0]))
                 self.print_dialogue("BPM has changed!")
         elif command == 'balance' or command == 'volume':
             bl_list = tx[1].strip().split(',')
@@ -237,28 +236,11 @@ class Parsing:
                 if var.isdecimal():
                     num = int(var)
                     if num > 0 and num <= 128:
-                        self.sq.block().send_program(i, num-1)
+                        self.md.send_program(i, num-1)
             self.print_dialogue("Program number has changed!")
 
     def letterB(self, input_text):
-        if input_text[0:5] == 'block':
-            if self.sq.during_play:
-                return
-            tx = input_text[5:].replace(' ', '')
-
-            part = self.inputPart
-            if tx == 's':
-                self.sq.change_block(0)
-                self.print_dialogue("Block changed to Sync Type.")
-                self.inputBlock = 'S'
-            elif tx == 'i':
-                self.sq.change_block(1)
-                self.print_dialogue("Block changed to Independent Type.")
-                self.inputBlock = 'I'
-            self.sq.block().inputPart = part - 1
-            self.prompt_str = self.get_prompt_string(self.inputBlock, self.inputPart)
-        else:
-            self.print_dialogue("what?")
+        self.print_dialogue("what?")
 
     def letterP(self, input_text):
         if input_text[0:4] == 'play':
@@ -273,15 +255,13 @@ class Parsing:
             tx = input_text[4:].replace(' ', '')
             if tx.isdecimal():
                 part = int(tx)
-                if 0 < part <= ncf.MAX_PART_COUNT:
+                if 0 < part <= nlib.MAX_PART_COUNT:
                     self.print_dialogue("Changed current part to " + str(part) + ".")
-                    blk = self.sq.block()
-                    blk.inputPart = part - 1
-                    self.inputPart = part
-                    self.prompt_str = self.get_prompt_string(self.inputBlock, part)
+                    self.input_part = part
+                    self.prompt_str = self.get_prompt_string('0', part)
         elif input_text[0:5] == 'panic':
-            blk = self.sq.block()
-            for i in range(ncf.MAX_PART_COUNT):
+            blk = self.sq.blk()
+            for i in range(nlib.MAX_PART_COUNT):
                 blk.part(i).change_cc(120, 0)          
         else:
             self.print_dialogue("what?")
@@ -300,20 +280,20 @@ class Parsing:
             self.parse_set_command(input_text[3:])
         elif input_text[0:4] == 'show':
             option = input_text[4:].replace(' ', '')
-            blk = self.sq.block()
+            blk = self.sq.blk()
             if option == 'all':
-                for i in range(ncf.MAX_PART_COUNT):
+                for i in range(nlib.MAX_PART_COUNT):
                     ptn_str = self.get_complete_pattern_string(blk, i)
                     if ptn_str is not None:
                         self.print_dialogue('['+str(i+1)+']'+'~~> '+ptn_str)
             else:
-                ptn_str = self.get_complete_pattern_string(blk, blk.inputPart)
+                ptn_str = self.get_complete_pattern_string(blk, self.input_part-1)
                 if ptn_str is not None: self.print_dialogue('~~> '+ptn_str)
         elif input_text[0:4] == 'save':
             file = input_text[4:].replace(' ', '')
             if self.fl.prepare_save_file(file):
-                blk = self.sq.block()
-                for i in range(ncf.MAX_PART_COUNT):
+                blk = self.sq.blk()
+                for i in range(nlib.MAX_PART_COUNT):
                     ptn_str = self.get_complete_pattern_string(blk, i)
                     if ptn_str is not None:
                         self.fl.save_pattern(ptn_str)
@@ -327,12 +307,10 @@ class Parsing:
             tx = input_text[5:].replace(' ', '')
             if tx.isdecimal():
                 part = int(tx)
-                if 0 < part <= ncf.MAX_PART_COUNT:
+                if 0 < part <= nlib.MAX_PART_COUNT:
                     self.print_dialogue("Changed current part to " + str(part) + ".")
-                    blk = self.sq.block()
-                    blk.inputPart = part - 1
-                    self.inputPart = part
-                    self.prompt_str = self.get_prompt_string(self.inputBlock, part)
+                    self.input_part = part
+                    self.prompt_str = self.get_prompt_string('0', part)
         else:
             self.print_dialogue("what?")
 
@@ -341,8 +319,8 @@ class Parsing:
             tx = input_text[7:].replace(' ', '')
             if tx.isdecimal():
                 part = int(tx)
-                if 0 < part <= ncf.MAX_PART_COUNT:
-                    self.sq.block().copy_phrase(part - 1)
+                if 0 < part <= nlib.MAX_PART_COUNT:
+                    self.sq.blk().copy_phrase(part - 1)
                     self.print_dialogue("Phrase copied to part" + tx + ".")
         elif input_text[0:5] == 'color':
             color = input_text[6:].replace(' ','')
@@ -383,7 +361,7 @@ class Parsing:
                     # chain loading
                     self.print_dialogue("Completed chain loading!")
                     self.sq.stop()
-                    self.fl.read_first_chain_loading(self.sq.block())
+                    self.fl.read_first_chain_loading(self.sq.blk())
         else:
             self.print_dialogue("what?")
 
@@ -391,7 +369,7 @@ class Parsing:
         dx = dscrpt.Description()
         description = dx.complement_bracket(input_text)
         if description != None:
-            dx.set_dscrpt_to_block(self.sq.block(), description)
+            dx.set_dscrpt_to_block(self.input_part-1, self.sq.blk(), description)
             self.print_dialogue("set Phrase!")
         else:
             self.print_dialogue("what?")
@@ -400,18 +378,18 @@ class Parsing:
         dx = dscrpt.Description()
         description, dialogue = dx.complement_brace(input_text)
         if description != None:
-            dx.set_dscrpt_to_block(self.sq.block(), description)
+            dx.set_dscrpt_to_block(self.input_part-1, self.sq.blk(), description)
             self.print_dialogue(dialogue)
         else:
             self.print_dialogue("what?")
 
     def during_load(self, input_text):
-        if self.fl.load_pattern(input_text, self.sq.block()):
+        if self.fl.load_pattern(input_text, self.sq.blk()):
             self.print_dialogue("description loaded!")
         else:
             self.print_dialogue("what?")            
         self.prompt_mode = Prompt.NORMAL
-        self.prompt_str = self.get_prompt_string(self.inputBlock, self.inputPart)
+        self.prompt_str = self.get_prompt_string('0', self.input_part)
 
     def startParsing(self, input_text):
         first_letter = input_text[0:1]

@@ -1,110 +1,107 @@
 # -*- coding: utf-8 -*-
 import time
-#import mido
-import pygame.midi as pmd
 import namiblock as blk
+import namilib as nlib
 
 class Seq:
-    #   MIDI シーケンスの制御
-    #   開始時に生成され、periodic() がコマンド入力とは別スレッドで、定期的に呼ばれる
-    #   その他の機能： pygame.midi/mido の生成、CUIに情報を送る
-    #   Block: 現状 [0] の一つだけ生成
-
-    def __init__(self, nfl):
-        pmd.init()  # MIDI Init
-
-        self.all_ports = []
-        self.midi_port = []
-        self.scan_midi_all_port()
-        self.set_midi_port(0)
-        self.start_time = time.time()
+    #   開始時に生成され、periodic() がコマンド入力とは別スレッドで、定期的に呼ばれる。
+    #   そのため、change_tempo, play, stop 受信時はフラグのみを立て、periodic()
+    #   で実処理を行う。
+    def __init__(self, nfl, md):
         self.during_play = False
-        self.blocks = [blk.BlockRegular(self.midi_port), blk.BlockIndependentLoop(self.midi_port)]
-        self.current_bk = self.blocks[0]
-        self.next_time = 0
+        self.block = blk.Block(md)
+        self.start_time = 0
         self.current_time = 0
-        self.latest_clear_time = 0
+        self.current_tick = 0   # quarter note = 480
+        self.next_tick = 0
+        self.tempo = 120
+        self.one_tick_time = 1/((self.tempo/60)*480)
+        self.tempo_for_periodic = 0 # 0 means False, others True
+        self.play_for_periodic = False
+        self.stop_for_periodic = False
+        self.fine_for_periodic = False
         self.fl = nfl
-
-    def scan_midi_all_port(self):
-        self.all_ports = []
-        devnum = pmd.get_count()
-        for i in range(devnum):
-            dev = pmd.get_device_info(i)
-            if dev[3] == 1: # MIDI Output なら
-                name = dev[1].decode()
-                self.all_ports.append([i,name,False])
-        return self.all_ports
-
-    def set_midi_port(self, idx):
-        if idx < len(self.all_ports) and idx >= 0:
-            devid = self.all_ports[idx][0]
-            self.all_ports[idx][2] = True
-        else:
-            devid = pmd.get_default_output_id()
-            for pt in self.all_ports:
-                if devid == pt[0]:
-                    pt[2] = True
-        try:
-            self.midi_port = pmd.Output(devid)
-        except:
-            devid = -1
-        return devid
-
-    def get_tick(self): # for GUI
-        tm = self.current_time - self.latest_clear_time
-        tick_info = self.current_bk.get_tick_info()
-        one_beat = 60/(self.current_bk.tt.bpm*(tick_info[2]/4)) # 1拍の時間
-        msr = self.current_bk.tt.crnt_msr + 1
-
-        while tm > one_beat*tick_info[1]:
-            tm -= one_beat*tick_info[1]
-        # 戻り値： 拍、拍以下の数値0-0.999、小節内の拍数
-        return msr, int(tm//one_beat), int((tm%one_beat)*1000/one_beat), tick_info[1]
-
-    def block(self):
-        return self.current_bk
-
-    def change_block(self, blk):
-        self.current_bk = self.blocks[blk]
 
     def file_auto_play(self, pas):
         if self.fl.auto_stop:   # check end of chain loading
-            self.current_bk.stop()
+            self.block.stop()
             self.during_play = False
             self.fl.auto_stop = False
             pas.print_dialogue("The End!")
 
+    def get_tick(self): # for GUI
+        bi = self.block.get_beat_info()
+        tick_for_onemsr = bi[0]
+        tick_for_beat = nlib.DEFAULT_TICK_FOR_ONE_MEASURE/bi[2]
+        tick_inmsr = self.current_tick-self.block.abs_tick_of_msrtop
+        count = tick_for_onemsr//tick_for_beat
+        beat = tick_inmsr//tick_for_beat
+        tick = tick_inmsr%tick_for_beat
+        return self.block.abs_msr_counter,int(beat),int(tick),int(count)
+
+    def start(self):
+        if self.fl.chain_loading_state:
+            self.fl.read_first_chain_loading(self.block)   # chain loading
+        self.start_time = time.time()                # Get current time
+        self.current_time = 0
+        self.current_tick = 0   # quarter note = 480
+        self.next_tick = 0
+        self.next_time = 0
+        self.block.start()
+        if self.fl.chain_loading_state:
+            self.fl.read_second_chain_loading(self.block)   # chain loading
+
     def periodic(self):     # different thread from other functions
+        if self.play_for_periodic and not self.during_play:
+            self.play_for_periodic = False
+            self.start()
+            self.during_play = True
+
+        if self.stop_for_periodic:
+            self.stop_for_periodic = False
+            self.block.stop()
+            self.during_play = False
+
+        if self.fine_for_periodic:
+            self.fine_for_periodic = False
+            self.block.fine()
+
+        if self.tempo_for_periodic != 0:
+            self.tempo = self.tempo_for_periodic
+            self.tempo_for_periodic = 0
+            self.one_tick_time = 1/((self.tempo/60)*480)
+
         if not self.during_play:
             return
-
-        self.current_time = time.time() - self.start_time  # calculate elapsed time
-        if self.current_time > self.next_time:             # if time of next event come,
+        total_time = time.time() - self.start_time
+        diff_time = total_time - self.current_time
+        while diff_time > self.one_tick_time:
+            self.current_tick += 1
+            diff_time -= self.one_tick_time
+            self.current_time = total_time
+        if self.current_tick > self.next_tick:  # if time of next event come,
             callback = self.fl.read_next_chain_loading if self.fl.chain_loading_state else None
             # Call Block
-            self.next_time, clear_ev = self.current_bk.generate_event(self.current_time, callback)
-            if self.next_time == blk.STOP_PLAYING:
+            self.next_tick = self.block.generate_event(self.current_tick, callback)
+            if self.next_tick == blk.STOP_PLAYING:
                 self.during_play = False             # Stop playing
-            if clear_ev:
-                self.latest_clear_time = self.current_time
 
-    def play(self, repeat='on'):
-        if self.during_play: return False
-        if self.fl.chain_loading_state:
-            self.fl.read_first_chain_loading(self.current_bk)   # chain loading
-        self.during_play = True
-        self.start_time = time.time()                # Get current time
-        self.next_time = 0
-        self.latest_clear_time = 0
-        start_success = self.current_bk.start()
-        if self.fl.chain_loading_state:
-            self.fl.read_second_chain_loading(self.current_bk)   # chain loading
-        return start_success
+    def blk(self):
+        return self.block
+
+    def change_tempo(self, tempo):
+        self.tempo_for_periodic = tempo
+
+    def play(self):
+        self.play_for_periodic = True
+        if self.during_play is False:
+            return True
+        else:
+            return False
 
     def stop(self):
-        self.current_bk.stop()
-        self.during_play = False
+        self.stop_for_periodic = True
 
     def fine(self):
-        self.current_bk.fine()
+        self.fine_for_periodic = True
+        

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import  os
-import  namiconf as ncf
+import  namilib as nlib
 import  namidscrpt as dsc
 
 NO_NOTE = ['phrase','','','']
@@ -12,14 +12,14 @@ class NamiFile:
         self.during_save = False
         self.list_up_files()
         self.chain_loading_state = False    # public
-        self.chain_loading = [[] for _ in range(ncf.MAX_PART_COUNT)]
-        self.chain_loading_idx = [0 for _ in range(ncf.MAX_PART_COUNT)]
+        self.chain_loading = [[] for _ in range(nlib.MAX_PART_COUNT)]
+        self.chain_loading_idx = [0 for _ in range(nlib.MAX_PART_COUNT)]
         self.auto_stop = False
         self.loaded_file = None
 
     def clear_chain_loading(self):
-        self.chain_loading = [[] for _ in range(ncf.MAX_PART_COUNT)]
-        self.chain_loading_idx = [0 for _ in range(ncf.MAX_PART_COUNT)]
+        self.chain_loading = [[] for _ in range(nlib.MAX_PART_COUNT)]
+        self.chain_loading_idx = [0 for _ in range(nlib.MAX_PART_COUNT)]
 
     def list_up_files(self):
         # 起動時のファイル一覧取得
@@ -68,7 +68,7 @@ class NamiFile:
         # Chain Load 時のファイル読み込みと解析、その可否
         chain = True
         self.clear_chain_loading()
-        next_lines = [0 for _ in range(ncf.MAX_PART_COUNT)] # 各パートごとに次の行番号を格納する
+        next_lines = [0 for _ in range(nlib.MAX_PART_COUNT)] # 各パートごとに次の行番号を格納する
         for line in load_lines:
             strtmp0 = line[1]
             line_num = line[0] + 1
@@ -83,7 +83,7 @@ class NamiFile:
                     part = next_lines.index(line_num)
                 else:
                     i=0
-                    while next_lines[i] != 0 and i<ncf.MAX_PART_COUNT-1: i=i+1
+                    while next_lines[i] != 0 and i<nlib.MAX_PART_COUNT-1: i=i+1
                     part = i
                 self.chain_loading[part].append(strtmp1[0].strip()) # set chain loading
                 next = strtmp1[1].strip()
@@ -159,16 +159,16 @@ class NamiFile:
     def read_first_chain_loading(self, blk):
         # for all part (just after file load)
         # set first description
-        for i in range(ncf.MAX_PART_COUNT):
+        for i in range(nlib.MAX_PART_COUNT):
             ni, ptx = self.gen_ni(self.chain_loading[i][0])
             if ni != None:
                 blk.part(i).add_seq_description(ni)
                 # self.disp_ni(ni) # load時は表示しない
-        self.chain_loading_idx = [1 for _ in range(ncf.MAX_PART_COUNT)]
+        self.chain_loading_idx = [1 for _ in range(nlib.MAX_PART_COUNT)]
 
     def read_second_chain_loading(self, blk):
         # for all part (play/start command)
-        for i in range(ncf.MAX_PART_COUNT):
+        for i in range(nlib.MAX_PART_COUNT):
             if len(self.chain_loading[i]) >= 2:
                 self.chain_loading_idx[i] = 2
                 ni, ptx = self.gen_ni(self.chain_loading[i][1])

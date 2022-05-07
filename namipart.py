@@ -13,7 +13,7 @@ class Part:
     def __init__(self, blk, part_num):
         self.description = [None for _ in range(4)]
         self.retained_note = []
-        self.parent_block = blk
+        self.blk = blk
         self.midich = part_num
         self.whole_tick = 0             # a length of whole tick that needs to play
         self.state_play = False         # during Playing
@@ -26,7 +26,7 @@ class Part:
 
     def _send_midi_note(self, nt, vel):
         if nt > 127 or vel > 127: return
-        self.parent_block.send_midi_note(self.midich, nt, vel)
+        self.blk.midi().send_midi_note(self.midich, nt, vel)
         # stop 時に直ちに Note Off を出すため、現在 Note On 中の音を保持しておく
         if vel != 0:
             self.retained_note.append(nt)
@@ -57,7 +57,7 @@ class Part:
     def change_cc(self, cc_num, val):
         if val >= 0 and val < 128:
             self.volume = val
-            self.parent_block.send_control(self.midich, cc_num, val)
+            self.blk.midi().send_control(self.midich, cc_num, val)
 
     # Data Input IF
     def clear_description(self):

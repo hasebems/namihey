@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 import pygame
 from pygame.locals import *     # 定数を読み込む
-import sys
 import datetime
-import namiconf as ncf
+import namilib as nlib
 
 BACK_COLOR = ((100,0,0),(0,100,0),(0,0,100))
 
@@ -70,7 +69,7 @@ class NamiGui:
         self.screen.blit(title, [NamiGui.COLUMN1_X, NamiGui.LINE3_Y])   # 文字列の位置を指定
     
     def _display_beat(self, seq):
-        bpm_str = self.font.render('bpm : ' + str(seq.current_bk.tt.bpm), True, 'lightblue')
+        bpm_str = self.font.render('bpm : ' + str(seq.tempo), True, 'lightblue')
         self.screen.blit(bpm_str, [NamiGui.COLUMN2_X, NamiGui.LINE1_Y])   # 文字列の位置を指定
         msr, beat, tick, count = seq.get_tick()
         beat_str = self.font.render(str(msr) + ' : ' + str(beat+1) + ' : ' + str(tick), True, 'magenta')
@@ -83,11 +82,11 @@ class NamiGui:
                 (NamiGui.COLUMN2_X+i*NamiGui.LAMP_INTERVAL, NamiGui.LINE3_Y+NamiGui.LAMP_OFS), 5)
 
     def _display_part(self, seq):
-        for num in range(ncf.MAX_PART_COUNT):
+        for num in range(nlib.MAX_PART_COUNT):
             self.screen.blit(self.font.render(str(num+1), True, 'lightblue'), \
                 [NamiGui.COLUMN3_X+num*NamiGui.PART_INTERVAL, NamiGui.LINE1_Y])
             color_str = 'lightblue'
-            pt = seq.current_bk.part(num)
+            pt = seq.blk().part(num)
             if len(pt.retained_note) > 0:
                 color_str = 'magenta'
             pygame.draw.circle(self.screen, color_str, \

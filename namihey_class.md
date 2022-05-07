@@ -77,16 +77,6 @@ Description <-- NamiFile
 
 ### Block
 - File: namiblock.py
-- Role: ブロックの Super Class
-
-### BlockRegular
-- File: namiblock.py
-- Role: 各パートが同期したループを持つ普通のブロック
-- Note:
-    - 全パートが同じ周期でループするので、内部的には一周期分の tick で時間管理される
-
-### BlockIndependentLoop
-- File: namiblock.py
 - Role: 各パートが独立したループを持つブロック
 - Note:
     - 全パートが同時にスタートする時 ev_time が 0 に初期化され、そこからの相対時間が記録される

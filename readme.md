@@ -31,9 +31,6 @@ python によって記述され、pygame を使用して MIDI 出力します。
     - フレーズやパターンは part ごとに設定できる
     - part は必ず小節の切れ目まで演奏される
 - block : 最大5partをひとまとめにして演奏できる単位
-    - block には、Sync Type block と Independent Type block の二種類がある
-        - Sync Type とは、全パートのループが同期していて、最大長のパートに合わせる
-        - Independent Type とは、各パートのループが独立して動作する
 
 
 起動と終了
@@ -42,8 +39,8 @@ python によって記述され、pygame を使用して MIDI 出力します。
 - 起動
     - 'python namihey.py'  : 通常の python スクリプトと同じ
 - 入力
-    - '[S][1]~~> ' : nami prompt
-        - [S][1]は、Sync Type block/part 1の入力状態であることを示す
+    - '[0][1]~~> ' : nami prompt
+        - [0][1]は、block 0, part 1の入力状態であることを示す
         - このプロンプトの後に、コマンドやフレーズを書き込む
     - カーソルによる過去入力のヒストリー呼び出しが可能
 - 終了
@@ -189,7 +186,6 @@ python によって記述され、pygame を使用して MIDI 出力します。
 
 - 'copyto 2' : 入力中のpartのフレーズ/パターンを part2 にコピー
 - 'input 1' 'part 1' : part 1への入力切り替え（1〜5)
-- 'block s' 'block i' : s は Sync. Type、i は Independent Type の block に切り替える
 - 'show [all]' : 現在の入力パートのフレーズ/パターンを一行で表示（allで全パートを5行で表示）
 - 'midi 1' : MIDI PORT 1 を選択
 - 'color 0' : Namihey Indicator の背景色を赤にする（1:緑、2:青)
