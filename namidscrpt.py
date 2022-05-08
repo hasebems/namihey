@@ -71,5 +71,4 @@ class Description:
     def set_dscrpt_to_block(self, part_num, blk, dscrpt):
         # complement_bracket/brace で note_info[] を得た後に txt に入れて呼ばれる
         blk.part(part_num).clear_description()
-        blk.part(part_num).add_seq_description(dscrpt)
-
+        blk.part_in_advance(part_num).add_seq_description(dscrpt)

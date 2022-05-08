@@ -61,7 +61,7 @@ class Part:
 
     # Data Input IF
     def clear_description(self):
-        self.description = [None for _ in range(4)]
+        self.add_seq_description(['phrase',None,None,None])
 
     # Data Input IF
     def add_seq_description(self, data):
@@ -70,7 +70,6 @@ class Part:
             self.state_reserve = True
         else:
             self._generate_sequence()
-        return self.whole_tick
 
     # Sequence Control IF
     def start(self):

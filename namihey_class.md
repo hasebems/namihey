@@ -6,10 +6,7 @@
 ```plantuml
 @startuml
 Seq *-- Block
-Block <|-- BlockRegular
-Block <|-- BlockIndependentLoop
-BlockRegular *-- Part
-BlockIndependentLoop *-- Part
+Block *-- Part
 Part *-- PatternGenerator
 Part *-- PartGenPlay
 PartGenPlay *-- PhraseGenerator
@@ -23,17 +20,21 @@ class Parsing
 ```mermaid
 classDiagram
 Seq *-- Block
-Block <|-- Measure
-Block <|-- BlockRegular
-Block <|-- BlockIndependentLoop
-BlockRegular *-- Part
-BlockIndependentLoop *-- Part
+Block *-- PartOperator
+PartOperator *-- Part
 Part *-- PatternGenerator
 Part *-- PartGenPlay
 PartGenPlay *-- PhraseGenerator
-class Namigui
 Description <-- Parsing
 Description <-- NamiFile
+Seq <-- Parsing
+NamiFile <-- Seq
+NamiFile <-- Parsing
+Midi <-- Seq
+Midi <-- Parsing
+Seq <-- Namigui
+Parsing <-- Namigui
+NamiFile <-- Namigui
 ```
 
 
@@ -53,26 +54,33 @@ Description <-- NamiFile
 - File: namiseq.py
 - Role: 複数ブロックのタイミング管理、MIDI PORT設定、chain load制御
 - Note:
-    - あくまでタイミングは時間で管理し、小節や tick という概念は、このクラスでは扱わない
-    - ブロックは、Regular と Independent の二種類を一つずつ生成する
-    - MIDI PORT の設定を行う
-    - chain load 時、ファイルからの Description を呼び出す制御を行う
+    - 絶対時間を tick に変換し、tick による時間管理で Block を呼び出す
+    - Tempo イベントを受信し、時間 <-> tick 変換に反映させる
+    - 外部からの関数呼び出しは、一度 flag にして、periodic のスレッド内に処理を集める
 - Variables:
-    - self.during_play          : 再生中か
-    - self.start_time           : start したときの絶対時間
-    - self.current_time         : start から現在までの経過時間(startからの相対時間)
-    - self.next_time            : 次回再生イベントがある時間(startからの相対時間)
-    - self.latest_clear_time    : 前回再生イベントがあった時間(startからの相対時間)
+    - self.during_play      : 再生中か
+    - self.start_time       : start したときの絶対時間
+    - self.current_time     : start から現在までの経過時間(startからの相対時間)
+    - self.current_tick     : 四分音符=480 としたときの、start から現在までの tick
+    - self.next_tick        : 次のイベントの tick 
+
 - Methods:
-    - def _calc_max_measure():
-        - この中で、各パートの return_to_top() をコールし、各パートの最大tickから最大小節数を算出
     - def periodic()
         - generate_ev() から呼ばれ続ける別スレッドの関数
 
-### Measure
+### PartOperator
 - File: namiblock.py
-- Role: ブロックの小節と時間の管理
+- Role: Part ごとに異なる Loop を管理し、Part を呼び出すクラス 
 - Variables:
+    - self.part = npt.Part(blk, num)
+    - self.part_num
+    - self.max_msr : データが無くても 1、whole_tick より大きい小節数
+    - self.loop_next_tick : 次回 event の tick
+    - self.wait_for_looptop : 次回 event が loop に戻るか
+    - self.whole_tick : Phrase Data の総 tick 数
+    - self.looptop_msr : Loop start 時の絶対小節数(Measureにて計測)
+    - self.msr_counter : 現在の Loop 先頭からの小節数
+    - self.one_msr_tick : 現拍子の1小節の tick 数
     - self.tick_for_one_measure     : [１小節のtick数, 分子, 分母]
 
 ### Block

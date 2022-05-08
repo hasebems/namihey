@@ -150,7 +150,7 @@ class Parsing:
             del cc_list[nlib.MAX_PART_COUNT:]
         curbk = self.sq.blk()
         for i, vol in enumerate(cc_list):
-            curbk.part(i).change_cc(cc_num, int(vol))
+            self.sq.blk().send_midi_cc(i, cc_num, int(vol))
 
     CONFIRM_MIDI_OUT_ID = -1
 
@@ -235,7 +235,7 @@ class Parsing:
                 if var.isdecimal():
                     num = int(var)
                     if num > 0 and num <= 128:
-                        self.md.send_program(i, num-1)
+                        self.sq.blk().send_midi_pgn(i,num-1)
             self.print_dialogue("Program number has changed!")
 
     def letterB(self, input_text):
