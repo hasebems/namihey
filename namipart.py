@@ -80,22 +80,16 @@ class Part:
             self.ptn.start()
 
     # Sequence Control IF
-    def return_to_top(self, tick_for_one_measure, cl):
+    def return_to_top(self, tick_for_one_measure):
         # Phrase sequence return to top during playing 
         part_tick = 0
-        gen_seq_flag = False
         if self.state_reserve:
             self._generate_sequence()
             self.state_reserve = False
-            gen_seq_flag = True
         if not self.is_onebyone:
             part_tick = self.ptgen.return_to_top()
         else:
             part_tick = self.ptn.return_to_top(tick_for_one_measure)
-        if cl != None and gen_seq_flag:
-            ninfo = cl(self.midich)
-            if ninfo != []:
-                self.add_seq_description(ninfo) # Chain loading
         return part_tick
 
     # Sequence Control IF

@@ -24,17 +24,15 @@ class PartOperator:
         self.whole_tick = 0
         self.msr_counter = 0
 
-    #def is_same_measure(self, tt):
-    #    return self.looptop_msr == tt.crnt_msr
-
     def msrtop(self):
         self.msr_counter += 1
 
-    def return_to_looptop(self, one_msr_tick, cl=None):
-        # 最大tick/小節数を算出する
+    def return_to_looptop(self, one_msr_tick):
         self.looptop_msr += 1
         self.one_msr_tick = one_msr_tick
-        self.whole_tick = self.part.return_to_top(one_msr_tick, cl)
+
+        # 最大tick/小節数を算出する
+        self.whole_tick = self.part.return_to_top(one_msr_tick)
         self.wait_for_looptop = False
         self.loop_next_tick = 0
         self.msr_counter = 0
@@ -78,13 +76,12 @@ class PartOperator:
 
 class Block:
     #   シーケンスの断片を Block という単位で扱う
-    #   本クラスは Block の IF を表す抽象クラス
     #   Part は見た目の Part に対して、二つの Part を用意しておく
-    def __init__(self, md):
+    def __init__(self, nfl, md):
         self.md = md
+        self.fl = nfl
         self.part_op = [PartOperator(self,i) for i in range(nlib.MAX_PART_COUNT*2)]
         self.which_op = [True for _ in range(nlib.MAX_PART_COUNT)]
-        self.change_part_alternately = False
         self.during_play = False
         self.wait_for_fine = False
         self.__stock_beat_info = [nlib.DEFAULT_TICK_FOR_ONE_MEASURE,4,4]
@@ -110,18 +107,10 @@ class Block:
         self.md.send_program(num*2+1, pgn)
 
     def part(self, num):
-        if self.during_play:
-            return self.op(num, True).part
-        else:
-            return self.part_op[num*2].part
+        return self.op(num, True).part if self.during_play else self.part_op[num*2].part
 
     def part_in_advance(self, num):
-        if self.during_play:
-            # 逆の Part を返す
-            self.change_part_alternately = True
-            return self.op(num, False).part
-        else:
-            return self.part_op[num*2].part
+        return self.op(num, False).part if self.during_play else self.part_op[num*2].part            
 
     def op(self, num, which=True):
         if which:
@@ -141,10 +130,53 @@ class Block:
         if self.beat_info != self.__stock_beat_info:
             self.change_beat()
 
-    # Main IF : Start Sequencer
+    #   まだ何かおかしい
+    #   下の whole_tick と wait_for_looptop で条件が足りなかったり、間違ったりしている
+    #   箇所があるっぽい。
+    def chain_loading(self):
+        for usr_part in range(nlib.MAX_PART_COUNT):
+            op1 = self.part_op[usr_part*2]
+            op2 = self.part_op[usr_part*2+1]
+#            if (op1.whole_tick != 0 and op1.wait_for_looptop) or \
+#               (op2.whole_tick != 0 and op2.wait_for_looptop) or \
+#               (op1.whole_tick == 0 and op2.whole_tick == 0 and \
+#                (op1.wait_for_looptop or op2.wait_for_looptop)):
+            if (self.which_op[usr_part] and op1.wait_for_looptop) or \
+               (not self.which_op[usr_part] and op2.wait_for_looptop):
+                ninfo = self.fl.read_next_chain_loading(usr_part)
+                if ninfo != []:
+                    self.part(usr_part).clear_description()
+                    self.part_in_advance(usr_part).add_seq_description(ninfo)
+                    self.which_op[usr_part] = not self.which_op[usr_part]
+
+    def generate_block_event(self, ev_tick):
+        if self.fl.chain_loading_state:
+            self.chain_loading()
+        # 全パートに対して、現在の tick を超えたイベントを出力
+        # また、次のイベントの tick を調べ、一番最近のものを return とする
+        # next_tick: とりあえず最大値を２小節分にしておく
+        next_tick = self.beat_info[0]*2
+        self.tick_inmsr = ev_tick - self.abs_tick_of_msrtop
+        for op in self.part_op:
+            pt_next_tick = op.next_tick_inmsr()
+            if self.tick_inmsr > pt_next_tick:
+                if op.wait_for_looptop:
+                    # loop 先頭に戻る
+                    op.return_to_looptop(self.beat_info[0])
+                # 一番近い将来のイベントがある時間算出
+                pt_next_tick = op.generate_event_for_one_part(self.tick_inmsr)
+            if next_tick > pt_next_tick:
+                next_tick = pt_next_tick
+        return next_tick + self.abs_tick_of_msrtop # 絶対 tick を返す
+
+    ### Main IF : Start Sequencer
     def start(self):
+        # for chain loading
+        if self.fl.chain_loading_state:
+            self.fl.read_first_chain_loading(self)
+
         # block の初期化
-        self.change_part_alternately = False
+        self.which_op = [True for _ in range(nlib.MAX_PART_COUNT)]
         self.during_play = True
         self.wait_for_fine = False
         self.tick_inmsr = 0
@@ -155,11 +187,11 @@ class Block:
             op.return_to_looptop(self.beat_info[0])
             op.part.start() # <<Part>>
 
-    # Main IF : Periodic
-    def generate_event(self, ev_tick, cl):
+    ### Main IF : Periodic
+    def generate_event(self, ev_tick):
         # 小節先頭チェック
         next_msrtop = self.beat_info[0] + self.abs_tick_of_msrtop
-        if ev_tick > next_msrtop:
+        if ev_tick >= next_msrtop:
             if self.wait_for_fine:
                 # Fine で終了
                 self.wait_for_fine = False
@@ -168,6 +200,7 @@ class Block:
 
             # 小節先頭処理
             self.abs_tick_of_msrtop += self.beat_info[0]
+            next_msrtop += self.beat_info[0]
 
             # beat_info に更新がないかチェック
             if self.beat_info != self.__stock_beat_info:
@@ -178,34 +211,20 @@ class Block:
             for op in self.part_op:
                 op.msrtop()
 
-        # 全パートに対して、現在の tick を超えたイベントを出力
-        # また、次のイベントの tick を調べ、一番最近のものを return とする
-        # next_tick: とりあえず最大値を２小節分にしておく
-        next_tick = self.beat_info[0]*2
-        self.tick_inmsr = ev_tick - self.abs_tick_of_msrtop
-        for num, op in enumerate(self.part_op):
-            pt_next_tick = op.next_tick_inmsr()
-            if self.tick_inmsr > pt_next_tick:
-                if op.wait_for_looptop:
-                    # loop 先頭に戻る
-                    if self.change_part_alternately:
-                        self.change_part_alternately = False
-                        self.which_op[num//2] = not self.which_op[num//2]
-                    op.return_to_looptop(self.beat_info[0], cl)
-                # 一番近い将来のイベントがある時間算出
-                pt_next_tick = op.generate_event_for_one_part(self.tick_inmsr)
-            if next_tick > pt_next_tick:
-                next_tick = pt_next_tick
-        return next_tick + self.abs_tick_of_msrtop # 絶対 tick を返す
+        # ev_tick を超えたノートを再生
+        abs_tick = self.generate_block_event(ev_tick)
+        if abs_tick > next_msrtop:
+            abs_tick = next_msrtop  # 小節先頭イベントは必ず得る
+        return abs_tick     # 次回コール時の絶対 tick を返す
 
-    # Main IF : Stop Sequencer
+    ### Main IF : Stop Sequencer
     def stop(self):
         # 演奏強制終了
         for op in self.part_op:
             op.part.stop()  # <<Part>>
         self.during_play = False
 
-    # Main IF : Stop like music
+    ### Main IF : Stop like music
     def fine(self):
         # Blockの最後で演奏終了
         self.wait_for_fine = True

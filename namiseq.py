@@ -9,7 +9,7 @@ class Seq:
     #   で実処理を行う。
     def __init__(self, nfl, md):
         self.during_play = False
-        self.block = blk.Block(md)
+        self.block = blk.Block(nfl, md)
         self.start_time = 0
         self.current_time = 0
         self.current_tick = 0   # quarter note = 480
@@ -40,16 +40,12 @@ class Seq:
         return self.block.abs_msr_counter,int(beat),int(tick),int(count)
 
     def start(self):
-        if self.fl.chain_loading_state:
-            self.fl.read_first_chain_loading(self.block)   # chain loading
         self.start_time = time.time()                # Get current time
         self.current_time = 0
         self.current_tick = 0   # quarter note = 480
         self.next_tick = 0
         self.next_time = 0
         self.block.start()
-        if self.fl.chain_loading_state:
-            self.fl.read_second_chain_loading(self.block)   # chain loading
 
     def periodic(self):     # different thread from other functions
         if self.play_for_periodic and not self.during_play:
@@ -74,6 +70,7 @@ class Seq:
         if not self.during_play:
             self.block.no_running()
             return
+
         total_time = time.time() - self.start_time
         diff_time = total_time - self.current_time
         while diff_time > self.one_tick_time:
@@ -81,11 +78,9 @@ class Seq:
             diff_time -= self.one_tick_time
             self.current_time = total_time
         if self.current_tick > self.next_tick:  # if time of next event come,
-            callback = self.fl.read_next_chain_loading if self.fl.chain_loading_state else None
-            # Call Block
-            self.next_tick = self.block.generate_event(self.current_tick, callback)
+            self.next_tick = self.block.generate_event(self.current_tick)
             if self.next_tick == blk.STOP_PLAYING:
-                self.during_play = False             # Stop playing
+                self.during_play = False   # Stop playing
 
     def blk(self):
         return self.block
