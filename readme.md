@@ -64,9 +64,7 @@ python によって記述され、pygame を使用して MIDI 出力します。
     - Sync Type block のときはデータが無いと再生されない
 - 'mute 2,3' : part2 と part3 をミュートする        【未実装】
 - 'mutecancel' : ミュートしていたパートのミュート解除する    【未実装】
-- 'fine' : 小節の最後でシーケンス終了
-    - Sync Type block の場合、loopの最後の小節で終了する
-    - Independent Type block の場合、次の小節の頭で終了する
+- 'fine' : この小節の最後でシーケンス終了
 - 'stop' : 直ちにシーケンス終了
 
 
@@ -197,7 +195,6 @@ python によって記述され、pygame を使用して MIDI 出力します。
 
 - 'set bpm=100' : BPM（テンポ）=100 にセット
 - 'set beat=4/4' : 拍子を 4/4 にセット
-    - Independent Type block のときは、演奏中の変更は不可
 - 'set key=C4' : key を C4 にセット
     - namihey にとって key とは [d]（ド） と指示されたときの音名を表す
     - デフォルト値は C4(midi note number=60)
