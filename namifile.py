@@ -163,7 +163,7 @@ class NamiFile:
             ni, ptx = self.gen_ni(self.chain_loading[i][0])
             if ni != None:
                 blk.part(i).add_seq_description(ni)
-                # self.disp_ni(ni) # load時は表示しない
+                self.disp_ni(ni)
         self.chain_loading_idx = [1 for _ in range(nlib.MAX_PART_COUNT)]
 
     def read_second_chain_loading(self, blk):

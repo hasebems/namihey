@@ -360,7 +360,6 @@ class Parsing:
                     # chain loading
                     self.print_dialogue("Completed chain loading!")
                     self.sq.stop()
-                    self.fl.read_first_chain_loading(self.sq.blk())
         else:
             self.print_dialogue("what?")
 
