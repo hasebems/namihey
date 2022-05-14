@@ -56,7 +56,7 @@ class Description:
             note_info.append('100')  # set default velocity value
         elif brktNum == 0 or brktNum > 3:
             # [] の数が 1〜3 以外ならエラー
-            return None
+            return None,"what?"
 
         if note_info[0][0:3] == 'rnd':
             note_info.insert(0, 'random')
@@ -65,7 +65,7 @@ class Description:
             note_info.insert(0, 'arp')
             dialogue = "set Arpeggio Pattern!"
         else:
-            return None
+            return None,"what?"
         return note_info, dialogue
 
     def set_dscrpt_to_block(self, part_num, blk, dscrpt):
