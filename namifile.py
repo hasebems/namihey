@@ -162,10 +162,13 @@ class NamiFile:
         for i in range(nlib.MAX_PART_COUNT):
             ni, ptx = self.gen_ni(self.chain_loading[i][0])
             if ni != None:
+                blk.part_direct(i,True).clear_description()
+                blk.part_direct(i,False).clear_description()
                 blk.part(i).add_seq_description(ni)
                 self.disp_ni(ni)
         self.chain_loading_idx = [1 for _ in range(nlib.MAX_PART_COUNT)]
 
+    '''
     def read_second_chain_loading(self, blk):
         # for all part (play/start command)
         for i in range(nlib.MAX_PART_COUNT):
@@ -177,8 +180,9 @@ class NamiFile:
                     self.disp_ni(ni)
                     continue
             self.chain_loading_idx[i] = INDEX_END
+    '''
 
-    def read_next_chain_loading(self, part_num):
+    def read_next_chain_loading(self, blk, part_num):
         # for one part (return to top)
         idx = self.chain_loading_idx[part_num]
         if len(self.chain_loading[part_num]) > idx:
@@ -187,6 +191,8 @@ class NamiFile:
             ni, ptx = self.gen_ni(self.chain_loading[part_num][idx])
             if ni != None:
                 self.disp_ni(ni)
+                blk.part(part_num).clear_description()
+                blk.part_in_advance(part_num).add_seq_description(ni)
                 return ni
         self.chain_loading_idx[part_num] = INDEX_END
         # 全パートが終了したかチェック
