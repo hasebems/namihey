@@ -30,7 +30,8 @@ Description <-- NamiFile
 Seq <-- Parsing
 NamiFile <-- Seq
 NamiFile <-- Parsing
-Midi <-- Seq
+NamiFile <-- Block
+Midi <-- Block
 Midi <-- Parsing
 Seq <-- Namigui
 Parsing <-- Namigui
@@ -75,21 +76,21 @@ NamiFile <-- Namigui
     - self.part = npt.Part(blk, num)
     - self.part_num
     - self.max_msr : データが無くても 1、whole_tick より大きい小節数
-    - self.loop_next_tick : 次回 event の tick
+    - self.loop_next_tick   : 次回 event の tick
     - self.wait_for_looptop : 次回 event が loop に戻るか
-    - self.whole_tick : Phrase Data の総 tick 数
-    - self.looptop_msr : Loop start 時の絶対小節数(Measureにて計測)
-    - self.msr_counter : 現在の Loop 先頭からの小節数
-    - self.one_msr_tick : 現拍子の1小節の tick 数
-    - self.tick_for_one_measure     : [１小節のtick数, 分子, 分母]
+    - self.whole_tick       : Phrase Data の総 tick 数
+    - self.msr_counter      : 現在の Loop 先頭からの小節数
+    - self.one_msr_tick     : 現拍子の1小節の tick 数
+
 
 ### Block
 - File: namiblock.py
 - Role: 各パートが独立したループを持つブロック
 - Note:
-    - 全パートが同時にスタートする時 ev_time が 0 に初期化され、そこからの相対時間が記録される
-    - 各パートは、パターンが開始された時間を ev_time からの相対値として looptop_msr に記録する
-    - 小節の頭で小節数と絶対時間を記録し、また各パートはそのときのループの位置も把握する。これによって、再生中にテンポを変えられるようにする。
+    - tick ベースで各 PartOperator を操作
+    - ユーザパートに対し、二つの PartOperator/Part をあて、新規 Description があるたびに
+      PartOperator を交互に使用する
+    - Chain Loading を演奏中に動的に発生させ、シーケンスを連続で鳴らす機能の中核となる
 
 ### Part
 - File: namipart.py
