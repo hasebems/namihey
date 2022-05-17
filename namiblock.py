@@ -49,25 +49,31 @@ class PartOperator:
     def next_tick_inmsr(self):
         return self.loop_next_tick - self._calc_elapsed_msr_tick()
 
+    # 再生時の Part の制御 
     def generate_event_for_one_part(self, tick_inmsr):
         def nothing_todo():
             self.wait_for_looptop = True
             self.loop_next_tick = self.one_msr_tick
 
-        elapsed_tick = tick_inmsr + self._calc_elapsed_msr_tick()
-        if self.whole_tick == 0:    # データが存在しない
+        # データが存在しない場合
+        if self.whole_tick == 0:
             nothing_todo()
             return self.one_msr_tick
+
+        # Loop 内での経過 tick の算出
+        elapsed_tick = tick_inmsr + self._calc_elapsed_msr_tick()
 
         # 今回の tick に対応する Event 出力と、次回 tick の算出
         if elapsed_tick >= self.loop_next_tick and self.wait_for_looptop is False:
             self.loop_next_tick = self.part.generate_event(elapsed_tick) # <<Part>>
             nlib.log.record(str(elapsed_tick)+'=>'+str(self.loop_next_tick))  # DEBUG
             if self.loop_next_tick is nlib.END_OF_DATA:
+                # このループの最後のイベントのとき
                 self.loop_next_tick = self.max_msr*self.one_msr_tick - 1 # 最大値にしておく
                 self.wait_for_looptop = True
                 return self.one_msr_tick
             else:
+                # 通常の再生時の次のtickを返す
                 return self.next_tick_inmsr()
         else:
             nlib.log.record(str(elapsed_tick)+'xx'+str(self.loop_next_tick))  # DEBUG
@@ -154,27 +160,34 @@ class Block:
                 if ninfo != nfl.NO_NOTE:
                     self.lock_new_dscrpt[usr_part] = True
 
+    # 小節の先頭処理
+    # ただし、シビアな再生タイミングに関わる処理ではない
     def change_part_on_msrtop(self):
         for usr_part in range(nlib.MAX_PART_COUNT):
             if self.new_dscrpt_ev[usr_part]:
                 # Description セット後、最初の小節先頭処理
+                # which_op を入れ替え、次の Description セット時のパートを変える
                 self.which_op[usr_part] = not self.which_op[usr_part]
                 self.new_dscrpt_ev[usr_part] = False
                 if self.fl.chain_loading_state:
+                    # Chain loading 時は、データセットのロックを外す
                     self.lock_new_dscrpt[usr_part] = False
         for op in self.part_op:
+            # Part Operator に小節先頭であることを知らせる
             op.msrtop()
 
+    # 全パートの再生処理    tick_inmsr: 小節内 tick
     def generate_block_event(self, tick_inmsr):
-        # 全パートの再生処理
+        # 直近の次のイベントtickを探すため、まず２小節先の値にしておく
         next_tick = self.beat_info[0]*2
         for op in self.part_op:
+            # 小節内の次のイベントがあるtick
             pt_next_tick = op.next_tick_inmsr()
             if tick_inmsr > pt_next_tick:
                 if op.wait_for_looptop:
                     # loop 先頭に戻す
                     op.return_to_looptop(self.beat_info[0])
-                # 一番近い将来のイベントがある時間算出
+                # イベントの再生 & 一番近い将来のイベントがある tick
                 pt_next_tick = op.generate_event_for_one_part(tick_inmsr)
 
             if next_tick > pt_next_tick:
