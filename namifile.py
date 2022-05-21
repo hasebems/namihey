@@ -12,14 +12,20 @@ class NamiFile:
         self.during_save = False
         self.list_up_files()
         self.chain_loading_state = False    # public
-        self.chain_loading = [[] for _ in range(nlib.MAX_PART_COUNT)]
+        self.chain_loading =     [[] for _ in range(nlib.MAX_PART_COUNT)]
         self.chain_loading_idx = [0 for _ in range(nlib.MAX_PART_COUNT)]
+        self.overlap =           [False for _ in range(nlib.MAX_PART_COUNT)]
         self.auto_stop = False
         self.loaded_file = None
 
     def clear_chain_loading(self):
-        self.chain_loading = [[] for _ in range(nlib.MAX_PART_COUNT)]
+        self.chain_loading =     [[] for _ in range(nlib.MAX_PART_COUNT)]
         self.chain_loading_idx = [0 for _ in range(nlib.MAX_PART_COUNT)]
+        self.overlap =           [False for _ in range(nlib.MAX_PART_COUNT)]
+
+
+    def get_overlap(self, part_num):
+        return self.overlap[part_num]
 
     def list_up_files(self):
         # 起動時のファイル一覧取得
@@ -104,7 +110,8 @@ class NamiFile:
         return chain
 
     def load_file(self, file):
-        # 指定されたファイルをロードする
+        # 指定されたファイルをロードし、
+        # load_lines に行番号と行の中身を入れる
         load_success = False
         load_prompt = False
         self.load_lines = []
@@ -140,9 +147,12 @@ class NamiFile:
                     ret_flag = True
         return ret_flag
 
-    def gen_ni(self, dscrpt_text): # generate note_info
+    # generate note_info
+    def gen_ni(self, dscrpt_text):
         ni = None
         ptx = dsc.Description()
+        if dscrpt_text[0] == '&':
+            dscrpt_text = dscrpt_text[1:]
         if dscrpt_text[0] == '[':
             ni = ptx.complement_bracket(dscrpt_text)
         elif dscrpt_text[0] == '{':
@@ -156,6 +166,15 @@ class NamiFile:
         if ni[3] != '': disp += '['+ni[3]+']'
         if disp != '~~>': print(disp)    # display chain data
 
+    def lookahead_overlap(self, part_num, idx):
+        overlap = False
+        if len(self.chain_loading[part_num]) > idx+1:
+            next_dscrpt = self.chain_loading[part_num][idx+1]
+            #print(next_dscrpt)
+            if next_dscrpt[0] == '&':
+                overlap = True
+        self.overlap[part_num] = overlap
+
     def read_first_chain_loading(self, blk):
         # for all part (just after file load)
         # set first description
@@ -166,21 +185,8 @@ class NamiFile:
                 blk.part_direct(i,False).clear_description()
                 blk.part(i).add_seq_description(ni)
                 self.disp_ni(ni)
+                self.lookahead_overlap(i, 0)
         self.chain_loading_idx = [1 for _ in range(nlib.MAX_PART_COUNT)]
-
-    '''
-    def read_second_chain_loading(self, blk):
-        # for all part (play/start command)
-        for i in range(nlib.MAX_PART_COUNT):
-            if len(self.chain_loading[i]) >= 2:
-                self.chain_loading_idx[i] = 2
-                ni, ptx = self.gen_ni(self.chain_loading[i][1])
-                if ni != None:
-                    blk.part(i).add_seq_description(ni)
-                    self.disp_ni(ni)
-                    continue
-            self.chain_loading_idx[i] = INDEX_END
-    '''
 
     def read_next_chain_loading(self, blk, part_num):
         # for one part (return to top)
@@ -193,6 +199,7 @@ class NamiFile:
                 self.disp_ni(ni)
                 blk.part(part_num).clear_description()
                 blk.part_in_advance(part_num).add_seq_description(ni)
+                self.lookahead_overlap(part_num, idx)
                 return ni
         self.chain_loading_idx[part_num] = INDEX_END
         # 全パートが終了したかチェック

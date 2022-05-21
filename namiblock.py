@@ -10,7 +10,7 @@ class PartOperator:
     def __init__(self, blk, num):
         self.part = npt.Part(blk, num)
         self.part_num = num
-        self.max_msr = 1                # データが無くても 1、whole_tick より大きい小節数
+        self.max_msr = 1                # 本ループの小節数. データが無くても 1、whole_tick より大きい小節数
         self.loop_next_tick = 0         # 次回 event の tick
         self.wait_for_looptop = False   # 次回 event が loop に戻るか
         self.whole_tick = 0             # Phrase Data の総 tick 数
@@ -149,12 +149,21 @@ class Block:
             self.change_beat()
 
     def set_chain_loading(self):
+        def condition_for_chain_loading():
+            mm = self.available_op(usr_part).max_msr
+            mc = self.available_op(usr_part).msr_counter
+            condition = \
+                not self.lock_new_dscrpt[usr_part] and \
+                ((ol and mm > 1 and mc+2 >= mm) or \
+                (self.which_op[usr_part] and op1.wait_for_looptop) or \
+                (not self.which_op[usr_part] and op2.wait_for_looptop))
+            return condition
+
         for usr_part in range(nlib.MAX_PART_COUNT):
             op1 = self.part_op[usr_part*2]
             op2 = self.part_op[usr_part*2+1]
-            if not self.lock_new_dscrpt[usr_part] and \
-              ((self.which_op[usr_part] and op1.wait_for_looptop) or \
-               (not self.which_op[usr_part] and op2.wait_for_looptop)):
+            ol = self.fl.get_overlap(usr_part)
+            if condition_for_chain_loading():
                 # wait_for_looptop 期間中に次の Description をセットする
                 ninfo = self.fl.read_next_chain_loading(self, usr_part)
                 if ninfo != nfl.NO_NOTE:
