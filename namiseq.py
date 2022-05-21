@@ -28,6 +28,7 @@ class Seq:
             self.during_play = False
             self.fl.auto_stop = False
             pas.print_dialogue("The End!")
+            pas.return_to_normal()
 
     def get_tick(self): # for GUI
         bi = self.block.get_beat_info()

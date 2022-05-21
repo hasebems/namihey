@@ -13,6 +13,7 @@ PAN_TRANS_TBL = ('L10','L9','L8','L7','L6','L5','L4','L3','L2','L1','C',
 class Prompt:
     NORMAL = 0
     LOAD = 1
+    NOTHING = 2 # コマンドは受け付けるが、プロンプトは表示しない。Chain Loading中に使用。
 
 class Parsing:
     #   入力した文字列の解析
@@ -359,6 +360,8 @@ class Parsing:
                 else:
                     # chain loading
                     self.print_dialogue("Completed chain loading!")
+                    self.prompt_mode = Prompt.NOTHING
+                    self.prompt_str = ''
                     self.sq.stop()
         else:
             self.print_dialogue("what?")
@@ -381,13 +384,16 @@ class Parsing:
         else:
             self.print_dialogue("what?")
 
+    def return_to_normal(self):
+        self.prompt_mode = Prompt.NORMAL
+        self.prompt_str = self.get_prompt_string('0', self.input_part)
+
     def during_load(self, input_text):
         if self.fl.load_pattern(input_text, self.sq.blk()):
             self.print_dialogue("description loaded!")
         else:
-            self.print_dialogue("what?")            
-        self.prompt_mode = Prompt.NORMAL
-        self.prompt_str = self.get_prompt_string('0', self.input_part)
+            self.print_dialogue("what?")
+        self.return_to_normal()
 
     def startParsing(self, input_text):
         first_letter = input_text[0:1]
