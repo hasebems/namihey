@@ -5,7 +5,7 @@ namihey Alpha-version
 about namihey
 --------------
 
-"namihey" is a music description language being developed mainly for use in Live Coding.
+"namihey" is a music description language being developed mainly for Live Coding.
 The main feature of namihey is the ability to specify tones by a gradation with a movable-do.
 It is written in python and output to MIDI by the pygame library.
 
@@ -22,13 +22,13 @@ python によって記述され、pygame を使用して MIDI 出力します。
 用語集 (Glossary)
 -------------------
 
-- phrase : 階名にて指定された音の連なりのことをフレーズと呼ぶ
-- pattern : ランダムなど決められたアルゴリズムに従って自動生成された音の連なりのことをパターンと呼ぶ
+- phrase : 階名にて指定する単パートの音群
+- pattern : ランダムなど決められたアルゴリズムに従って自動生成された音群
     - パターンには Random と Arpeggio がある
 - description : phrase/pattern が記述されたテキストデータ
-- loop : namihey は基本的に、フレーズやパターンの繰り返しを延々と演奏する。この繰り返しのことを loop と呼ぶ
-- part : 一つの音色による演奏を part と呼ぶ
-    - フレーズやパターンは part ごとに設定できる
+- loop : namihey は基本的に、phrase/pattern の繰り返しを延々と演奏する。この繰り返しのこと。
+- part : 一つの音色、楽器による演奏データ、イベント
+    - phrase や pattern は part ごとに設定できる
     - part は必ず小節の切れ目まで演奏される
 - block : 最大5partをひとまとめにして演奏できる単位
 
@@ -47,29 +47,26 @@ python によって記述され、pygame を使用して MIDI 出力します。
     - 'quit' 'exit' : 終了
 
 
-音を出す方法
--------------
+音を出すための外部環境
+--------------------
 
 - 外部 MIDI 音源を繋ぐ
 - マルチパートで MIDI受信するアプリを同時に起動する。以下のアプリで動作確認済。
     - Logic : Mac で MIDI 演奏するための DAW
         - なお Garage Band では同時に複数チャンネルのMIDI Inを入れることが出来ない
     - Super Collider
+    - namiheySynth
 
 
 再生コントロール
 --------------
 
 - 'play' 'start' : シーケンス開始
-    - Sync Type block のときはデータが無いと再生されない
-- 'mute 2,3' : part2 と part3 をミュートする        【未実装】
-- 'mutecancel' : ミュートしていたパートのミュート解除する    【未実装】
 - 'fine' : この小節の最後でシーケンス終了
 - 'stop' : 直ちにシーケンス終了
 
 
-
-フレーズ追加
+Phrase 追加
 -------------
 
 - [*note*][*duration*][*velocity*] : フレーズ追加の Description
@@ -103,9 +100,9 @@ python によって記述され、pygame を使用して MIDI 出力します。
         - [8:1,1,1,1] : n: と書く場合、各音の音価指定の前に書く
         - [2,1,2,1,3:12] : 一拍3連(12分音符)で、タータタータター
         - [1:2] のように書くと、どちらが基準音価か分からないので、値の大きい方を基準音価とみなす
-    - [<2,1>:12] : とすると、この後もずっと 2,1 のパターンの長さを繰り返す
+    - [<2,1>:12] : とすると、この後もずっと 2,1 の長さを繰り返す
         - <2,1>*2 のように階名と同じように繰り返し回数の指定ができる
-        - 繰り返し記号の終わりが音価表現全体の最後の場合、繰り返しパターンを何度も繰り返すが、最後でないと回数指定分しか繰り返さない。
+        - 繰り返し記号の終わりが音価表現全体の最後の場合、このパターン全体を回数制限なく繰り返すが、最後でないと回数指定分しか繰り返さない。
     - [:8(80%)] 音価指定の後に (nn%) とすると、実際の発音時間がそのパーセントの短さになる
         - (stacc.) と書くと 50% になる
 
@@ -115,13 +112,13 @@ python によって記述され、pygame を使用して MIDI 出力します。
     - [ff,f,mf,mp,p,pp] : ff-pp で音量を表現できる
     - [<f,p,mf,p>] : とすると、この後もずっと f,p,mf,p のパターンを繰り返す
         - <f,mp>*2 のように階名と同じように繰り返し回数の指定ができる
-        - 繰り返し記号の終わりが音量表現全体の最後の場合、繰り返しパターンを何度も繰り返すが、最後でないと回数指定分しか繰り返さない。
+        - 繰り返し記号の終わりが音量表現全体の最後の場合、このパターン全体を回数制限なく繰り返すが、最後でないと回数指定分しか繰り返さない。
 
 
-アルペジオパターン追加
+Arpeggio Pattern 追加
 ----------------------------
 
-- {arp(*prm*):*chord*}{*length*}{*velocity*} : アルペジオパターンの Description
+- {arp(*prm*):*chord*}{*length*}{*velocity*} : Arpeggio Pattern の Description
     - *prm*: アルペジオのパラメータ
     - *chord*: アルペジオのコード、カンマで区切って時系列で表現可能
     - *length*: パターンの小節数、カンマで区切って、上の対応するコードが持続する小節数を表現する
@@ -158,10 +155,10 @@ python によって記述され、pygame を使用して MIDI 出力します。
         - ex2)  {arp:VIm,IV,V,I}{1,1,1,1}{mf}   : 1小節ごとに指定した和音をアルペジオ、mfで
 
 
-ランダムパターン追加
+Random Pattern 追加
 ----------------------------
 
-- {rnd(*prm*):*chord*}{*length*}{*velocity*} : ランダムパターンの Description
+- {rnd(*prm*):*chord*}{*length*}{*velocity*} : Random Pattern の Description
     - アルペジオと同じ
 
 - Detail of description
@@ -235,8 +232,10 @@ python によって記述され、pygame を使用して MIDI 出力します。
     - チェーンロードが設定されたファイルの場合、再生行を選択するプロンプト'[load]'は現れない。
 - チェーンロード機能の特殊ルール
     - 行頭に '#' が書かれている場合、その行はコメントとなり無視される。 
-    - 行頭に '&' が書かれている場合、前のフレーズと小節が重なる。
-        - &[x,d,r][6,1,1:8] : 前のフレーズと１小節重なり、４拍目から再生する。
+    - 行頭に '&' が書かれている場合、前のフレーズと小節が１小節分、重なる。
+        - [d,r,m,f,s,l,t,x]
+        - &[x,+d,t,l,s,f,m,r][6,1,1,2,2,2,2:8]
+            - 前のフレーズと１小節重なり、４拍目から再生する。
         - ただし、前のフレーズも重なるフレーズも最低でも２小節はあるべきである。
         - 上記のようになっていない場合、再生の不具合が発生する可能性がある。
 
