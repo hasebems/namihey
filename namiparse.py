@@ -251,7 +251,7 @@ class Parsing:
             arg = input_text.split()
             if len(arg) == 1:
                 well_done = self.sq.play()
-                well_done2 = self.sq2.play()
+                well_done2 = self.sq2.start()
                 if well_done and well_done2:
                     self.print_dialogue("Phrase has started!")
                 else:
@@ -274,7 +274,7 @@ class Parsing:
     def letterS(self, input_text):
         if input_text[0:5] == 'start':
             well_done = self.sq.play()
-            well_done2 = self.sq2.play()
+            well_done2 = self.sq2.start()
             if well_done and well_done2:
                 self.print_dialogue("Phrase has started!")
             else:

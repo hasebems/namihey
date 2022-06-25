@@ -42,7 +42,7 @@ def main():
     fl = nfl.NamiFile()
     md = midi.Midi()
     seq = sq.Seq(fl,md)
-    seq2 = sq2.Seq2()
+    seq2 = sq2.Seq2(md)
     pas = ps.Parsing(seq,seq2,fl,md)
     gui = ngui.NamiGui()
     pas.midi_setting(pas.CONFIRM_MIDI_OUT_ID)

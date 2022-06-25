@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import time
-import namiblock as blk
 import namilib as nlib
+import namiseqply as sqp
 
 ####
 # Tempo 生成の考え方
@@ -9,16 +9,11 @@ import namilib as nlib
 #   2. 次に Tempo が変わるまで、その時間との差から、現在の tick を算出する
 #   また、本 class 内に rit. 機構を持つ
 #
-####
-# Event 受信の考え方
-#   - queue を利用して、スレッドを跨いだメッセージを送る
-#   - フラグを利用して、スレッドを跨いだ bool 情報を送る
-#
 class Seq2:
     #   開始時に生成され、periodic() がコマンド入力とは別スレッドで、定期的に呼ばれる。
     #   そのため、change_tempo, play, stop 受信時はフラグのみを立て、periodic()
     #   で実処理を行う。
-    def __init__(self):
+    def __init__(self, md):
         self.origin_time = 0        # start 時の絶対時間
         self.bpm_start_time = 0     # tempo/beat が変わった時点の絶対時間、tick 計測の開始時間
         self.bpm_start_tick = 0     # tempo が変わった時点の tick, beat が変わったとき0clear
@@ -37,6 +32,17 @@ class Seq2:
         self.stop_for_periodic = False
         self.fine_for_periodic = False
 
+        self.sqobjs = []
+        for i in range(nlib.MAX_PART_COUNT):
+            obj = sqp.Part(self,md,i)
+            self.sqobjs.append(obj)
+
+    def add_sqobj(self, obj):
+        self.sqobjs.append(obj)
+
+    def get_tick_for_onemsr(self):
+        return self.tick_for_onemsr
+
 #    def file_auto_play(self, pas):
 #        if self.fl.auto_stop:   # check end of chain loading
 #            self.fl.auto_stop = False
@@ -44,7 +50,7 @@ class Seq2:
 #            pas.return_to_normal()
 
     def get_tick(self): # for GUI
-        tick_for_beat = nlib.DEFAULT_TICK_FOR_ONE_MEASURE/self.beat[1]
+        tick_for_beat = nlib.DEFAULT_TICK_FOR_ONE_MEASURE/self.beat[1]  # 一拍のtick数
         tick_inmsr = self.crnt_tick_inmsr
         count = self.tick_for_onemsr//tick_for_beat
         beat = tick_inmsr//tick_for_beat
@@ -56,27 +62,40 @@ class Seq2:
         one_tick = 60/(480*self.tempo)
         return diff_time/one_tick + self.bpm_start_tick
 
-    def start(self):
+    def _play(self):
         self.bpm_start_time = self.origin_time = time.time()  # Get current time
         self.bpm_start_tick = 0
         self.beat_start_msr = 0
         self.elapsed_time = 0
 
+    def _destroy_ended_obj(self):
+        maxsq = len(self.sqobjs)
+        removed_num = -1
+        while removed_num < maxsq:
+            removed_num = -1
+            for i in range(maxsq):
+                if self.sqobjs[i].destroy_me():
+                    self.sqobjs.pop(i)
+                    removed_num = i
+                    break
+            if removed_num == -1: break
+            maxsq = len(self.sqobjs)
+
     def periodic(self):     # seqplay thread
         ## check flags
         if self.play_for_periodic and not self.during_play:
             self.play_for_periodic = False
-            self.start()
+            self._play()
             self.during_play = True
+            for sqobj in self.sqobjs:
+                sqobj.start()
 
         if self.stop_for_periodic:
             self.stop_for_periodic = False
-            #self.block.stop()
             self.during_play = False
-
-        if self.fine_for_periodic:
-            self.fine_for_periodic = False
-            #self.block.fine()
+            for sqobj in self.sqobjs:
+                sqobj.stop()
+            self._destroy_ended_obj()
 
         if not self.during_play:
             #self.block.no_running()
@@ -88,10 +107,11 @@ class Seq2:
         self.elapsed_time = current_time - self.origin_time
         former_msr = self.crnt_measure
         self.crnt_measure = int(tick_beat_starts//self.tick_for_onemsr + self.beat_start_msr)
-        self.crnt_tick_inmsr = tick_beat_starts%self.tick_for_onemsr
+        self.crnt_tick_inmsr = int(tick_beat_starts%self.tick_for_onemsr)
 
+        ## new measure or not
         if former_msr is not self.crnt_measure:
-            # 小節を跨いだ
+            # 小節を跨いだ場合
             if self.stock_tick_for_onemsr[0] is not self.tick_for_onemsr:
                 # change beat event があった
                 self.beat_start_msr = self.crnt_measure
@@ -100,9 +120,22 @@ class Seq2:
                 self.tick_for_onemsr = self.stock_tick_for_onemsr[0]
                 self.beat = self.stock_tick_for_onemsr[1:3]
 
+            if self.fine_for_periodic:
+                # fine event
+                self.fine_for_periodic = False
+                for sqobj in self.sqobjs:
+                    sqobj.fine()
+
+            ## new measure
+            for sqobj in self.sqobjs:
+                sqobj.msrtop()
+
         ## play seqplay_object
+        for sqobj in self.sqobjs:
+            sqobj.periodic(self.crnt_measure, self.crnt_tick_inmsr)
 
-
+        ## remove ended obj
+        self._destroy_ended_obj()
 
 
     def change_tempo(self, tempo):     # command thread
@@ -114,7 +147,7 @@ class Seq2:
     def change_beat(self, beat):    # beat: number of ticks of one measure
         self.stock_tick_for_onemsr = beat
 
-    def play(self):     # command thread
+    def start(self):     # command thread
         self.play_for_periodic = True
         if self.during_play is False:
             return True
