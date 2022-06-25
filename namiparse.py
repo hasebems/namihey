@@ -18,9 +18,10 @@ class Prompt:
 class Parsing:
     #   入力した文字列の解析
     #   一行単位で入力されるたびに生成される
-    def __init__(self, seq, nfl, md):
+    def __init__(self, seq, seq2, nfl, md):
         self.prompt_mode = Prompt.NORMAL
         self.sq = seq
+        self.sq2 = seq2
         self.fl = nfl
         self.md = md
         self.input_part = 1  # 1origin
@@ -58,8 +59,10 @@ class Parsing:
             if onpu_str.isdecimal():
                 onpu = int(onpu_str)
             if btnum >= 1 and onpu >= 1:
-                self.sq.blk().stock_beat_info(  \
-                    [(nlib.DEFAULT_TICK_FOR_ONE_MEASURE/onpu)*btnum, btnum, onpu])
+                # [1小節内のtick, 1小節内の拍数, 一拍の音価(2/4/8/16...)]
+                beat_ev = ((nlib.DEFAULT_TICK_FOR_ONE_MEASURE/onpu)*btnum, btnum, onpu)
+                self.sq.blk().stock_beat_info(beat_ev)
+                self.sq2.change_beat(beat_ev)
                 self.print_dialogue("Beat has changed!")
             else:
                 self.print_dialogue("what?")
@@ -210,6 +213,7 @@ class Parsing:
             bpmnumlist = tx[1].strip().split()
             if bpmnumlist[0].isdecimal():
                 self.sq.change_tempo(int(bpmnumlist[0]))
+                self.sq2.change_tempo(int(bpmnumlist[0]))
                 self.print_dialogue("BPM has changed!")
         elif command == 'balance' or command == 'volume':
             bl_list = tx[1].strip().split(',')
@@ -247,7 +251,8 @@ class Parsing:
             arg = input_text.split()
             if len(arg) == 1:
                 well_done = self.sq.play()
-                if well_done:
+                well_done2 = self.sq2.play()
+                if well_done and well_done2:
                     self.print_dialogue("Phrase has started!")
                 else:
                     self.print_dialogue("Unable to start!")
@@ -269,12 +274,14 @@ class Parsing:
     def letterS(self, input_text):
         if input_text[0:5] == 'start':
             well_done = self.sq.play()
-            if well_done:
+            well_done2 = self.sq2.play()
+            if well_done and well_done2:
                 self.print_dialogue("Phrase has started!")
             else:
                 self.print_dialogue("Unable to start!")
         elif input_text[0:4] == 'stop':
             self.sq.stop()
+            self.sq2.stop()
             self.print_dialogue("Stopped!")
         elif input_text[0:3] == 'set':
             self.parse_set_command(input_text[3:])
@@ -333,6 +340,7 @@ class Parsing:
     def letterF(self, input_text):
         if input_text[0:4] == "fine":
             self.sq.fine()
+            self.sq2.fine()
             self.print_dialogue('Will be ended!')
         else:
             self.print_dialogue("what?")

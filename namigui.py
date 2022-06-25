@@ -99,14 +99,14 @@ class NamiGui:
         debug = self.font.render(str(value), True, 'lightblue')
         self.screen.blit(debug, [NamiGui.COLUMN1_X, NamiGui.LINE3_Y])
 
-    def main_loop(self, loop, seq, pas, nfl):
+    def main_loop(self, loop, seq, seq2, pas, nfl):
         clock = pygame.time.Clock()
         while True:
             clock.tick(60)     # 60FPS
             self.screen.fill(BACK_COLOR[pas.back_color])
             self._display_time()
-            self._display_song(nfl, seq)
-            self._display_beat(seq)
+            self._display_song(nfl,seq)
+            self._display_beat(seq2)
             self._display_part(seq)
             self._debug_support(seq)
             # 画面更新
