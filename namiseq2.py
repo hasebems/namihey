@@ -19,7 +19,7 @@ class Seq2:
         self.bpm_start_tick = 0     # tempo が変わった時点の tick, beat が変わったとき0clear
         self.beat_start_msr = 0     # beat が変わった時点の経過小節数
         self.elapsed_time = 0       # start からの経過時間
-        self.crnt_measure = 0       # start からの小節数
+        self.crnt_measure = -1      # start からの小節数（最初の小節からイベントを出すため、-1初期化)
         self.crnt_tick_inmsr = 0    # 現在の小節内の tick 数
 
         self.tempo = 120
@@ -39,6 +39,7 @@ class Seq2:
 
     def add_sqobj(self, obj):
         self.sqobjs.append(obj)
+        #print(len(self.sqobjs))
 
     def get_tick_for_onemsr(self):
         return self.tick_for_onemsr
@@ -80,6 +81,7 @@ class Seq2:
                     break
             if removed_num == -1: break
             maxsq = len(self.sqobjs)
+            #print(len(self.sqobjs))
 
     def periodic(self):     # seqplay thread
         ## check flags
@@ -128,7 +130,7 @@ class Seq2:
 
             ## new measure
             for sqobj in self.sqobjs:
-                sqobj.msrtop()
+                sqobj.msrtop(self.crnt_measure)
 
         ## play seqplay_object
         for sqobj in self.sqobjs:

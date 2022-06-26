@@ -95,8 +95,8 @@ class NamiGui:
                 [NamiGui.COLUMN3_X+num*NamiGui.PART_INTERVAL, NamiGui.LINE3_Y])
 
     def _debug_support(self, seq):
-        value = '' #'<Debug Space>'      # 見たい変数を記載する
-        debug = self.font.render(str(value), True, 'lightblue')
+        value = len(seq.sqobjs) # value に見たい変数値を代入する(seqから辿れるもの)
+        debug = self.font.render('Sqobj. Num: '+str(value), True, 'lightblue')
         self.screen.blit(debug, [NamiGui.COLUMN1_X, NamiGui.LINE3_Y])
 
     def main_loop(self, loop, seq, seq2, pas, nfl):
@@ -108,7 +108,7 @@ class NamiGui:
             self._display_song(nfl,seq)
             self._display_beat(seq2)
             self._display_part(seq)
-            self._debug_support(seq)
+            self._debug_support(seq2)
             # 画面更新
             pygame.display.update()
 

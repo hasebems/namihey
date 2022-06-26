@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import namilib as nlib
 
+####
+#   SeqPlay Obj. の Interface
 class SeqPlay:
 
     def __init__(self, obj, md, type):
@@ -8,52 +10,102 @@ class SeqPlay:
         self.md = md
         self.type = type
 
-    def start(self):
+    # 以下の IF は Seqplay thread内でコール
+    def start(self):    # User による start/play 時にコールされる
         pass
 
-    def stop(self):
+    def stop(self):     # User による stop 時にコールされる
         pass
 
-    def fine(self):
+    def fine(self):     # User による fine があった次の小節先頭でコールされる
         pass
 
-    def msrtop(self):
+    def msrtop(self,msr):           # 小節先頭でコールされる
         pass
 
-    def periodic(self,msr,tick):
+    def periodic(self,msr,tick):    # 再生中、繰り返しコールされる
         pass
 
-    def destroy_me(self):
+    def destroy_me(self):   # 自クラスが役割を終えた時に True を返す
         return False
 
+####
+#   起動時から存在し、決して destroy されない SeqPlay Obj.
 class Part(SeqPlay):
 
     def __init__(self, obj, md, num):
         super().__init__(obj, md, 'Part')
         self.part_num = num
+        self.measure_count = 0
+        self.loop_measure = 3       # sample
+        self.loop_obj = None
+
+    def _generate_loop(self):
+        if self.part_num != 0: return # とりあえず part1 のみ
+        self.loop_obj = Loop(self.parent, self.md, self.loop_measure)
+        self.parent.add_sqobj(self.loop_obj)
+
+    def start(self):
+        pass
+
+    def msrtop(self,msr):
+        self.measure_count = msr
+        if self.measure_count%self.loop_measure == 0:
+            self._generate_loop()
+
+    def periodic(self,msr,tick):
+        pass
+
+    def destroy_me(self):
+        return False    # 最後まで削除されない
+
+
+####
+#   １行分の Phrase/Pattern を生成するための SeqPlay Obj.
+#   １周期が終わったら、destroy され、また新しいオブジェクトが Part によって作られる
+#   Loop 内のデータに基づき、Note Obj. を生成する
+class Loop(SeqPlay):
+
+    def __init__(self, obj, md, msr):
+        super().__init__(obj, md, 'Loop')
+        self.max_measure_num = msr
+        self.first_measure_num = -1
+        self.measure_count = 0
         self.count = 0
+        self.destroy = False
 
     def _set_note(self,ev):
         obj = Note(self.parent, self.md, ev)
         self.parent.add_sqobj(obj)
 
-    def start(self):
-        self.count = 0
+    def msrtop(self,msr):
+        # 初回コール時
+        if self.first_measure_num == -1:
+            self.first_measure_num = msr
+
+        self.measure_count = msr - self.first_measure_num
+        if self.measure_count >= self.max_measure_num:
+            self.destroy = True
 
     def periodic(self,msr,tick):
-        if self.part_num != 0:
-            return
         # example for generating Note Event
         cnt = self.count
-        if msr == (cnt//4) and tick > (cnt%4)*480:
+        lpmsr = msr - self.first_measure_num
+        if lpmsr == (cnt//4) and tick > (cnt%4)*480:
             note = cnt%12
             self.count += 1
-            self._set_note([self.part_num,0x3c+note,0x7f,600])
+            self._set_note([0,0x3c+note,0x7f,100])
 
     def destroy_me(self):
-        return False
+        return self.destroy
+
+    def stop(self):
+        self.destroy = True
 
 
+####
+#   一音符の SeqPlay Obj.
+#   Note On時に生成され、MIDI を出力した後、Note Offを生成して destroy される
 class Note(SeqPlay):
 
     def __init__(self, obj, md, ev):
