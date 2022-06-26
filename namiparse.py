@@ -387,7 +387,7 @@ class Parsing:
         dx = dscrpt.Description()
         description, dialogue = dx.complement_brace(input_text)
         if description != None:
-            dx.set_dscrpt_to_block(self.input_part-1, self.sq.blk(), description)
+            dx.set_dscrpt_to_seq2(self.input_part-1, self.sq2, description)
             self.print_dialogue(dialogue)
         else:
             self.print_dialogue("what?")

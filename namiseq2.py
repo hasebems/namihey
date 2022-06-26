@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import time
 import namilib as nlib
-import namiseqply as sqp
+import namiseqpart as sqp
 
 ####
 # Tempo 生成の考え方
@@ -44,6 +44,12 @@ class Seq2:
     def get_tick_for_onemsr(self):
         return self.tick_for_onemsr
 
+    def get_part(self, number):
+        if number < nlib.MAX_PART_COUNT:
+            return self.sqobjs[number]
+        else:
+            return None
+
 #    def file_auto_play(self, pas):
 #        if self.fl.auto_stop:   # check end of chain loading
 #            self.fl.auto_stop = False
@@ -81,7 +87,7 @@ class Seq2:
                     break
             if removed_num == -1: break
             maxsq = len(self.sqobjs)
-            #print(len(self.sqobjs))
+            #print('Destroyed!')
 
     def periodic(self):     # seqplay thread
         ## check flags

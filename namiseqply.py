@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import namilib as nlib
 
 ####
 #   SeqPlay Obj. の Interface
@@ -29,72 +28,6 @@ class SeqPlay:
     def destroy_me(self):   # 自クラスが役割を終えた時に True を返す
         return False
 
-####
-#   起動時から存在し、決して destroy されない SeqPlay Obj.
-class SeqPart(SeqPlay):
-
-    def __init__(self, obj, md, num):
-        super().__init__(obj, md, 'Part')
-        self.part_num = num
-        self.measure_count = 0
-        self.loop_obj = None
-        self.state_play = False
-        self.keynote = nlib.DEFAULT_NOTE_NUMBER
-        self.description = [None for _ in range(4)]
-
-        self.loop_measure = 3
-
-    def _generate_loop(self):
-        if self.part_num != 0: return # とりあえず part1 のみ
-        self.loop_obj = Loop(self.parent, self.md)
-        self.parent.add_sqobj(self.loop_obj)
-
-    def _generate_sequence(self):
-        pass
-
-    ## Seqplay thread内でコール
-    def start(self):
-        self.state_play = True
-
-    def msrtop(self,msr):
-        self.measure_count = msr
-        if self.measure_count%self.loop_measure == 0:
-            self._generate_loop()
-
-    #def periodic(self,msr,tick):
-    #    pass
-
-    def destroy_me(self):
-        return False    # 最後まで削除されない
-
-    def stop(self):
-        self.state_play = False
-
-    def fine(self):
-        self.stop()
-
-    ## CUI thread内でコール
-    def change_keynote(self, nt):
-        self.keynote = nt
-        if self.state_play:
-            self.state_reserve = True
-        else:
-            self._generate_sequence()
-
-    def change_cc(self, cc_num, val):
-        if val >= 0 and val < 128:
-            self.volume = val
-            self.md.send_control(self.midich, cc_num, val)
-
-    def clear_description(self):
-        self.add_seq_description(['phrase',None,None,None])
-
-    def add_seq_description(self, data):
-        self.description = data
-        if self.state_play:
-            self.state_reserve = True
-        else:
-            self._generate_sequence()
 
 ####
 #   １行分の Phrase/Pattern を生成するための SeqPlay Obj.
@@ -105,8 +38,8 @@ class Loop(SeqPlay):
     # example
     LOOP_LENGTH = 3
 
-    def __init__(self, obj, md):
-        super().__init__(obj, md, 'Loop')
+    def __init__(self, obj, md, ptn):
+        super().__init__(obj, md, ptn)
         self.first_measure_num = -1
         self.measure_count = 0
         self.whole_tick = self.parent.get_tick_for_onemsr() * self.LOOP_LENGTH # example
@@ -115,7 +48,7 @@ class Loop(SeqPlay):
         # example
         self.count = 0
 
-    def _set_note(self,ev):
+    def _set_note(self,ev): # ev: [midi ch, note, velocity, duration]
         obj = Note(self.parent, self.md, ev)
         self.parent.add_sqobj(obj)
 
@@ -162,14 +95,13 @@ class Note(SeqPlay):
         self.off_tick = 0
 
     def _note_on(self):
-        if self.note_num > 127 or self.velocity > 127: return
         self.md.send_midi_note(self.midi_ch, self.note_num, self.velocity)
+        pass
 
     def _note_off(self):
         self.destroy = True
         self.during_noteon = False
         # midi note off
-        if self.note_num > 127 or self.velocity > 127: return
         self.md.send_midi_note(self.midi_ch, self.note_num, 0)
 
     def periodic(self,msr,tick):
