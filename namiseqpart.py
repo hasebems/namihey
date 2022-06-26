@@ -10,7 +10,8 @@ class SeqPart(sqp.SeqPlay):
     def __init__(self, obj, md, num):
         super().__init__(obj, md, 'Part')
         self.part_num = num
-        self.measure_count = 0
+        self.first_measure_num = -1 # その Phrase/Pattern が始まった小節数
+
         self.loop_obj = None
         self.keynote = nlib.DEFAULT_NOTE_NUMBER
         self.description = [None for _ in range(4)]
@@ -36,17 +37,27 @@ class SeqPart(sqp.SeqPlay):
 
     ## Seqplay thread内でコール
     def start(self):
-        self.measure_count = 0
+        self.first_measure_num = -1
 
     def msrtop(self,msr):
-        self.measure_count = msr
+        if self.first_measure_num == -1:    # 計測開始
+            self.first_measure_num = msr
+
         if self.state_reserve:
+            # pattern 変更イベント時
             self._generate_sequence()
             if self.elm != None:
                 self.loop_measure = self.elm.max_measure_num
             self.state_reserve = False
+            self.first_measure_num = msr    # 計測開始の更新
 
-        if self.elm != None and self.loop_measure != 0 and self.measure_count%self.loop_measure == 0:
+        # 計測開始からの経過小節数
+        elapsed_msr = msr - self.first_measure_num
+
+        # Loop分の長さを過ぎたら、新たに Loop Obj.を生成
+        if self.elm != None and \
+           self.loop_measure != 0 and \
+           elapsed_msr%self.loop_measure == 0:
             self._generate_loop()
 
     #def periodic(self,msr,tick):
@@ -58,8 +69,8 @@ class SeqPart(sqp.SeqPlay):
     #def stop(self):
     #    pass
 
-    def fine(self):
-        self.stop()
+    #def fine(self):
+    #    self.stop()
 
     ## CUI thread内でコール
     def change_keynote(self, nt):

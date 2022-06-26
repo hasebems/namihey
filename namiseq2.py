@@ -131,8 +131,11 @@ class Seq2:
             if self.fine_for_periodic:
                 # fine event
                 self.fine_for_periodic = False
+                self.during_play = False
                 for sqobj in self.sqobjs:
                     sqobj.fine()
+                self._destroy_ended_obj()
+                return
 
             ## new measure
             for sqobj in self.sqobjs:

@@ -46,7 +46,7 @@ class Loop(SeqPlay):
         self.destroy = False
 
         # example
-        self.count = 0
+        #self.count = 0
 
     def _set_note(self,ev): # ev: [midi ch, note, velocity, duration]
         obj = Note(self.parent, self.md, ev)
@@ -64,12 +64,12 @@ class Loop(SeqPlay):
             return
 
         # example for generating Note Event
-        cnt = self.count
-        lpmsr = msr - self.first_measure_num
-        if lpmsr == (cnt//4) and tick > (cnt%4)*480:
-            note = cnt%12
-            self.count += 1
-            self._set_note([0,0x3c+note,0x7f,100])
+        #cnt = self.count
+        #lpmsr = msr - self.first_measure_num
+        #if lpmsr == (cnt//4) and tick > (cnt%4)*480:
+        #    note = cnt%12
+        #    self.count += 1
+        #    self._set_note([0,0x3c+note,0x7f,100])
 
     def destroy_me(self):
         return self.destroy
@@ -77,6 +77,8 @@ class Loop(SeqPlay):
     def stop(self):
         self.destroy = True
 
+    def fine(self):
+        self.destroy = True
 
 ####
 #   一音符の SeqPlay Obj.

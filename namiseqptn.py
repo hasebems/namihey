@@ -88,7 +88,6 @@ class PatternGenerator:
         self._analyse_chord_brace(pattern[0])
         self._analyse_measure_brace(pattern[1])
         self._analyse_velocity_brace(pattern[2])
-        #return self.max_measure_num #* self.tick_for_one_measure
 
 
 class PatternLoop(sqp.Loop):
@@ -234,7 +233,7 @@ class PatternLoop(sqp.Loop):
         else:
             self.next_tick = crnt_tick
 
-
+    ## IF Function by SeqPlay Class
     def msrtop(self,msr):
         # 初回コール時
         if self.first_measure_num == -1:
