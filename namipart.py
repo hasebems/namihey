@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import copy
-import namipattern
+#import namipattern
 import namiptgen as nptgen
 
 
@@ -19,9 +19,7 @@ class Part:
         self.state_play = False         # during Playing
         self.state_reserve = False       # Change Phrase at next loop top
         self.keynote = DEFAULT_NOTE_NUMBER
-        self.is_onebyone = False
         self.volume = 100
-        self.ptn = namipattern.PatternGenerator(DEFAULT_NOTE_NUMBER, self._send_midi_note)
         self.ptgen = nptgen.PartGenPlay(self._send_midi_note)
 
     def _send_midi_note(self, nt, vel):
@@ -37,13 +35,6 @@ class Part:
         seq_type = self.description[0]
         if seq_type == 'phrase':
             self.whole_tick = self.ptgen.set_phrase(self.description[1:], self.keynote)
-            self.is_onebyone = False
-        elif seq_type == 'random':
-            self.whole_tick = self.ptn.set_random(self.description[1:], self.keynote)
-            self.is_onebyone = True
-        elif seq_type == 'arp':
-            self.whole_tick = self.ptn.set_arp(self.description[1:], self.keynote)
-            self.is_onebyone = True
 
     # Settings IF
     def change_keynote(self, nt):
@@ -74,10 +65,7 @@ class Part:
     # Sequence Control IF
     def start(self):
         self.state_play = True
-        if not self.is_onebyone:
-            self.ptgen.start()
-        else:
-            self.ptn.start()
+        self.ptgen.start()
 
     # Sequence Control IF
     def return_to_top(self, tick_for_one_measure):
@@ -86,18 +74,12 @@ class Part:
         if self.state_reserve:
             self._generate_sequence()
             self.state_reserve = False
-        if not self.is_onebyone:
-            part_tick = self.ptgen.return_to_top()
-        else:
-            part_tick = self.ptn.return_to_top(tick_for_one_measure)
+        part_tick = self.ptgen.return_to_top()
         return part_tick
 
     # Sequence Control IF
     def generate_event(self, tick):
-        if not self.is_onebyone:
-            return self.ptgen.generate_event(tick)
-        else:
-            return self.ptn.generate_pattern(tick)
+        return self.ptgen.generate_event(tick)
 
     # Sequence Control IF
     def stop(self):
@@ -105,7 +87,5 @@ class Part:
         for nt in all_ntof:
             self._send_midi_note(nt, 0)
         self.state_play = False
-        if not self.is_onebyone:
-            self.ptgen.stop()
-        else:
-            self.ptn.stop()
+        self.ptgen.stop()
+
