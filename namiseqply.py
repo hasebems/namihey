@@ -10,7 +10,7 @@ class SeqPlay:
         self.md = md
         self.type = type
 
-    # 以下の IF は Seqplay thread内でコール
+    # Seqplay thread内でコール
     def start(self):    # User による start/play 時にコールされる
         pass
 
@@ -37,12 +37,12 @@ class Part(SeqPlay):
         super().__init__(obj, md, 'Part')
         self.part_num = num
         self.measure_count = 0
-        self.loop_measure = 3       # sample
         self.loop_obj = None
+        self.loop_measure = 3
 
     def _generate_loop(self):
         if self.part_num != 0: return # とりあえず part1 のみ
-        self.loop_obj = Loop(self.parent, self.md, self.loop_measure)
+        self.loop_obj = Loop(self.parent, self.md)
         self.parent.add_sqobj(self.loop_obj)
 
     def start(self):
@@ -59,6 +59,10 @@ class Part(SeqPlay):
     def destroy_me(self):
         return False    # 最後まで削除されない
 
+    # CUI thread内でコール
+    def add_seq_description(self,data):
+        pass
+
 
 ####
 #   １行分の Phrase/Pattern を生成するための SeqPlay Obj.
@@ -66,13 +70,18 @@ class Part(SeqPlay):
 #   Loop 内のデータに基づき、Note Obj. を生成する
 class Loop(SeqPlay):
 
-    def __init__(self, obj, md, msr):
+    # example
+    LOOP_LENGTH = 3
+
+    def __init__(self, obj, md):
         super().__init__(obj, md, 'Loop')
-        self.max_measure_num = msr
         self.first_measure_num = -1
         self.measure_count = 0
-        self.count = 0
+        self.whole_tick = self.parent.get_tick_for_onemsr() * self.LOOP_LENGTH # example
         self.destroy = False
+
+        # example
+        self.count = 0
 
     def _set_note(self,ev):
         obj = Note(self.parent, self.md, ev)
@@ -83,11 +92,12 @@ class Loop(SeqPlay):
         if self.first_measure_num == -1:
             self.first_measure_num = msr
 
-        self.measure_count = msr - self.first_measure_num
-        if self.measure_count >= self.max_measure_num:
-            self.destroy = True
-
     def periodic(self,msr,tick):
+        elapsed_tick = (msr - self.first_measure_num)*self.parent.get_tick_for_onemsr() + tick
+        if elapsed_tick >= self.whole_tick:
+            self.destroy = True
+            return
+
         # example for generating Note Event
         cnt = self.count
         lpmsr = msr - self.first_measure_num
@@ -110,7 +120,10 @@ class Note(SeqPlay):
 
     def __init__(self, obj, md, ev):
         super().__init__(obj, md, 'Note')
-        self.event = ev     # [midi ch, note, velocity, duration]
+        self.midi_ch = ev[0]
+        self.note_num = ev[1]
+        self.velocity = ev[2]
+        self.duration = ev[3]
         self.during_noteon = False
         self.destroy = False
         self.off_msr = 0
@@ -120,19 +133,19 @@ class Note(SeqPlay):
         self.destroy = True
         self.during_noteon = False
         # midi note off
-        self.md.send_midi_note(self.event[0], self.event[1], 0)
+        self.md.send_midi_note(self.midi_ch, self.note_num, 0)
 
     def periodic(self,msr,tick):
         if not self.during_noteon:
             self.during_noteon = True
             tk = self.parent.get_tick_for_onemsr()
             self.off_msr = msr
-            self.off_tick = tick + self.event[3]
+            self.off_tick = tick + self.duration
             while self.off_tick > tk:
                 self.off_tick -= tk
                 self.off_msr += 1
             # midi note on
-            self.md.send_midi_note(self.event[0], self.event[1], self.event[2])
+            self.md.send_midi_note(self.midi_ch, self.note_num, self.velocity)
         else:
             if msr == self.off_msr and tick > self.off_tick:
                 self._note_off()
