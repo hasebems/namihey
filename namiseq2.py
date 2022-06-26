@@ -34,7 +34,7 @@ class Seq2:
 
         self.sqobjs = []
         for i in range(nlib.MAX_PART_COUNT):
-            obj = sqp.Part(self,md,i)
+            obj = sqp.SeqPart(self,md,i)
             self.sqobjs.append(obj)
 
     def add_sqobj(self, obj):
