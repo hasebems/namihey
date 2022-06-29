@@ -28,11 +28,11 @@ def cui(loop, seq, pas):
         pas.startParsing(input_text)
     loop.running = False
 
-def generate_ev(loop, seq, seq2, pas):
+def generate_ev(loop, seq2, pas):
     while True:
-        seq.periodic()
+        #seq.periodic()
         seq2.periodic()
-        seq.file_auto_play(pas)
+        #seq.file_auto_play(pas)
         if not loop.running:
             break
 
@@ -47,9 +47,9 @@ def main():
     gui = ngui.NamiGui()
     pas.midi_setting(pas.CONFIRM_MIDI_OUT_ID)
 
-    cui_job = threading.Thread(target=cui, args=(loop, seq, pas))
+    cui_job = threading.Thread(target=cui, args=(loop, seq2, pas))
     cui_job.start()
-    ev_job = threading.Thread(target=generate_ev, args=(loop, seq, seq2, pas))
+    ev_job = threading.Thread(target=generate_ev, args=(loop, seq2, pas))
     ev_job.start()
     gui.main_loop(loop,seq,seq2,pas,fl)
 

@@ -38,38 +38,25 @@ class Loop(SeqPlay):
     # example
     LOOP_LENGTH = 3
 
-    def __init__(self, obj, md, ptn):
-        super().__init__(obj, md, ptn)
-        self.first_measure_num = -1
-        self.measure_count = 0
-        self.whole_tick = self.parent.get_tick_for_onemsr() * self.LOOP_LENGTH # example
+    def __init__(self, obj, md, type, msr):
+        super().__init__(obj, md, type)
+        self.first_measure_num = msr
+        self.whole_tick = 0
         self.destroy = False
-
-        # example
-        #self.count = 0
+        self.tick_for_one_measure = self.parent.get_tick_for_onemsr()
 
     def _set_note(self,ev): # ev: [midi ch, note, velocity, duration]
         obj = Note(self.parent, self.md, ev)
         self.parent.add_sqobj(obj)
 
     def msrtop(self,msr):
-        # 初回コール時
-        if self.first_measure_num == -1:
-            self.first_measure_num = msr
+        pass
 
     def periodic(self,msr,tick):
-        elapsed_tick = (msr - self.first_measure_num)*self.parent.get_tick_for_onemsr() + tick
+        elapsed_tick = (msr - self.first_measure_num)*self.tick_for_one_measure + tick
         if elapsed_tick >= self.whole_tick:
             self.destroy = True
             return
-
-        # example for generating Note Event
-        #cnt = self.count
-        #lpmsr = msr - self.first_measure_num
-        #if lpmsr == (cnt//4) and tick > (cnt%4)*480:
-        #    note = cnt%12
-        #    self.count += 1
-        #    self._set_note([0,0x3c+note,0x7f,100])
 
     def destroy_me(self):
         return self.destroy

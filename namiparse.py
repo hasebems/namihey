@@ -61,7 +61,6 @@ class Parsing:
             if btnum >= 1 and onpu >= 1:
                 # [1小節内のtick, 1小節内の拍数, 一拍の音価(2/4/8/16...)]
                 beat_ev = ((nlib.DEFAULT_TICK_FOR_ONE_MEASURE/onpu)*btnum, btnum, onpu)
-                self.sq.blk().stock_beat_info(beat_ev)
                 self.sq2.change_beat(beat_ev)
                 self.print_dialogue("Beat has changed!")
             else:
@@ -152,9 +151,8 @@ class Parsing:
     def change_cc(self, cc_num, cc_list):
         if len(cc_list) > nlib.MAX_PART_COUNT:
             del cc_list[nlib.MAX_PART_COUNT:]
-        curbk = self.sq.blk()
         for i, vol in enumerate(cc_list):
-            self.sq.blk().send_midi_cc(i, cc_num, int(vol))
+            self.sq2.send_midi_cc(i, cc_num, int(vol))
 
     CONFIRM_MIDI_OUT_ID = -1
 
@@ -212,7 +210,6 @@ class Parsing:
         elif command == 'bpm':
             bpmnumlist = tx[1].strip().split()
             if bpmnumlist[0].isdecimal():
-                self.sq.change_tempo(int(bpmnumlist[0]))
                 self.sq2.change_tempo(int(bpmnumlist[0]))
                 self.print_dialogue("BPM has changed!")
         elif command == 'balance' or command == 'volume':
@@ -240,7 +237,7 @@ class Parsing:
                 if var.isdecimal():
                     num = int(var)
                     if num > 0 and num <= 128:
-                        self.sq.blk().send_midi_pgn(i,num-1)
+                        self.sq2.send_midi_pgn(i,num-1)
             self.print_dialogue("Program number has changed!")
 
     def letterB(self, input_text):
@@ -378,7 +375,7 @@ class Parsing:
         dx = dscrpt.Description()
         description = dx.complement_bracket(input_text)
         if description != None:
-            dx.set_dscrpt_to_block(self.input_part-1, self.sq.blk(), description)
+            dx.set_dscrpt_to_seq2(self.input_part-1, self.sq2, description)
             self.print_dialogue("set Phrase!")
         else:
             self.print_dialogue("what?")

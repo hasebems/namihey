@@ -92,16 +92,19 @@ class PatternGenerator:
 
 class PatternLoop(sqp.Loop):
 
-    def __init__(self, obj, md, ptn, key):
-        super().__init__(obj, md, 'PtnLoop')
+    def __init__(self, obj, md, msr, ptn, key, ch):
+        super().__init__(obj, md, 'PtnLoop', msr)
         self.ptn = ptn
         self.keynote = key
+        self.midich = ch
+
+        self.chord_flow = self.ptn.chord_flow_next
         self.next_tick = 0
         #self.event_counter = 0
         self.max_measure_num = ptn.max_measure_num
         self.last_note = 0
-        self.chord_flow = []
-        self.tick_for_one_measure = self.parent.get_tick_for_onemsr()
+
+        # for super's member
         self.whole_tick = ptn.max_measure_num*self.tick_for_one_measure
 
     def _detect_locate(self, tick):
@@ -221,7 +224,7 @@ class PatternLoop(sqp.Loop):
             measure_num = self._detect_locate(crnt_tick)
             note = self._detect_note_number(measure_num, crnt_tick, tick_reso)
             vel = self.ptn.velocity_flow[measure_num]
-            self._set_note([0,note,vel,tick_reso - NOTE_OFF_MARGIN])
+            self._set_note([self.midich,note,vel,tick_reso - NOTE_OFF_MARGIN])
             #print('NoteOn:'+str(crnt_tick)+'-'+str(note))
             self.last_note = note
             crnt_tick += tick_reso
@@ -234,12 +237,6 @@ class PatternLoop(sqp.Loop):
             self.next_tick = crnt_tick
 
     ## IF Function by SeqPlay Class
-    def msrtop(self,msr):
-        # 初回コール時
-        if self.first_measure_num == -1:
-            self.first_measure_num = msr
-            self.chord_flow = self.ptn.chord_flow_next
-
     def periodic(self,msr,tick):
         tk_onemsr = self.tick_for_one_measure
         elapsed_tick = (msr - self.first_measure_num)*tk_onemsr + tick

@@ -22,12 +22,13 @@ class PhraseGenerator:
     def __add_note(self, tick, notes, duration, velocity=100):
         for note in notes:
             if note != nlib.REST:
-                self.playData.append([tick, note, velocity])
-        for note in notes:
-            if note != nlib.REST:
-                real_dur = math.floor(duration * self.durPer * 480 * 4 / (100 * self.baseNote))  # 切り捨て
-                off_tick = tick + real_dur - 1
-                self.playData.append([off_tick, note, 0])
+                real_dur = math.floor(duration * self.durPer * 480 * 4 / (100 * self.baseNote)) # add line
+                self.playData.append([tick, note, velocity, real_dur])                          # add real_dur
+        #for note in notes:
+        #    if note != nlib.REST:
+        #        real_dur = math.floor(duration * self.durPer * 480 * 4 / (100 * self.baseNote))  # 切り捨て
+        #        off_tick = tick + real_dur - 1
+        #        self.playData.append([off_tick, note, 0])
 
     def __fill_omitted_note_data(self):
         # スペース削除し、',' '|' 区切りでリスト化
@@ -291,7 +292,7 @@ class PhraseGenerator:
             dur = self.__cnv_duration(dur_flow[read_ptr])
             vel = nlib.convert_exp2vel(vel_flow[read_ptr])
             self.__add_note(tick, cnts, dur, vel)
-            tick += dur * 480 * 4 / self.baseNote
+            tick += int(dur * 480 * 4 / self.baseNote)
             read_ptr += 1  # out from repeat
 
         return tick, self.playData
