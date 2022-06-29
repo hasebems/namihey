@@ -30,7 +30,7 @@ def cui(loop, seq, pas):
 def generate_ev(loop, seq, pas):
     while True:
         seq.periodic()
-        #seq.file_auto_play(pas)
+        seq.file_auto_play(pas)
         if not loop.running:
             break
 
@@ -39,8 +39,7 @@ def main():
     loop = ngui.Loop()
     fl = nfl.NamiFile()
     md = midi.Midi()
-    #seq = sq.Seq(fl,md)
-    seq = sq2.Seq2(md)
+    seq = sq2.Seq2(fl,md)
     pas = ps.Parsing(seq,fl,md)
     gui = ngui.NamiGui()
     pas.midi_setting(pas.CONFIRM_MIDI_OUT_ID)

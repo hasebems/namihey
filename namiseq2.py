@@ -13,7 +13,7 @@ class Seq2:
     #   開始時に生成され、periodic() がコマンド入力とは別スレッドで、定期的に呼ばれる。
     #   そのため、change_tempo, play, stop 受信時はフラグのみを立て、periodic()
     #   で実処理を行う。
-    def __init__(self, md):
+    def __init__(self, fl, md):
         self.origin_time = 0        # start 時の絶対時間
         self.bpm_start_time = 0     # tempo/beat が変わった時点の絶対時間、tick 計測の開始時間
         self.bpm_start_tick = 0     # tempo が変わった時点の tick, beat が変わったとき0clear
@@ -32,10 +32,11 @@ class Seq2:
         self.stop_for_periodic = False
         self.fine_for_periodic = False
 
+        self.fl = fl
         self.md = md
         self.sqobjs = []
         for i in range(nlib.MAX_PART_COUNT):
-            obj = sqp.SeqPart(self,md,i)
+            obj = sqp.SeqPart(self,md,fl,i)
             self.sqobjs.append(obj)
 
     def add_sqobj(self, obj):
@@ -58,11 +59,11 @@ class Seq2:
                 nt.append(obj)
         return nt
 
-#    def file_auto_play(self, pas):
-#        if self.fl.auto_stop:   # check end of chain loading
-#            self.fl.auto_stop = False
-#            #pas.print_dialogue("The End!")
-#            pas.return_to_normal()
+    def file_auto_play(self, pas):
+        if self.fl.auto_stop:   # check end of chain loading
+            self.fl.auto_stop = False
+            #pas.print_dialogue("The End!")
+            pas.return_to_normal()
 
     def get_tick(self): # for GUI
         tick_for_beat = nlib.DEFAULT_TICK_FOR_ONE_MEASURE/self.beat[1]  # 一拍のtick数
@@ -167,6 +168,10 @@ class Seq2:
         self.stock_tick_for_onemsr = beat
 
     def start(self):     # command thread
+        # for chain loading
+        #if self.fl.chain_loading_state:
+        #    self.fl.read_first_chain_loading(self)
+
         self.play_for_periodic = True
         if self.during_play is False:
             return True

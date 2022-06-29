@@ -132,7 +132,7 @@ class NamiFile:
                 load_success = True # success for loading file
         return load_success, load_prompt
 
-    def load_pattern(self, input, blk):
+    def load_pattern(self, input, seq):
         # Load a description selected form input number
         ret_flag = False
         num = input.replace( '\n' , '' )
@@ -143,7 +143,7 @@ class NamiFile:
                 #print(pattern)
                 ni, ptx = self.gen_ni(pattern[1])
                 if ni != None:
-                    ptx.set_dscrpt_to_block(blk, ni)
+                    ptx.set_dscrpt_to_seq2(seq, ni)
                     ret_flag = True
         return ret_flag
 
@@ -159,7 +159,7 @@ class NamiFile:
             ni, dialogue = ptx.complement_brace(dscrpt_text)
         return ni, ptx
 
-    def disp_ni(self, ni):
+    def display_ni(self, ni):
         disp = '~~>'
         if ni[1] != '': disp += '['+ni[1]+']'
         if ni[2] != '': disp += '['+ni[2]+']'
@@ -175,20 +175,14 @@ class NamiFile:
                 overlap = True
         self.overlap[part_num] = overlap
 
-    def read_first_chain_loading(self, blk):
-        # for all part (just after file load)
-        # set first description
-        for i in range(nlib.MAX_PART_COUNT):
-            ni, ptx = self.gen_ni(self.chain_loading[i][0])
-            if ni != None:
-                blk.part_direct(i,True).clear_description()
-                blk.part_direct(i,False).clear_description()
-                blk.part(i).add_seq_description(ni)
-                self.disp_ni(ni)
-                self.lookahead_overlap(i, 0)
-        self.chain_loading_idx = [1 for _ in range(nlib.MAX_PART_COUNT)]
+    def read_first_chain_loading(self, part_num):
+        ni, ptx = self.gen_ni(self.chain_loading[part_num][0])
+        self.display_ni(ni)
+        self.lookahead_overlap(part_num, 0)
+        self.chain_loading_idx[part_num] = 1
+        return ni
 
-    def read_next_chain_loading(self, blk, part_num):
+    def read_next_chain_loading(self, part_num):
         # for one part (return to top)
         idx = self.chain_loading_idx[part_num]
         if len(self.chain_loading[part_num]) > idx:
@@ -196,9 +190,7 @@ class NamiFile:
             # print(idx) # debug
             ni, ptx = self.gen_ni(self.chain_loading[part_num][idx])
             if ni != None:
-                self.disp_ni(ni)
-                blk.part(part_num).clear_description()
-                blk.part_in_advance(part_num).add_seq_description(ni)
+                self.display_ni(ni)
                 self.lookahead_overlap(part_num, idx)
                 return ni
         self.chain_loading_idx[part_num] = INDEX_END

@@ -11,11 +11,12 @@ SEQ_START = -1
 #   起動時から存在し、決して destroy されない SeqPlay Obj.
 class SeqPart(sqp.SeqPlay):
 
-    def __init__(self, obj, md, num):
+    def __init__(self, obj, md, fl, num):
         super().__init__(obj, md, 'Part')
         self.part_num = num
         self.first_measure_num = SEQ_START # 新しい Phrase/Pattern が始まった絶対小節数
 
+        self.fl = fl
         self.loop_obj = None
         self.keynote = nlib.DEFAULT_NOTE_NUMBER
         self.seq_type = None
@@ -57,9 +58,28 @@ class SeqPart(sqp.SeqPlay):
         self._generate_sequence()
         self.state_reserve = False
         self.first_measure_num = msr    # 計測開始の更新
+        #print(self.whole_tick,self.loop_measure)
+
+    def _set_chain_loading(self, elapsed_msr):
+        # 次回が overlap 対象か？
+        ol = self.fl.get_overlap(self.part_num)
+        # 1小節前になったか？ overlap の場合２小節前になったか？
+        condition = \
+            ((self.loop_measure-1 == elapsed_msr) and not ol) or \
+            ((self.loop_measure-2 == elapsed_msr) and ol)
+        if condition:
+            # wait_for_looptop 期間中に次の Description をセットする
+            noteinfo = self.fl.read_next_chain_loading(self.part_num)
+            self.add_seq_description(noteinfo)
+
 
     ## Seqplay thread内でコール
     def start(self):
+        # chain load
+        if self.fl.chain_loading_state:
+            noteinfo = self.fl.read_first_chain_loading(self.part_num)
+            self.add_seq_description(noteinfo)
+
         self.first_measure_num = SEQ_START
 
     def msrtop(self,msr):
@@ -67,14 +87,18 @@ class SeqPart(sqp.SeqPlay):
         if self.first_measure_num == SEQ_START:
             self._pattern_change(msr)
 
+        # 計測開始からの経過小節数
+        elapsed_msr = msr - self.first_measure_num
+
+        # Chain Loading
+        if self.fl.chain_loading_state:
+            self._set_chain_loading(elapsed_msr)
+
         # データの無い状態で start し、再生中に phrase/pattern 指定されたとき
         if self.elm == None:
             if self.state_reserve:
                 # pattern 変更イベント時
                 self._pattern_change(msr)
-
-        # 計測開始からの経過小節数
-        elapsed_msr = msr - self.first_measure_num
 
         # Loop分の長さを過ぎたか
         if self.elm != None and \

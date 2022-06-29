@@ -386,12 +386,11 @@ class Parsing:
         self.prompt_str = self.get_prompt_string('0', self.input_part)
 
     def during_load(self, input_text):
-#        if self.fl.load_pattern(input_text, self.sq.blk()):
-#            self.print_dialogue("description loaded!")
-#        else:
-#            self.print_dialogue("what?")
-#        self.return_to_normal()
-        pass
+        if self.fl.load_pattern(input_text, self.sq2):
+            self.print_dialogue("description loaded!")
+        else:
+            self.print_dialogue("what?")
+        self.return_to_normal()
 
     def startParsing(self, input_text):
         first_letter = input_text[0:1]
