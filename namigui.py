@@ -90,8 +90,8 @@ class NamiGui:
                 color_str = 'magenta'
             pygame.draw.circle(self.screen, color_str, \
                 (NamiGui.COLUMN31_X+num*NamiGui.PART_INTERVAL, NamiGui.LINE2_Y+NamiGui.LAMP_OFS), 5)
-#            self.screen.blit(self.font.render(str(pt.keynote-60), True, 'lightblue'), \
-#                [NamiGui.COLUMN3_X+num*NamiGui.PART_INTERVAL, NamiGui.LINE3_Y])
+            self.screen.blit(self.font.render(str(seq.get_part(num).keynote-60), True, 'lightblue'), \
+                [NamiGui.COLUMN3_X+num*NamiGui.PART_INTERVAL, NamiGui.LINE3_Y])
 
     def _debug_support(self, seq):
         value = len(seq.sqobjs) # value に見たい変数値を代入する(seqから辿れるもの)

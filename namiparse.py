@@ -149,7 +149,7 @@ class Parsing:
         if len(cc_list) > nlib.MAX_PART_COUNT:
             del cc_list[nlib.MAX_PART_COUNT:]
         for i, vol in enumerate(cc_list):
-            self.sq2.send_midi_cc(i, cc_num, int(vol))
+            self.sq2.get_part(i).change_cc(cc_num, int(vol))
 
     CONFIRM_MIDI_OUT_ID = -1
 
@@ -234,7 +234,7 @@ class Parsing:
                 if var.isdecimal():
                     num = int(var)
                     if num > 0 and num <= 128:
-                        self.sq2.send_midi_pgn(i,num-1)
+                        self.sq2.get_part(i).change_pgn(num-1)
             self.print_dialogue("Program number has changed!")
 
     def letterB(self, input_text):

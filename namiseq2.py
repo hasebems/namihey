@@ -178,24 +178,3 @@ class Seq2:
 
     def fine(self):     # command thread
         self.fine_for_periodic = True
-
-#--------
-    def change_note(self, key, oct):
-        pass
-
-    def change_oct_to_part(self, part, oct):
-        pass
-
-    def get_complete_pattern_string(self, blk, i):
-        pass
-
-    def send_midi_cc(self, num, cc_num, val):
-        self.md.send_control(num*2, cc_num, val)
-        self.md.send_control(num*2+1, cc_num, val)
-
-    def send_midi_pgn(self, num, pgn):
-        self.md.send_program(num*2, pgn)
-        self.md.send_program(num*2+1, pgn)
-
-    #self.sq.blk().copy_phrase(part - 1)
-    #ptn_str = self.get_complete_pattern_string(blk, i)

@@ -106,10 +106,10 @@ class SeqPart(sqp.SeqPlay):
     def change_cc(self, cc_num, val):
         if val >= 0 and val < 128:
             self.volume = val
-            self.md.send_control(self.midich, cc_num, val)
+            self.md.send_control(self.part_num, cc_num, val)
 
-    #def clear_description(self):
-    #    self.add_seq_description(['phrase',None,None,None])
+    def change_pgn(self, pgn):
+        self.md.send_program(self.part_num, pgn)
 
     def add_seq_description(self, data):
         self.seq_type = data[0]
