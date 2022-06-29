@@ -18,9 +18,8 @@ class Prompt:
 class Parsing:
     #   入力した文字列の解析
     #   一行単位で入力されるたびに生成される
-    def __init__(self, seq, seq2, nfl, md):
+    def __init__(self, seq2, nfl, md):
         self.prompt_mode = Prompt.NORMAL
-        self.sq = seq
         self.sq2 = seq2
         self.fl = nfl
         self.md = md
@@ -105,12 +104,11 @@ class Parsing:
                     octave_letter = key_text[2:]
             if octave_letter.isdecimal():
                 oct = int(octave_letter) + 1
-        curbk = self.sq.blk()
         if all:
             for i in range(nlib.MAX_PART_COUNT):
-                change_note(curbk.part(i), key, oct)
+                change_note(self.sq2.get_part(i), key, oct)
         else:
-            pt = curbk.part(self.input_part-1)
+            pt = self.sq2.get_part(self.input_part-1)
             change_note(pt, key, oct)
 
     def change_oct(self, text, all):
@@ -134,18 +132,17 @@ class Parsing:
             else:
                 return 0
 
-        curbk = self.sq.blk()
         if type(text) == list:
             for i, letter in enumerate(text):
                 oct = generate_oct_number(letter)
-                change_oct_to_part(curbk.part(i), oct)
+                change_oct_to_part(self.sq2.get_part(i), oct)
         else:
             oct = generate_oct_number(text)
             if all:
                 for i in range(nlib.MAX_PART_COUNT):
-                    change_oct_to_part(curbk.part(i), oct)
+                    change_oct_to_part(self.sq2.get_part(i), oct)
             else:
-                pt = curbk.part(self.input_part-1)
+                pt = self.sq2.get_part(self.input_part-1)
                 change_oct_to_part(pt, oct)
 
     def change_cc(self, cc_num, cc_list):
@@ -247,9 +244,8 @@ class Parsing:
         if input_text[0:4] == 'play':
             arg = input_text.split()
             if len(arg) == 1:
-                well_done = self.sq.play()
-                well_done2 = self.sq2.start()
-                if well_done and well_done2:
+                well_done = self.sq2.start()
+                if well_done:
                     self.print_dialogue("Phrase has started!")
                 else:
                     self.print_dialogue("Unable to start!")
@@ -262,49 +258,46 @@ class Parsing:
                     self.input_part = part
                     self.prompt_str = self.get_prompt_string('0', part)
         elif input_text[0:5] == 'panic':
-            blk = self.sq.blk()
             for i in range(nlib.MAX_PART_COUNT):
-                blk.part(i).change_cc(120, 0)          
+                self.sq2.get_part(i).change_cc(120, 0)          
         else:
             self.print_dialogue("what?")
 
     def letterS(self, input_text):
         if input_text[0:5] == 'start':
-            well_done = self.sq.play()
-            well_done2 = self.sq2.start()
-            if well_done and well_done2:
+            well_done = self.sq2.play()
+            if well_done:
                 self.print_dialogue("Phrase has started!")
             else:
                 self.print_dialogue("Unable to start!")
         elif input_text[0:4] == 'stop':
-            self.sq.stop()
             self.sq2.stop()
             self.print_dialogue("Stopped!")
         elif input_text[0:3] == 'set':
             self.parse_set_command(input_text[3:])
         elif input_text[0:4] == 'show':
             option = input_text[4:].replace(' ', '')
-            blk = self.sq.blk()
-            if option == 'all':
-                for i in range(nlib.MAX_PART_COUNT):
-                    ptn_str = self.get_complete_pattern_string(blk, i)
-                    if ptn_str is not None:
-                        self.print_dialogue('['+str(i+1)+']'+'~~> '+ptn_str)
-            else:
-                ptn_str = self.get_complete_pattern_string(blk, self.input_part-1)
-                if ptn_str is not None: self.print_dialogue('~~> '+ptn_str)
-        elif input_text[0:4] == 'save':
-            file = input_text[4:].replace(' ', '')
-            if self.fl.prepare_save_file(file):
-                blk = self.sq.blk()
-                for i in range(nlib.MAX_PART_COUNT):
-                    ptn_str = self.get_complete_pattern_string(blk, i)
-                    if ptn_str is not None:
-                        self.fl.save_pattern(ptn_str)
-                self.fl.close_save_file()
-                self.print_dialogue('Saved!')
-        else:
-            self.print_dialogue("what?")
+#            blk = self.sq.blk()
+#            if option == 'all':
+#                for i in range(nlib.MAX_PART_COUNT):
+#                    ptn_str = self.get_complete_pattern_string(blk, i)
+#                    if ptn_str is not None:
+#                        self.print_dialogue('['+str(i+1)+']'+'~~> '+ptn_str)
+#            else:
+#                ptn_str = self.get_complete_pattern_string(blk, self.input_part-1)
+#                if ptn_str is not None: self.print_dialogue('~~> '+ptn_str)
+#        elif input_text[0:4] == 'save':
+#            file = input_text[4:].replace(' ', '')
+#            if self.fl.prepare_save_file(file):
+#                blk = self.sq.blk()
+#                for i in range(nlib.MAX_PART_COUNT):
+#                    ptn_str = self.get_complete_pattern_string(blk, i)
+#                    if ptn_str is not None:
+#                        self.fl.save_pattern(ptn_str)
+#                self.fl.close_save_file()
+#                self.print_dialogue('Saved!')
+#        else:
+#            self.print_dialogue("what?")
 
     def letterI(self, input_text):
         if input_text[0:5] == 'input':
@@ -324,7 +317,7 @@ class Parsing:
             if tx.isdecimal():
                 part = int(tx)
                 if 0 < part <= nlib.MAX_PART_COUNT:
-                    self.sq.blk().copy_phrase(part - 1)
+#                    self.sq.blk().copy_phrase(part - 1)
                     self.print_dialogue("Phrase copied to part" + tx + ".")
         elif input_text[0:5] == 'color':
             color = input_text[6:].replace(' ','')
@@ -336,7 +329,6 @@ class Parsing:
 
     def letterF(self, input_text):
         if input_text[0:4] == "fine":
-            self.sq.fine()
             self.sq2.fine()
             self.print_dialogue('Will be ended!')
         else:
@@ -367,7 +359,7 @@ class Parsing:
                     self.print_dialogue("Completed chain loading!")
                     self.prompt_mode = Prompt.NOTHING
                     self.prompt_str = ''
-                    self.sq.stop()
+                    self.sq2.stop()
         else:
             self.print_dialogue("what?")
 
@@ -394,11 +386,12 @@ class Parsing:
         self.prompt_str = self.get_prompt_string('0', self.input_part)
 
     def during_load(self, input_text):
-        if self.fl.load_pattern(input_text, self.sq.blk()):
-            self.print_dialogue("description loaded!")
-        else:
-            self.print_dialogue("what?")
-        self.return_to_normal()
+#        if self.fl.load_pattern(input_text, self.sq.blk()):
+#            self.print_dialogue("description loaded!")
+#        else:
+#            self.print_dialogue("what?")
+#        self.return_to_normal()
+        pass
 
     def startParsing(self, input_text):
         first_letter = input_text[0:1]

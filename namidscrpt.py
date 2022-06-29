@@ -75,5 +75,4 @@ class Description:
 
     def set_dscrpt_to_seq2(self, part_num, sq2, dscrpt):
         # complement_brace で note_info[] を得た後に txt に入れて呼ばれる
-        #sq2.get_part(part_num).clear_description()
         sq2.get_part(part_num).add_seq_description(dscrpt)

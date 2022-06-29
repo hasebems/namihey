@@ -6,7 +6,6 @@
 #
 import  threading
 import  namiparse as ps
-import  namiseq as sq
 import  namiseq2 as sq2
 import  namilib as nlib
 import  namigui as ngui
@@ -28,10 +27,9 @@ def cui(loop, seq, pas):
         pas.startParsing(input_text)
     loop.running = False
 
-def generate_ev(loop, seq2, pas):
+def generate_ev(loop, seq, pas):
     while True:
-        #seq.periodic()
-        seq2.periodic()
+        seq.periodic()
         #seq.file_auto_play(pas)
         if not loop.running:
             break
@@ -41,17 +39,17 @@ def main():
     loop = ngui.Loop()
     fl = nfl.NamiFile()
     md = midi.Midi()
-    seq = sq.Seq(fl,md)
-    seq2 = sq2.Seq2(md)
-    pas = ps.Parsing(seq,seq2,fl,md)
+    #seq = sq.Seq(fl,md)
+    seq = sq2.Seq2(md)
+    pas = ps.Parsing(seq,fl,md)
     gui = ngui.NamiGui()
     pas.midi_setting(pas.CONFIRM_MIDI_OUT_ID)
 
-    cui_job = threading.Thread(target=cui, args=(loop, seq2, pas))
+    cui_job = threading.Thread(target=cui, args=(loop, seq, pas))
     cui_job.start()
-    ev_job = threading.Thread(target=generate_ev, args=(loop, seq2, pas))
+    ev_job = threading.Thread(target=generate_ev, args=(loop, seq, pas))
     ev_job.start()
-    gui.main_loop(loop,seq,seq2,pas,fl)
+    gui.main_loop(loop,seq,pas,fl)
 
     cui_job.join()
     ev_job.join()

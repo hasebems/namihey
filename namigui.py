@@ -86,29 +86,28 @@ class NamiGui:
             self.screen.blit(self.font.render(str(num+1), True, 'lightblue'), \
                 [NamiGui.COLUMN3_X+num*NamiGui.PART_INTERVAL, NamiGui.LINE1_Y])
             color_str = 'lightblue'
-            pt = seq.blk().part(num)
-            if len(pt.retained_note) > 0:
+            if len(seq.get_note(num)) > 0:
                 color_str = 'magenta'
             pygame.draw.circle(self.screen, color_str, \
                 (NamiGui.COLUMN31_X+num*NamiGui.PART_INTERVAL, NamiGui.LINE2_Y+NamiGui.LAMP_OFS), 5)
-            self.screen.blit(self.font.render(str(pt.keynote-60), True, 'lightblue'), \
-                [NamiGui.COLUMN3_X+num*NamiGui.PART_INTERVAL, NamiGui.LINE3_Y])
+#            self.screen.blit(self.font.render(str(pt.keynote-60), True, 'lightblue'), \
+#                [NamiGui.COLUMN3_X+num*NamiGui.PART_INTERVAL, NamiGui.LINE3_Y])
 
     def _debug_support(self, seq):
         value = len(seq.sqobjs) # value に見たい変数値を代入する(seqから辿れるもの)
         debug = self.font.render('Sqobj. Num: '+str(value), True, 'lightblue')
         self.screen.blit(debug, [NamiGui.COLUMN1_X, NamiGui.LINE3_Y])
 
-    def main_loop(self, loop, seq, seq2, pas, nfl):
+    def main_loop(self, loop, seq, pas, nfl):
         clock = pygame.time.Clock()
         while True:
             clock.tick(60)     # 60FPS
             self.screen.fill(BACK_COLOR[pas.back_color])
             self._display_time()
             self._display_song(nfl,seq)
-            self._display_beat(seq2)
+            self._display_beat(seq)
             self._display_part(seq)
-            self._debug_support(seq2)
+            self._debug_support(seq)
             # 画面更新
             pygame.display.update()
 
