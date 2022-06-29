@@ -51,6 +51,13 @@ class Seq2:
         else:
             return None
 
+    def get_note(self, part_num):
+        nt = []
+        for obj in self.sqobjs:
+            if obj.type == 'Note' and obj.midi_ch == part_num:
+                nt.append(obj)
+        return nt
+
 #    def file_auto_play(self, pas):
 #        if self.fl.auto_stop:   # check end of chain loading
 #            self.fl.auto_stop = False
@@ -191,3 +198,4 @@ class Seq2:
         self.md.send_program(num*2+1, pgn)
 
     #self.sq.blk().copy_phrase(part - 1)
+    #ptn_str = self.get_complete_pattern_string(blk, i)
