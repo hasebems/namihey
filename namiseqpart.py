@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 import namilib as nlib
 import namiphrase as nph
+import namifile as nf
 import namiseqply as sqp
 import namiseqptn as ptnlp
 import namiseqphr as phrlp
-
-SEQ_START = -1
 
 ####
 #   起動時から存在し、決して destroy されない SeqPlay Obj.
@@ -14,7 +13,7 @@ class SeqPart(sqp.SeqPlay):
     def __init__(self, obj, md, fl, num):
         super().__init__(obj, md, 'Part')
         self.part_num = num
-        self.first_measure_num = SEQ_START # 新しい Phrase/Pattern が始まった絶対小節数
+        self.first_measure_num = 0 # 新しい Phrase/Pattern が始まった絶対小節数
 
         self.fl = fl
         self.loop_obj = None
@@ -54,61 +53,76 @@ class SeqPart(sqp.SeqPlay):
                 self.keynote, self.part_num)
         self.parent.add_sqobj(self.loop_obj)
 
-    def _pattern_change(self, msr):
-        self._generate_sequence()
-        self.state_reserve = False
-        self.first_measure_num = msr    # 計測開始の更新
-        #print(self.whole_tick,self.loop_measure)
-
-    def _set_chain_loading(self, elapsed_msr):
-        # 次回が overlap 対象か？
-        ol = self.fl.get_overlap(self.part_num)
-        # 1小節前になったか？ overlap の場合２小節前になったか？
-        condition = \
-            ((self.loop_measure-1 == elapsed_msr) and not ol) or \
-            ((self.loop_measure-2 == elapsed_msr) and ol)
-        if condition:
-            # wait_for_looptop 期間中に次の Description をセットする
-            noteinfo = self.fl.read_next_chain_loading(self.part_num)
-            self.add_seq_description(noteinfo)
+    def _set_chain_loading(self, msr, elapsed_msr):
+        if msr == 0:
+            noteinfo = self.fl.read_first_chain_loading(self.part_num)
+            #self.add_seq_description(noteinfo)
+            self.seq_type = noteinfo[0]
+            self.description = noteinfo[1:]
+            return True
+        else:
+            # 次回が overlap 対象か？
+            ol = self.fl.get_overlap(self.part_num)
+            # 1小節前になったか？ overlap の場合２小節前になったか？
+            condition = \
+                ((self.loop_measure == elapsed_msr) and not ol) or \
+                ((self.loop_measure-1 == elapsed_msr) and ol)
+            if condition:
+                # wait_for_looptop 期間中に次の Description をセットする
+                noteinfo = self.fl.read_next_chain_loading(self.part_num)
+                if noteinfo == nf.NO_NOTE:
+                    return False
+                #self.add_seq_description(noteinfo)
+                self.seq_type = noteinfo[0]
+                self.description = noteinfo[1:]
+                return True        
+        return False
 
 
     ## Seqplay thread内でコール
     def start(self):
-        # chain load
-        if self.fl.chain_loading_state:
-            noteinfo = self.fl.read_first_chain_loading(self.part_num)
-            self.add_seq_description(noteinfo)
-
-        self.first_measure_num = SEQ_START
+        self.first_measure_num = 0
 
     def msrtop(self,msr):
-        # start 前に phrase/pattern 指定されたとき
-        if self.first_measure_num == SEQ_START:
-            self._pattern_change(msr)
-
-        # 計測開始からの経過小節数
-        elapsed_msr = msr - self.first_measure_num
-
-        # Chain Loading
-        if self.fl.chain_loading_state:
-            self._set_chain_loading(elapsed_msr)
-
-        # データの無い状態で start し、再生中に phrase/pattern 指定されたとき
-        if self.elm == None:
-            if self.state_reserve:
-                # pattern 変更イベント時
-                self._pattern_change(msr)
-
-        # Loop分の長さを過ぎたか
-        if self.elm != None and \
-            self.loop_measure != 0 and elapsed_msr%self.loop_measure == 0:
-            if self.state_reserve:
-                # pattern 変更イベント時
-                self._pattern_change(msr)
-
+        def new_loop(msr):
+            self._generate_sequence()
+            self.first_measure_num = msr    # 計測開始の更新
             # 新たに Loop Obj.を生成
             self._generate_loop(msr)
+
+        elapsed_msr = msr - self.first_measure_num
+        if self.fl.chain_loading_state:
+            # Chain Loading
+            if self._set_chain_loading(msr, elapsed_msr):
+                new_loop(msr)
+
+        elif self.state_reserve:
+            self.state_reserve = False
+            # 前小節にて phrase/pattern 指定された時
+            if msr == 0:
+                # 今回 start したとき
+                new_loop(msr)
+
+            elif self.elm == None:
+                # データのない状態で start し、今回初めて指定された時
+                new_loop(msr)
+
+            elif self.loop_measure != 0 and elapsed_msr%self.loop_measure == 0:
+                # 前小節にて Loop Obj が終了した時
+                new_loop(msr)
+
+            else:
+                # 現在の Loop Obj が終了していない時
+                pass
+
+        elif self.elm != None and \
+            self.loop_measure != 0 and elapsed_msr%self.loop_measure == 0:
+            # 同じ Loop.Obj を生成する
+            self._generate_loop(msr)
+
+        else:
+            # Loop 途中で何も起きないとき
+            pass
 
     #def periodic(self,msr,tick):
     #    pass

@@ -96,7 +96,7 @@ class NamiGui:
     def _debug_support(self, seq):
         value = len(seq.sqobjs) # value に見たい変数値を代入する(seqから辿れるもの)
         debug = self.font.render('Sqobj. Num: '+str(value), True, 'lightblue')
-        self.screen.blit(debug, [NamiGui.COLUMN1_X, NamiGui.LINE3_Y])
+        self.screen.blit(debug, [NamiGui.COLUMN12_X, NamiGui.LINE3_Y])
 
     def main_loop(self, loop, seq, pas, nfl):
         clock = pygame.time.Clock()

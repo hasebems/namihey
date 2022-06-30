@@ -62,7 +62,8 @@ class Seq2:
     def file_auto_play(self, pas):
         if self.fl.auto_stop:   # check end of chain loading
             self.fl.auto_stop = False
-            #pas.print_dialogue("The End!")
+            self.stop()
+            pas.print_dialogue("The End!")
             pas.return_to_normal()
 
     def get_tick(self): # for GUI
