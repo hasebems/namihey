@@ -33,16 +33,20 @@ class SeqPart(sqp.SeqPlay):
             # その時の beat 情報で、whle_tick を loop_measure に換算
             self.loop_measure = self.whole_tick//tick_for_onemsr + \
                 (0 if self.whole_tick%tick_for_onemsr == 0 else 1)
+            return True
         elif self.seq_type == 'random':
             self.elm = ptnlp.PatternGenerator(True,self.description)
             if self.elm != None:
                 self.loop_measure = self.elm.max_measure_num
                 self.whole_tick = self.loop_measure*tick_for_onemsr
+                return True
         elif self.seq_type == 'arp':
             self.elm = ptnlp.PatternGenerator(False,self.description)
             if self.elm != None:
                 self.loop_measure = self.elm.max_measure_num
                 self.whole_tick = self.loop_measure*tick_for_onemsr
+                return True
+        return False
 
     def _generate_loop(self,msr):
         if self.seq_type == 'phrase':
@@ -63,21 +67,19 @@ class SeqPart(sqp.SeqPlay):
         else:
             # 次回が overlap 対象か？
             ol = self.fl.get_overlap(self.part_num)
+            # あるいは、ひとつ前のデータに中身が無ければ
             # 1小節前になったか？ overlap の場合２小節前になったか？
             condition = \
+                (self.loop_measure == 0) or \
                 ((self.loop_measure == elapsed_msr) and not ol) or \
                 ((self.loop_measure-1 == elapsed_msr) and ol)
             if condition:
                 # wait_for_looptop 期間中に次の Description をセットする
                 noteinfo = self.fl.read_next_chain_loading(self.part_num)
-                if noteinfo == nf.NO_NOTE:
-                    return False
-                #self.add_seq_description(noteinfo)
                 self.seq_type = noteinfo[0]
                 self.description = noteinfo[1:]
-                return True        
-        return False
-
+                return True
+            return False
 
     ## Seqplay thread内でコール
     def start(self):
@@ -85,10 +87,10 @@ class SeqPart(sqp.SeqPlay):
 
     def msrtop(self,msr):
         def new_loop(msr):
-            self._generate_sequence()
+            if self._generate_sequence():
+                # 新たに Loop Obj.を生成
+                self._generate_loop(msr)
             self.first_measure_num = msr    # 計測開始の更新
-            # 新たに Loop Obj.を生成
-            self._generate_loop(msr)
 
         elapsed_msr = msr - self.first_measure_num
         if self.fl.chain_loading_state:

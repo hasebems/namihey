@@ -159,12 +159,13 @@ class NamiFile:
             ni, dialogue = ptx.complement_brace(dscrpt_text)
         return ni, ptx
 
-    def display_ni(self, ni):
-        disp = '~~>'
-        if ni[1] != '': disp += '['+ni[1]+']'
-        if ni[2] != '': disp += '['+ni[2]+']'
-        if ni[3] != '': disp += '['+ni[3]+']'
-        if disp != '~~>': print(disp)    # display chain data
+    def display_ni(self, num, ni):
+        disp = '['+str(num)+']'+'~~>'
+        if ni[1] != '':
+            disp += '['+ni[1]+']'
+            if ni[2] != '': disp += '['+ni[2]+']'
+            if ni[3] != '': disp += '['+ni[3]+']'
+            print(disp)    # display chain data
 
     def lookahead_overlap(self, part_num, idx):
         overlap = False
@@ -177,7 +178,7 @@ class NamiFile:
 
     def read_first_chain_loading(self, part_num):
         ni, ptx = self.gen_ni(self.chain_loading[part_num][0])
-        self.display_ni(ni)
+        self.display_ni(part_num, ni)
         self.lookahead_overlap(part_num, 0)
         self.chain_loading_idx[part_num] = 1
         return ni
@@ -190,7 +191,7 @@ class NamiFile:
             # print(idx) # debug
             ni, ptx = self.gen_ni(self.chain_loading[part_num][idx])
             if ni != None:
-                self.display_ni(ni)
+                self.display_ni(part_num, ni)
                 self.lookahead_overlap(part_num, idx)
                 return ni
         self.chain_loading_idx[part_num] = INDEX_END
