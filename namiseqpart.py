@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import namilib as nlib
 import namiphrase as nph
-import namifile as nf
 import namiseqply as sqp
 import namiseqptn as ptnlp
 import namiseqphr as phrlp
@@ -105,7 +104,7 @@ class SeqPart(sqp.SeqPlay):
                 # 今回 start したとき
                 new_loop(msr)
 
-            elif self.elm == None:
+            elif self.loop_measure == 0:
                 # データのない状態で start し、今回初めて指定された時
                 new_loop(msr)
 
