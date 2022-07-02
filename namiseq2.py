@@ -32,7 +32,6 @@ class Seq2:
         self.stop_for_periodic = False
         self.fine_for_periodic = False
 
-        self.fl = fl
         self.md = md
         self.sqobjs = []
         for i in range(nlib.MAX_PART_COUNT):
@@ -58,13 +57,6 @@ class Seq2:
             if obj.type == 'Note' and obj.midi_ch == part_num:
                 nt.append(obj)
         return nt
-
-    def file_auto_play(self, pas):
-        if self.fl.auto_stop:   # check end of chain loading
-            self.fl.auto_stop = False
-            self.stop()
-            pas.print_dialogue("The End!")
-            pas.return_to_normal()
 
     def get_tick(self): # for GUI
         tick_for_beat = nlib.DEFAULT_TICK_FOR_ONE_MEASURE/self.beat[1]  # 一拍のtick数
@@ -169,10 +161,6 @@ class Seq2:
         self.stock_tick_for_onemsr = beat
 
     def start(self):     # command thread
-        # for chain loading
-        #if self.fl.chain_loading_state:
-        #    self.fl.read_first_chain_loading(self)
-
         self.play_for_periodic = True
         if self.during_play is False:
             return True

@@ -18,6 +18,11 @@ def quit_job(seq):
         seq.stop()
     pass
 
+def chain_load_auto_stop(seq, pas):
+    seq.stop()
+    pas.print_dialogue("The End!")
+    pas.return_to_normal()
+
 def cui(loop, seq, pas):
     while True:
         input_text = input(pas.prompt_str)
@@ -27,10 +32,12 @@ def cui(loop, seq, pas):
         pas.startParsing(input_text)
     loop.running = False
 
-def generate_ev(loop, seq, pas):
+def generate_ev(loop, fl, seq, pas):
     while True:
         seq.periodic()
-        seq.file_auto_play(pas)
+        if fl.auto_stop:   # check end of chain loading
+            fl.auto_stop = False
+            chain_load_auto_stop(seq, pas)
         if not loop.running:
             break
 
@@ -46,7 +53,7 @@ def main():
 
     cui_job = threading.Thread(target=cui, args=(loop, seq, pas))
     cui_job.start()
-    ev_job = threading.Thread(target=generate_ev, args=(loop, seq, pas))
+    ev_job = threading.Thread(target=generate_ev, args=(loop, fl, seq, pas))
     ev_job.start()
     gui.main_loop(loop,seq,pas,fl)
 
