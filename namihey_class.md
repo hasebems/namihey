@@ -16,28 +16,28 @@ class Parsing
 ```
 -->
 
-
 ```mermaid
 classDiagram
-Seq *-- Block
-Block *-- PartOperator
-PartOperator *-- Part
-Part *-- PatternGenerator
-Part *-- PartGenPlay
-PartGenPlay *-- PhraseGenerator
+SeqPlay *-- Midi
+SeqPlay *-- Seq2
+SeqPlay <|-- Loop
+SeqPlay <|-- Note
+SeqPlay <|-- SeqPart
+Loop <|-- PhraseLoop
+Loop <|-- PatternLoop
+Seq2 o-- SeqPart
+Seq2 o-- PhraseLoop
+Seq2 o-- PatternLoop
+Seq2 o-- Note
 Description <-- Parsing
 Description <-- NamiFile
-Seq <-- Parsing
-NamiFile <-- Seq
+Seq2 <-- Parsing
 NamiFile <-- Parsing
-NamiFile <-- Block
-Midi <-- Block
 Midi <-- Parsing
-Seq <-- Namigui
+Seq2 <-- Namigui
 Parsing <-- Namigui
 NamiFile <-- Namigui
 ```
-
 
 ### Parsing
 - File: namiparse.py
@@ -51,70 +51,33 @@ NamiFile <-- Namigui
 - File: namidscrpt.py
 - Role: 入力されたパターンテキストの内容を整備し、Block に渡す仕組みを提供する
 
-### Seq
-- File: namiseq.py
-- Role: 複数ブロックのタイミング管理、MIDI PORT設定、chain load制御
-- Note:
-    - 絶対時間を tick に変換し、tick による時間管理で Block を呼び出す
-    - Tempo イベントを受信し、時間 <-> tick 変換に反映させる
-    - 外部からの関数呼び出しは、一度 flag にして、periodic のスレッド内に処理を集める
-- Variables:
-    - self.during_play      : 再生中か
-    - self.start_time       : start したときの絶対時間
-    - self.current_time     : start から現在までの経過時間(startからの相対時間)
-    - self.current_tick     : 四分音符=480 としたときの、start から現在までの tick
-    - self.next_tick        : 次のイベントの tick 
+### Seq2
+- File: namiseq2.py
+- Role: タイミング管理
 
-- Methods:
-    - def periodic()
-        - generate_ev() から呼ばれ続ける別スレッドの関数
+### SeqPlay
+- File: namiseqply.py
+- Role: Sequencer 内のインスタンスを生成するための Super Class
 
-### PartOperator
-- File: namiblock.py
-- Role: Part ごとに異なる Loop を管理し、Part を呼び出すクラス 
-- Variables:
-    - self.part = npt.Part(blk, num)
-    - self.part_num
-    - self.max_msr : データが無くても 1、whole_tick より大きい小節数
-    - self.loop_next_tick   : 次回 event の tick
-    - self.wait_for_looptop : 次回 event が loop に戻るか
-    - self.whole_tick       : Phrase Data の総 tick 数
-    - self.msr_counter      : 現在の Loop 先頭からの小節数
-    - self.one_msr_tick     : 現拍子の1小節の tick 数
+### Loop
+- File: namiseqply.py
 
+### Note
+- File: namiseqply.py
 
-### Block
-- File: namiblock.py
-- Role: 各パートが独立したループを持つブロック
-- Note:
-    - tick ベースで各 PartOperator を操作
-    - ユーザパートに対し、二つの PartOperator/Part をあて、新規 Description があるたびに
-      PartOperator を交互に使用する
-    - Chain Loading を演奏中に動的に発生させ、シーケンスを連続で鳴らす機能の中核となる
-
-### Part
-- File: namipart.py
-- Role: パート内の、シーケンスデータ生成オブジェクトによるデータ生成と、再生コントロール
-- Note:
-    - Part IF を提供し、シーケンスの生成オブジェクトをコール
-    - シーケンス生成オブジェクトには、oneByOne と atOnce の2typeがある
-
-### PartGenPlay
-- File: namiptgen.py
-- Role: ユーザーが入力したデータから、その場で MIDI シーケンスを生成し、再生コントロールするオブジェクト(atOnce型)
-- Note:
-    - 実際には、内部で PhraseGenerator オブジェクトを呼び出して、このオブジェクトにシーケンスを作ってもらう
+### SeqPart
+- File: namiseqpart.py
 
 ### PhraseGenerator
 - File: namiphrase.py
 - Role: 入力データから MIDI シーケンスを生成する処理
-- Note:
-    - PartGen からコールされる
 
 ### PatternGenerator
-- File: namipattern.py
-- Role: ユーザーが入力したデータをもとに、再生時に逐次シーケンスを生成し、再生コントロールするオブジェクト(oneByOne型)
-    - Random 型と Arpeggio 型の二つのタイプがある
+- File: namiseqptn.py
+
+### PhraseLoop(sqp.Loop):
+
+### PatternLoop(sqp.Loop):
 
 ### NamiGui
 - File: namigui.py
