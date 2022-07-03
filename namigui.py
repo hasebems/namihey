@@ -72,7 +72,7 @@ class NamiGui:
         bpm_str = self.font.render('bpm : ' + str(seq.tempo), True, 'lightblue')
         self.screen.blit(bpm_str, [NamiGui.COLUMN2_X, NamiGui.LINE1_Y])   # 文字列の位置を指定
         msr, beat, tick, count = seq.get_tick()
-        beat_str = self.font.render(str(msr) + ' : ' + str(beat+1) + ' : ' + str(tick), True, 'magenta')
+        beat_str = self.font.render(str(msr+1) + ' : ' + str(beat+1) + ' : ' + str(tick), True, 'magenta')
         self.screen.blit(beat_str, [NamiGui.COLUMN2_X, NamiGui.LINE2_Y])   # 文字列の位置を指定
         for i in range(count):
             color_str = 'lightblue'
@@ -94,9 +94,10 @@ class NamiGui:
                 [NamiGui.COLUMN3_X+num*NamiGui.PART_INTERVAL, NamiGui.LINE3_Y])
 
     def _debug_support(self, seq):
-        value = len(seq.sqobjs) # value に見たい変数値を代入する(seqから辿れるもの)
-        debug = self.font.render('Sqobj. Num: '+str(value), True, 'lightblue')
-        self.screen.blit(debug, [NamiGui.COLUMN12_X, NamiGui.LINE3_Y])
+#        value = len(seq.sqobjs) # value に見たい変数値を代入する(seqから辿れるもの)
+#        debug = self.font.render('Debug. Num: '+str(value), True, 'lightblue')
+#        self.screen.blit(debug, [NamiGui.COLUMN12_X, NamiGui.LINE3_Y])
+        pass
 
     def main_loop(self, loop, seq, pas, nfl):
         clock = pygame.time.Clock()

@@ -42,6 +42,12 @@ class Seq2:
         self.sqobjs.append(obj)
         #print(len(self.sqobjs))
 
+    def get_sqobj_count(self, type):
+        count = 0
+        for obj in self.sqobjs:
+            if obj.type == type: count += 1
+        return count
+
     def get_tick_for_onemsr(self):
         return self.tick_for_onemsr
 
@@ -64,7 +70,7 @@ class Seq2:
         count = self.tick_for_onemsr//tick_for_beat
         beat = tick_inmsr//tick_for_beat
         tick = tick_inmsr%tick_for_beat
-        return self.crnt_measure+1,int(beat),int(tick),int(count)
+        return int(self.crnt_measure),int(beat),int(tick),int(count)
 
     def _calc_current_tick(self, crnt_time):
         diff_time = crnt_time - self.bpm_start_time
@@ -116,11 +122,11 @@ class Seq2:
         tick_beat_starts = self._calc_current_tick(current_time)
         self.elapsed_time = current_time - self.origin_time
         former_msr = self.crnt_measure
-        self.crnt_measure = int(tick_beat_starts//self.tick_for_onemsr + self.beat_start_msr)
-        self.crnt_tick_inmsr = int(tick_beat_starts%self.tick_for_onemsr)
+        self.crnt_measure = tick_beat_starts//self.tick_for_onemsr + self.beat_start_msr
+        self.crnt_tick_inmsr = tick_beat_starts%self.tick_for_onemsr
 
         ## new measure or not
-        if former_msr is not self.crnt_measure:
+        if former_msr != self.crnt_measure:
             # 小節を跨いだ場合
             if self.stock_tick_for_onemsr[0] is not self.tick_for_onemsr:
                 # change beat event があった
