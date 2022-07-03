@@ -17,6 +17,7 @@ class PatternGenerator:
         self.rnd_rgn = 12
         self.rnd_ofs = 0
         self.rnd_dur = 8
+        self.rnd_prb = 100          # probability 出現確率
         self.arp_type = 'sawup'
         self.measure_flow = []      # 各 Pattern の小節数
         self.velocity_flow = []     # 各 Pattern のベロシティ
@@ -32,9 +33,9 @@ class PatternGenerator:
             prms = inside[0].split(',')
             for prm in prms:
                 elm = prm.strip().split('=')
-                if len(elm) < 2:
+                if len(elm) != 2:
                     break
-                if elm[1].isdecimal():
+                if elm[1].isdecimal():  # xxx=n n:number
                     value = int(elm[1])
                     if elm[0] == 'rgn' and self.random_ptn:
                         if value < 1: value = 1
@@ -46,6 +47,8 @@ class PatternGenerator:
                         self.rnd_ofs = value
                     elif elm[0] == 'dur':
                         self.rnd_dur = value
+                    elif elm[0] == 'prb':
+                        self.rnd_prb = value
                 elif elm[0] == 'ptn' and not self.random_ptn:
                     self.arp_type = elm[1]
         if len(chord_flow) >= 2:
@@ -224,7 +227,9 @@ class PatternLoop(sqp.Loop):
             measure_num = self._detect_locate(crnt_tick)
             note = self._detect_note_number(measure_num, crnt_tick, tick_reso)
             vel = self.ptn.velocity_flow[measure_num]
-            self._set_note([self.midich,note,vel,tick_reso - NOTE_OFF_MARGIN])
+            prb = random.randint(0, 99)
+            if prb <= self.ptn.rnd_prb:
+                self._set_note([self.midich,note,vel,tick_reso - NOTE_OFF_MARGIN])
             #print('NoteOn:'+str(crnt_tick)+'-'+str(note))
             self.last_note = note
             crnt_tick += tick_reso

@@ -168,6 +168,7 @@ Random Pattern 追加
         - ofs   : 中心音の位置 (0-11 default:0)
         - rgn   : 中心からの広がり、12で±1オクターブ（1-12 default:12）
         - dur   : ランダム音の音価。数値は基準音価と同じ（default:8)
+        - prb   : 上の音価における出現確率の調整(0-100[%] default:100)
     - コード名
         - アルペジオと同じ
     - 使用例
@@ -181,7 +182,7 @@ Random Pattern 追加
 
 - 'copyto 2' : 入力中のpartのフレーズ/パターンを part2 にコピー
 - 'input 1' 'part 1' : part 1への入力切り替え（1〜5)
-- 'show [all]' : 現在の入力パートのフレーズ/パターンを一行で表示（allで全パートを5行で表示）
+- 'show [all]' : 現在の入力パートのフレーズ/パターンを一行で表示（allで全パートを5行で表示）（未実装）
 - 'midi 1' : MIDI PORT 1 を選択
 - 'color 0' : Namihey Indicator の背景色を赤にする（1:緑、2:青)
 - 'panic' : 今鳴っている音を消音する
