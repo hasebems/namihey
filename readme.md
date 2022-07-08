@@ -1,5 +1,6 @@
-
+<div style="text-align: center;">
 ![namilogo](namilogo.png)
+</div>
 
 namihey Alpha-version
 =================================
