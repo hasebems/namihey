@@ -1,4 +1,4 @@
-![namilogo](namilogo.png)
+![namilogo](namilogo_gray.gif)
 
 namihey Alpha-version
 =================================
