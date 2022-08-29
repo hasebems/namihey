@@ -68,6 +68,6 @@ class Description:
             return None,"what?"
         return note_info, dialogue
 
-    def set_dscrpt_to_seq2(self, part_num, sq2, dscrpt):
+    def set_dscrpt_to_seq2(self, part_num, sqs, dscrpt):
         # complement_brace で note_info[] を得た後に txt に入れて呼ばれる
-        sq2.get_part(part_num).add_seq_description(dscrpt)
+        sqs.get_part(part_num).add_seq_description(dscrpt)

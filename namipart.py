@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 import namilib as nlib
 import namiphrase as nph
-import namiseqply as sqp
+import namielapse as sqp
 import namiseqptn as ptnlp
 import namiseqphr as phrlp
 
 ####
-#   起動時から存在し、決して destroy されない SeqPlay Obj.
-class SeqPart(sqp.SeqPlay):
+#   起動時から存在し、決して destroy されない ElapseIF Obj.
+class Part(sqp.ElapseIF):
 
     def __init__(self, obj, md, fl, num):
         super().__init__(obj, md, 'Part')

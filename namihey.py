@@ -6,7 +6,7 @@
 #
 import  threading
 import  namiparse as ps
-import  namiseq2 as sq2
+import  namistack as sqs
 import  namilib as nlib
 import  namigui as ngui
 import  namifile as nfl
@@ -46,7 +46,7 @@ def main():
     loop = ngui.Loop()
     fl = nfl.NamiFile()
     md = midi.Midi()
-    seq = sq2.Seq2(fl,md)
+    seq = sqs.SeqStack(fl,md)
     pas = ps.Parsing(seq,fl,md)
     gui = ngui.NamiGui()
     pas.midi_setting(pas.CONFIRM_MIDI_OUT_ID)

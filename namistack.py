@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import time
 import namilib as nlib
-import namiseqpart as sqp
+import namipart as sqp
 
 ####
 # Tempo 生成の考え方
@@ -9,7 +9,7 @@ import namiseqpart as sqp
 #   2. 次に Tempo が変わるまで、その時間との差から、現在の tick を算出する
 #   また、本 class 内に rit. 機構を持つ
 #
-class Seq2:
+class SeqStack:
     #   開始時に生成され、periodic() がコマンド入力とは別スレッドで、定期的に呼ばれる。
     #   そのため、change_tempo, play, stop 受信時はフラグのみを立て、periodic()
     #   で実処理を行う。
@@ -35,7 +35,7 @@ class Seq2:
         self.md = md
         self.sqobjs = []
         for i in range(nlib.MAX_PART_COUNT):
-            obj = sqp.SeqPart(self,md,fl,i)
+            obj = sqp.Part(self,md,fl,i)
             self.sqobjs.append(obj)
 
     def add_sqobj(self, obj):

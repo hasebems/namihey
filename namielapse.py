@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
 ####
-#   SeqPlay Obj. の Interface
-class SeqPlay:
+#   ElapseIF Obj. の Interface
+class ElapseIF:
 
     def __init__(self, obj, md, type):
         self.parent = obj
         self.md = md
         self.type = type
 
-    # Seqplay thread内でコール
+    # ElapseIF thread内でコール
     def start(self):    # User による start/play 時にコールされる
         pass
 
@@ -30,10 +30,10 @@ class SeqPlay:
 
 
 ####
-#   １行分の Phrase/Pattern を生成するための SeqPlay Obj.
+#   １行分の Phrase/Pattern を生成するための ElapseIF Obj.
 #   １周期が終わったら、destroy され、また新しいオブジェクトが Part によって作られる
 #   Loop 内のデータに基づき、Note Obj. を生成する
-class Loop(SeqPlay):
+class Loop(ElapseIF):
 
     # example
     LOOP_LENGTH = 3
@@ -68,9 +68,9 @@ class Loop(SeqPlay):
         self.destroy = True
 
 ####
-#   一音符の SeqPlay Obj.
+#   一音符の ElapseIF Obj.
 #   Note On時に生成され、MIDI を出力した後、Note Offを生成して destroy される
-class Note(SeqPlay):
+class Note(ElapseIF):
 
     def __init__(self, obj, md, ev):
         super().__init__(obj, md, 'Note')

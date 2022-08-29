@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import namilib as nlib
-import namiseqply as sqp
+import namielapse as sqp
 
 class PhraseLoop(sqp.Loop):
 
@@ -46,7 +46,7 @@ class PhraseLoop(sqp.Loop):
         self.play_counter = trace
         return next_tick
 
-    ## IF Function by SeqPlay Class
+    ## IF Function by ElapseIF Class
     def periodic(self,msr,tick):
         tk_onemsr = self.tick_for_one_measure
         elapsed_tick = (msr - self.first_measure_num)*tk_onemsr + tick
